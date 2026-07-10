@@ -1,0 +1,43 @@
+name: Pages Smoke Test
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for Pages endpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://yueert1997ai-sys.github.io/mecha-marco/"
+          for i in {1..12}; do
+            code=$(curl -L -A 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1' -sS -o page.html -w '%{http_code}' "$url" || true)
+            if [ "$code" = "200" ]; then break; fi
+            echo "Attempt $i returned HTTP $code"
+            sleep 10
+          done
+          test "$code" = "200"
+          grep -q '天穹断刃' page.html
+          grep -q 'loader.js' page.html
+
+      - name: Verify published assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://yueert1997ai-sys.github.io/mecha-marco/"
+          curl -fLsS "${base}styles.css" -o styles.css
+          curl -fLsS "${base}loader.js" -o loader.js
+          for i in $(seq -w 1 8); do
+            curl -fLsS "${base}chunks/game.part${i}.txt" -o "game.part${i}.txt"
+          done
+          cat game.part*.txt > game.js
+          node --check game.js
+          grep -q 'touch-device-root' game.js
+
+      - name: Report headers
+        run: |
+          curl -ILsS https://yueert1997ai-sys.github.io/mecha-marco/
