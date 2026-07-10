@@ -1,0 +1,10 @@
+{
+  "name": "天穹断刃 · Mecha Marco",
+  "short_name": "天穹断刃",
+  "description": "Hades 式房间选择与动作槽位构筑的机甲动作肉鸽。",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#071226",
+  "theme_color": "#071226"
+}
