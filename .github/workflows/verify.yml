@@ -20,35 +20,79 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -f index.html
-          test -f styles.css
-          test -f loader.js
-          test -f docs/HADES_ARCHITECTURE_4.0.md
+          test -s index.html
+          test -s v3/index.html
+          test -s v4/index.html
+          test -s v4/styles.css
+          test -s v4/manifest.webmanifest
+          test -s v4/sw.js
+          test -s v4/src/main.js
+          test -s v4/src/game.js
+          test -s docs/HADES_ARCHITECTURE_4.0.md
+          test -s v4/docs/QA_REPORT_4.0.md
+          test -s styles.css
+          test -s loader.js
           for i in 01 02 03 04 05 06 07 08; do
             test -s "chunks/game.part${i}.txt"
           done
 
-      - name: Verify concatenated JavaScript syntax
+      - name: Verify entry routing and legacy fallback
         shell: bash
         run: |
           set -euo pipefail
-          cat chunks/game.part*.txt > /tmp/game.js
-          node --check /tmp/game.js
+          grep -q './v4/' index.html
+          grep -q './v3/' index.html
+          grep -q '../styles.css' v3/index.html
+          grep -q '../loader.js' v3/index.html
+          grep -q './src/main.js' v4/index.html
+          grep -q './manifest.webmanifest' v4/index.html
 
-      - name: Verify loader and page wiring
+      - name: Verify v3 concatenated JavaScript syntax
         shell: bash
         run: |
           set -euo pipefail
-          grep -q 'styles.css' index.html
-          grep -q 'loader.js' index.html
+          cat chunks/game.part*.txt > /tmp/game-v3.js
+          node --check /tmp/game-v3.js
           for i in 01 02 03 04 05 06 07 08; do
             grep -q "game.part${i}.txt" loader.js
           done
 
+      - name: Verify v4 ES module syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            echo "Checking $file"
+            node --input-type=module --check < "$file"
+          done < <(find v4/src -type f -name '*.js' -print0 | sort -z)
+          node --check v4/sw.js
+
+      - name: Browser smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/mecha-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill $server_pid || true' EXIT
+          for i in {1..20}; do
+            curl -fsS http://127.0.0.1:4173/ >/tmp/root.html && break
+            sleep 0.5
+          done
+          grep -q './v4/' /tmp/root.html
+          curl -fsS http://127.0.0.1:4173/v3/ | grep -q 'v3.2'
+          curl -fsS http://127.0.0.1:4173/v4/ | grep -q '天穹断刃 4.0'
+          chrome="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$chrome"
+          "$chrome" --headless=new --no-sandbox --disable-gpu --virtual-time-budget=7000 --dump-dom 'http://127.0.0.1:4173/v4/?smoke' >/tmp/v4-dom.html
+          grep -q 'data-smoke-ready="true"' /tmp/v4-dom.html
+          grep -q 'id="game-canvas"' /tmp/v4-dom.html
+          grep -q 'id="panel"' /tmp/v4-dom.html
+
       - name: Build summary
         shell: bash
         run: |
-          printf 'HTML bytes: '; wc -c < index.html
-          printf 'CSS bytes: '; wc -c < styles.css
-          printf 'Runtime bytes: '; cat chunks/game.part*.txt | wc -c
-          echo 'Static build verification passed.'
+          printf 'Root entry bytes: '; wc -c < index.html
+          printf 'Legacy v3 HTML bytes: '; wc -c < v3/index.html
+          printf 'V4 HTML bytes: '; wc -c < v4/index.html
+          printf 'V4 source bytes: '; find v4/src -type f -name '*.js' -print0 | xargs -0 cat | wc -c
+          echo 'Root routing, legacy fallback, ES modules and browser smoke verification passed.'
