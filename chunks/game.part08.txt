@@ -1,0 +1,24 @@
+  hardpoints(){if(!player)return null;const h=getWeaponHardpoints(player);return {player:{x:player.x,y:0,z:player.z},muzzle:h.muzzle,saberBase:h.saberBase,saberTip:h.saberTip};},
+  hitFirstEnemy(){const e=enemies.find(x=>x&&!x.dead);if(e){e.spawn=0;e.hurt(12,false,{x:player.x,z:player.z},5);}},
+  firstEnemy(){const e=enemies.find(x=>x&&!x.dead);return e?{x:e.x,z:e.z,stagger:e.stagger,hitSide:e.hitSide,hitBack:e.hitBack}:null;},
+  debugView(){const scale=player?mechRenderScale(player,true):1;return {camera:{...camera},player:player?{x:player.x,z:player.z,yaw:player.yaw}:null,playerScreen:player?project3(player.x,1.2*scale,player.z):null,headScreen:player?project3(player.x,3.15*scale,player.z):null,feetScreen:player?project3(player.x,-1.0*scale,player.z):null,projectedScale:scale,drawCalls,theme:arenaTheme().name,layout:arenaLayoutName()};},
+  worldConfig(){return {arena:ARENA,playerScale:player?mechRenderScale(player,true):.8,enemyScale:mechRenderScale({type:"rifle"},false),eliteScale:mechRenderScale({type:"rifle",elite:true},false),bossScale:mechRenderScale({type:"boss"},false),theme:arenaTheme().name,layout:arenaLayoutName()};},
+  chooseRoute,
+  showShop,
+  showEvent:showRandomEvent,
+  pause:pauseGame,
+  resume:resumeGame,
+  rewardClick(index=0){const card=UI.cards.children[index];if(card?.onclick)card.onclick();},
+  eventClick(index=0){const card=UI.eventChoices.children[index];if(card?.onclick)card.onclick();},
+  shopClick(index=0){const card=UI.shopItems.children[index];if(card?.onclick)card.onclick();},
+  grantCores(v=100){gainCores(v);},
+  clearIntro(){sectorFlash=0;announceTimer=0;UI.announcement.classList.remove("show");tipTimer=0;UI.tip.classList.remove("show");},
+  jumpSector(n){if(!player)return;room=clamp(Math.floor(n)-1,0,TOTAL_SECTORS-1);startSector("combat");this.clearIntro();},
+  damagePlayer(v=9999){player?.hurt(v);},
+  setFrame(id){if(FRAME_DEFS[id])selectedFrame=id;},
+  setDifficulty(id){if(DIFFICULTY_DEFS[id])selectedDifficulty=id;},
+  losePointer(){intentionalUnlock=false;document.pointerLockElement=null;for(const fn of (globalThis.__testListeners?.pointerlockchange||[]))fn();},
+  snapshot(){return {state,room,node:currentNode,theme:arenaTheme().name,layout:arenaLayoutName(),enemies:enemies.filter(e=>e&&!e.dead).length,missiles:missiles.length,shots:shots.length,slashes:slashes.length,vfx:vfxBursts.length,saberAnim:player?.saberAnim??0,hp:player?.hp??null,maxHp:player?.maxHp??null,cores:player?.cores??0,upgrades:player?.upgrades.length??0,sectorFlash,runStats:JSON.parse(JSON.stringify(runStats))};}
+};
+
+})();
