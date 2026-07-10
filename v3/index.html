@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" name="viewport"/>
+<meta content="#09111e" name="theme-color"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
+<meta content="天穹断刃" name="apple-mobile-web-app-title"/>
+<meta content="天穹断刃 v3.2：纯网页 2.5D 超级系机甲动作肉鸽旧版。" name="description"/>
+<title>天穹断刃 v3.2｜旧版回退</title>
+<link href="../styles.css" rel="stylesheet"/>
+</head>
+<body>
+<canvas aria-label="游戏三维画面" id="gl"></canvas>
+<canvas aria-hidden="true" id="fx"></canvas>
+<div class="hidden" id="hud">
+<div class="hud-left">
+<div class="brand">SKYBREAK // MOBILE COMBAT v3.2 <span id="perf">60 FPS · 0 DRAWS</span></div>
+<div class="bar-label"><span>FRAME ARMOR</span><span id="hpText">160 / 160</span></div>
+<div class="bar armor"><i id="hpBar"></i></div>
+<div class="bar-label"><span>BOOST</span><span id="boostText">READY</span></div>
+<div class="bar boost"><i id="boostBar"></i></div>
+<div class="bar-label"><span>OVER LIMIT</span><span id="superText">READY</span></div>
+<div class="bar super"><i id="superBar"></i></div>
+<div class="weapon-row">
+<div><b>LMB / RT</b><span>主武器</span></div><div><b>RMB / LT</b><span>近战</span></div><div><b>Q / RB</b><span>导弹</span></div><div><b>SPACE / A</b><span>推进</span></div><div><b>E / Y</b><span>超限必杀</span></div><div><b>ESC</b><span>暂停</span></div>
+</div>
+</div>
+<div class="hud-center"><div class="objective" id="objective">歼灭当前区块全部敌机</div></div>
+<div class="hud-right">
+<div class="room-line"><span id="roomType">COMBAT</span><strong id="roomText">SECTOR 01</strong></div>
+<div class="resource-line"><span>HOSTILES <strong id="enemyText">0</strong></span><span>CORES <strong id="coreText">0</strong></span></div>
+<div class="build-list" id="buildList"></div>
+</div>
+<div class="boss-hud hidden" id="bossHud"><div><span id="bossName">BOSS</span><span id="bossHpText">100%</span></div><i><b id="bossBar"></b></i></div>
+<div class="crosshair" id="crosshair"><i></i><i></i></div>
+<div class="announcement" id="announcement"></div><div class="tip" id="tip"></div>
+</div>
+<section class="screen visible" id="menu">
+<div class="scanlines"></div>
+<div class="menu-shell">
+<header class="hero-block"><div class="eyebrow">WEBGL MECHA ROGUELITE // LEGACY BUILD</div><h1>天穹断刃</h1><p>v3.2 旧版回退入口 · 12 区块战役 · 三台超级系机体</p></header>
+<div class="hangar-grid">
+<div class="hangar-main">
+<div class="section-title"><span>01</span>选择出击机体</div>
+<div class="frame-cards" id="frameCards">
+<button class="frame-card selected" data-frame="vanguard"><span class="frame-code">SKY-01</span><strong>断刃·先锋型</strong><em>均衡 / 光束步枪 / 泛用盾</em><small>装甲 160　机动 7.3　火力 19</small></button>
+<button class="frame-card" data-frame="titan"><span class="frame-code">SKY-02</span><strong>断岳·重装型</strong><em>重甲 / 巨剑 / 蜂群导弹</em><small>装甲 220　机动 6.2　近战 86</small></button>
+<button class="frame-card" data-frame="seraph"><span class="frame-code">SKY-03</span><strong>星翼·高机动型</strong><em>高速 / 连射 / 浮游炮</em><small>装甲 128　机动 8.6　射速 0.11s</small></button>
+</div>
+<div class="section-title"><span>02</span>作战协议</div>
+<div class="difficulty-cards" id="difficultyCards"><button class="difficulty selected" data-difficulty="normal"><strong>标准</strong><span>推荐首次出击</span></button><button class="difficulty" data-difficulty="heroic"><strong>英雄</strong><span>敌机 +28% 强度，核心收益 +35%</span></button></div>
+<div class="menu-actions"><button class="primary" id="startBtn">开始新战役</button><button class="secondary" id="settingsBtn">系统设置</button></div>
+<p class="hint">iPhone 请横屏游玩。左摇杆移动，右摇杆瞄准；右侧按钮负责射击、军刀、推进、导弹和必杀。</p>
+</div>
+<aside class="profile-panel">
+<div class="section-title"><span>档案</span>驾驶员记录</div>
+<div class="profile-stats"><div><span>完成战役</span><strong id="metaWins">0</strong></div><div><span>历史出击</span><strong id="metaRuns">0</strong></div><div><span>最高区块</span><strong id="metaBest">0</strong></div><div><span>累计击破</span><strong id="metaKills">0</strong></div></div>
+<div class="release-features"><h3>v3.2 旧版</h3><p>此入口用于 4.0 出现兼容问题时回退。</p><p><a href="../v4/" style="color:inherit">返回 4.0 正式入口</a></p></div>
+</aside>
+</div>
+</div>
+</section>
+<section class="screen overlay-screen" id="upgrade"><div class="overlay-wrap wide"><div class="eyebrow" id="rewardEyebrow">FRAME EVOLUTION</div><h2 id="rewardTitle">选择机体强化</h2><p id="rewardDesc">模块将立即安装，并改变本次战役的构筑。</p><div class="cards" id="cards"></div></div></section>
+<section class="screen overlay-screen" id="route"><div class="overlay-wrap wide"><div class="eyebrow">TACTICAL ROUTE</div><h2>选择下一条航线</h2><p>节点会消耗一个区块。首领区块无法绕过。</p><div class="route-cards" id="routeCards"></div></div></section>
+<section class="screen overlay-screen" id="shop"><div class="overlay-wrap wide"><div class="overlay-heading"><div><div class="eyebrow">MOBILE ARSENAL</div><h2>流动军械库</h2></div><div class="wallet">CORES <strong id="shopCores">0</strong></div></div><div class="shop-items" id="shopItems"></div><div class="overlay-actions"><button class="secondary" id="shopRerollBtn">刷新货架 · 15</button><button class="primary" id="shopExitBtn">离开军械库</button></div></div></section>
+<section class="screen overlay-screen" id="event"><div class="overlay-wrap event-wrap"><div class="eyebrow">UNKNOWN SIGNAL</div><h2 id="eventTitle">未知信号</h2><p id="eventBody"></p><div class="event-choices" id="eventChoices"></div></div></section>
+<section class="screen overlay-screen" id="pause"><div class="overlay-wrap pause-wrap"><div class="eyebrow">SYSTEM SUSPENDED</div><h2>作战暂停</h2><div class="pause-actions"><button class="primary" id="resumeBtn">继续作战</button><button class="secondary" id="pauseSettingsBtn">系统设置</button><button class="secondary" id="fullscreenBtn">切换全屏</button><button class="danger" id="quitBtn">结束本次出击</button></div></div></section>
+<section class="screen overlay-screen" id="settings"><div class="overlay-wrap settings-wrap"><div class="eyebrow">SYSTEM CONFIGURATION</div><h2>系统设置</h2><label><span>主音量</span><input id="volumeRange" max="100" min="0" type="range" value="65"/><b id="volumeValue">65%</b></label><label><span>屏幕震动</span><input id="shakeRange" max="100" min="0" type="range" value="75"/><b id="shakeValue">75%</b></label><label><span>粒子密度</span><select id="particleSelect"><option value="0.55">低</option><option value="0.8">中</option><option selected value="1">高</option></select></label><label><span>渲染比例</span><select id="renderSelect"><option value="0.75">性能</option><option selected value="1">均衡</option><option value="1.25">清晰</option></select></label><label class="toggle-row"><span>自动捕获鼠标</span><input checked id="autoLockToggle" type="checkbox"/></label><div class="overlay-actions"><button class="primary" id="settingsBackBtn">保存并返回</button></div></div></section>
+<section class="screen relock-screen" id="relock"><div class="relock-card"><strong>鼠标已释放</strong><span>点击恢复瞄准，或按 ESC 打开暂停菜单。</span><button id="relockBtn">恢复瞄准</button></div></section>
+<section class="screen overlay-screen" id="gameover"><div class="overlay-wrap result-wrap"><div class="eyebrow" id="endEyebrow">MISSION FAILED</div><h2 id="endTitle">机体失去响应</h2><div class="stats" id="stats"></div><div class="result-actions"><button class="primary" id="restartBtn">使用相同配置再次出击</button><button class="secondary" id="hangarBtn">返回机库</button></div></div></section>
+<div aria-label="触控操作区" class="mobile-controls" id="mobileControls">
+<div class="touch-stick move-stick" id="moveStick"><div class="stick-ring"></div><div class="stick-knob"></div><span>移动</span></div>
+<div class="touch-stick aim-stick" id="aimStick"><div class="stick-ring"></div><div class="stick-knob"></div><span>瞄准</span></div>
+<button class="touch-btn fire-btn" id="touchFire"><b>FIRE</b><span>射击</span></button><button class="touch-btn saber-btn" id="touchSaber"><b>SLASH</b><span>军刀</span></button><button class="touch-btn dash-btn" id="touchDash"><b>BOOST</b><span>推进</span></button><button class="touch-btn missile-btn" id="touchMissile"><b>MISSILE</b><span>导弹</span></button><button class="touch-btn super-btn" id="touchSuper"><b>LIMIT</b><span>必杀</span></button><button aria-label="暂停" class="touch-pause" id="touchPause">Ⅱ</button>
+</div>
+<div class="portrait-blocker" id="portraitBlocker"><strong>请旋转至横屏</strong><span>横屏能够显示完整战场和触控按键</span></div>
+<div class="error hidden" id="error"></div>
+<script src="../loader.js"></script>
+</body>
+</html>
