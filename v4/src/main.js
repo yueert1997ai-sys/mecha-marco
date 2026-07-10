@@ -1,20 +1,40 @@
-import { GameLoop } from './core.js';
+import { GameLoop } from './core/gameLoop.js';
 import { Renderer } from './render/renderer.js';
 import { InputRouter } from './input/inputRouter.js';
 import { AppUI } from './ui/appUI.js';
 import { SynthAudio } from './audio/synthAudio.js';
 import { Game } from './game.js';
-const canvas=document.getElementById('game-canvas');
-const touchRoot=document.getElementById('touch-controls');
-const renderer=new Renderer(canvas);
-const input=new InputRouter(canvas,touchRoot);
-const ui=new AppUI();
-const audio=new SynthAudio();
-const game=new Game({renderer,input,ui,audio});
-const loop=new GameLoop({update:(dt)=>game.update(dt),render:()=>game.render()});
-const smokeMode=new URLSearchParams(location.search).has('smoke');
-if(smokeMode){game.render();document.documentElement.dataset.smokeReady='true';}else loop.start();
-addEventListener('pointerdown',()=>audio.unlock(),{once:true});
-addEventListener('keydown',()=>audio.unlock(),{once:true});
-if(!smokeMode&&'serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
-globalThis.__MECHA_MARCO__={game,snapshot:()=>({state:game.state,depth:game.run?.depth??null,enemies:game.enemies.filter((e)=>!e.dead).length,projectiles:game.projectiles.length,player:game.player?{hp:game.player.hp,maxHp:game.player.maxHp,x:game.player.x,y:game.player.y}:null})};
+
+const canvas = document.getElementById('game-canvas');
+const touchRoot = document.getElementById('touch-controls');
+const renderer = new Renderer(canvas);
+const input = new InputRouter(canvas, touchRoot);
+const ui = new AppUI();
+const audio = new SynthAudio();
+const game = new Game({ renderer, input, ui, audio });
+const loop = new GameLoop({ update:(dt)=>game.update(dt), render:()=>game.render() });
+const smokeMode = new URLSearchParams(location.search).has('smoke');
+if (smokeMode) {
+  game.render();
+  document.documentElement.dataset.smokeReady = 'true';
+} else {
+  loop.start();
+}
+
+addEventListener('pointerdown', () => audio.unlock(), { once:true });
+addEventListener('keydown', () => audio.unlock(), { once:true });
+
+if (!smokeMode && 'serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+globalThis.__MECHA_MARCO__ = {
+  game,
+  snapshot: () => ({
+    state:game.state,
+    depth:game.run?.depth ?? null,
+    enemies:game.enemies.filter((e)=>!e.dead).length,
+    projectiles:game.projectiles.length,
+    player:game.player?{hp:game.player.hp,maxHp:game.player.maxHp,x:game.player.x,y:game.player.y}:null,
+  }),
+};

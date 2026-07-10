@@ -1,29 +1,299 @@
-import { clamp, fromAngle, rgba } from '../core.js';
-import { computeMechRig } from '../systems.js';
-export class Renderer{
-constructor(canvas){this.canvas=canvas;this.ctx=canvas.getContext('2d',{alpha:false,desynchronized:true});this.dpr=1;this.width=1;this.height=1;this.scale=52;this.camera={x:0,y:0,shake:0};this.resize();addEventListener('resize',()=>this.resize());addEventListener('orientationchange',()=>setTimeout(()=>this.resize(),120));}
-resize(){const rect=this.canvas.getBoundingClientRect(),mobile=matchMedia('(pointer:coarse)').matches;this.dpr=Math.min(devicePixelRatio||1,mobile?1.6:2);this.width=Math.max(1,Math.round(rect.width*this.dpr));this.height=Math.max(1,Math.round(rect.height*this.dpr));if(this.canvas.width!==this.width||this.canvas.height!==this.height){this.canvas.width=this.width;this.canvas.height=this.height;}this.scale=Math.min(this.width/20.5,this.height/13.5);}
-worldToScreen(x,y){const shakeX=Math.sin(performance.now()*.09)*this.camera.shake,shakeY=Math.cos(performance.now()*.11)*this.camera.shake;return{x:this.width*.5+(x-this.camera.x)*this.scale+shakeX,y:this.height*.5+(y-this.camera.y)*this.scale*.82+shakeY};}
-screenToWorld(x,y){return{x:(x*this.dpr-this.width*.5)/this.scale+this.camera.x,y:(y*this.dpr-this.height*.5)/(this.scale*.82)+this.camera.y};}
-begin(world){const ctx=this.ctx;ctx.setTransform(1,0,0,1,0,0);const gradient=ctx.createLinearGradient(0,0,0,this.height);gradient.addColorStop(0,'#071226');gradient.addColorStop(.58,'#101c35');gradient.addColorStop(1,'#030712');ctx.fillStyle=gradient;ctx.fillRect(0,0,this.width,this.height);const target=world.player&&!world.player.dead?world.player:{x:0,y:0};this.camera.x+=(target.x*.16-this.camera.x)*.035;this.camera.y+=(target.y*.12-this.camera.y)*.035;this.camera.shake*=.86;this.drawArena(world);}
-drawArena(world){const ctx=this.ctx,bounds=world.bounds,tl=this.worldToScreen(bounds.left,bounds.top),br=this.worldToScreen(bounds.right,bounds.bottom);ctx.save();ctx.shadowBlur=28*this.dpr;ctx.shadowColor='rgba(50,170,255,.25)';const floor=ctx.createLinearGradient(tl.x,tl.y,br.x,br.y);floor.addColorStop(0,'#1b3550');floor.addColorStop(.5,'#203c57');floor.addColorStop(1,'#11253d');ctx.fillStyle=floor;ctx.strokeStyle='#55b9ee';ctx.lineWidth=2*this.dpr;this.roundRect(tl.x,tl.y,br.x-tl.x,br.y-tl.y,18*this.dpr);ctx.fill();ctx.stroke();ctx.restore();ctx.save();ctx.globalAlpha=.28;ctx.strokeStyle='#7fd5ff';ctx.lineWidth=.7*this.dpr;for(let x=Math.ceil(bounds.left);x<=bounds.right;x+=1){const a=this.worldToScreen(x,bounds.top),b=this.worldToScreen(x,bounds.bottom);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}for(let y=Math.ceil(bounds.top);y<=bounds.bottom;y+=1){const a=this.worldToScreen(bounds.left,y),b=this.worldToScreen(bounds.right,y);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}ctx.restore();this.drawLayout(world.room?.layout||'open',bounds);this.drawStars(world.time);}
-drawLayout(layout){const ctx=this.ctx,structures=[];if(layout==='pillars')structures.push([-4,-2,1.1],[4,-2,1.1],[-4,2,1.1],[4,2,1.1]);if(layout==='lane')structures.push([-3.6,-1.4,.75],[-3.6,1.4,.75],[3.6,-1.4,.75],[3.6,1.4,.75]);if(layout==='ring')for(let i=0;i<8;i+=1){const a=i/8*Math.PI*2;structures.push([Math.cos(a)*4.4,Math.sin(a)*3.1,.62]);}if(layout==='islands')structures.push([-4,0,1.3],[0,-2.6,.9],[3.8,.6,1.15]);if(layout==='gate')structures.push([-4.8,-1.5,1],[-4.8,1.5,1],[4.8,-1.5,1],[4.8,1.5,1]);for(const[x,y,r]of structures){const p=this.worldToScreen(x,y);ctx.save();ctx.translate(p.x,p.y);ctx.scale(1,.72);const g=ctx.createRadialGradient(-r*this.scale*.2,-r*this.scale*.35,1,0,0,r*this.scale);g.addColorStop(0,'#6c91ad');g.addColorStop(.45,'#263f58');g.addColorStop(1,'#101b2c');ctx.fillStyle=g;ctx.strokeStyle='#78c7e9';ctx.lineWidth=1.3*this.dpr;ctx.beginPath();ctx.arc(0,0,r*this.scale,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.restore();}}
-drawStars(time){const ctx=this.ctx;ctx.save();ctx.globalAlpha=.38;ctx.fillStyle='#a8e9ff';for(let i=0;i<42;i+=1){const x=(i*97.3+time*6)%this.width,y=(i*53.7)%Math.max(1,this.height*.26),s=((i%3)+1)*.45*this.dpr;ctx.fillRect(x,y,s,s);}ctx.restore();}
-render(world){this.begin(world);this.drawHazards(world);const actors=[...world.decoys,...world.enemies.filter((e)=>!e.dead),...(world.player?[world.player]:[])].sort((a,b)=>a.y-b.y);for(const actor of actors){if(actor.decoy)this.drawDecoy(actor,world.time);else this.drawMech(actor,actor===world.player,world.time);}this.drawSlashes(world);this.drawProjectiles(world);this.drawMissiles(world);this.drawVfx(world);this.drawDamageNumbers(world);this.drawVignette(world);}
-drawMech(actor,isPlayer,time){const ctx=this.ctx,rig=computeMechRig(actor,time),p=(point)=>this.worldToScreen(point.x,point.y),palette=isPlayer?actor.mech.palette:{primary:actor.def?.color||'#ff5d73',secondary:actor.elite?'#751f2d':'#3d2635',accent:actor.boss?'#ffcf6b':'#ff8294',trim:'#ffe3c7',glow:actor.def?.color||'#ff5d73',dark:'#170b15'},scale=(actor.boss?1.52:actor.elite?1.18:1)*(1-(actor.spawn||0)*.35),alpha=clamp(1-(actor.spawn||0)*1.6,0,1);ctx.save();ctx.globalAlpha=alpha;const shadow=p({x:actor.x-.12,y:actor.y+.22});ctx.save();ctx.translate(shadow.x,shadow.y);ctx.scale(1,.45);ctx.fillStyle='rgba(0,0,0,.42)';ctx.beginPath();ctx.ellipse(0,0,38*this.dpr*scale,23*this.dpr*scale,0,0,Math.PI*2);ctx.fill();ctx.restore();if(actor.markTime>0){const c=p(actor);ctx.strokeStyle='#ffd85a';ctx.lineWidth=2*this.dpr;ctx.globalAlpha=.65+.25*Math.sin(time*12);ctx.beginPath();ctx.arc(c.x,c.y,35*this.dpr*scale,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=alpha;}this.drawThrusters(rig,palette,actor,time,scale);this.drawSegment(rig.wingL,rig.backpack,14*scale,palette.secondary,palette.glow,1);this.drawSegment(rig.wingR,rig.backpack,14*scale,palette.secondary,palette.glow,1);this.drawSegment(rig.hipR,rig.kneeR,18*scale,palette.dark,palette.primary,1.15);this.drawSegment(rig.kneeR,rig.footR,20*scale,palette.primary,palette.secondary,1.25);this.drawSegment(rig.hipL,rig.kneeL,18*scale,palette.dark,palette.primary,1.15);this.drawSegment(rig.kneeL,rig.footL,20*scale,palette.primary,palette.secondary,1.25);this.drawTorso(rig,palette,scale,actor);this.drawShoulder(rig.shoulderR,rig.torsoYaw,palette,scale,1);this.drawShoulder(rig.shoulderL,rig.torsoYaw,palette,scale,-1);this.drawSegment(rig.shoulderR,rig.forearmR,15*scale,palette.dark,palette.primary,1.05);this.drawSegment(rig.shoulderL,rig.forearmL,15*scale,palette.dark,palette.primary,1.05);this.drawRifle(rig,palette,scale,actor);this.drawSaber(rig,palette,scale,actor);this.drawHead(rig,palette,scale,actor);if(!isPlayer){const c=p({x:actor.x,y:actor.y-.9*scale}),w=44*this.dpr*scale,ratio=clamp(actor.hp/actor.maxHp,0,1);ctx.fillStyle='rgba(5,8,18,.72)';ctx.fillRect(c.x-w/2,c.y,w,4*this.dpr);ctx.fillStyle=actor.boss?'#ff3e8b':actor.elite?'#ff9f48':'#ff6175';ctx.fillRect(c.x-w/2,c.y,w*ratio,4*this.dpr);}ctx.restore();}
-drawTorso(rig,palette,scale,actor){const ctx=this.ctx,p=this.worldToScreen(rig.body.x,rig.body.y);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(rig.torsoYaw);ctx.scale(this.dpr*scale,this.dpr*scale*.86);ctx.shadowBlur=actor.overdriveTimer>0?18:7;ctx.shadowColor=palette.glow;const g=ctx.createLinearGradient(-22,-20,24,24);g.addColorStop(0,palette.primary);g.addColorStop(.52,palette.secondary);g.addColorStop(1,palette.dark);ctx.fillStyle=g;ctx.strokeStyle=palette.trim;ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(26,0);ctx.lineTo(13,-25);ctx.lineTo(-12,-28);ctx.lineTo(-26,-11);ctx.lineTo(-23,12);ctx.lineTo(-8,27);ctx.lineTo(15,22);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle=palette.accent;ctx.beginPath();ctx.moveTo(19,0);ctx.lineTo(2,-12);ctx.lineTo(-11,0);ctx.lineTo(2,12);ctx.closePath();ctx.fill();ctx.fillStyle=palette.glow;ctx.shadowBlur=14;ctx.beginPath();ctx.arc(3,0,4.5,0,Math.PI*2);ctx.fill();ctx.restore();}
-drawHead(rig,palette,scale){const ctx=this.ctx,p=this.worldToScreen(rig.head.x,rig.head.y);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(rig.torsoYaw);ctx.scale(this.dpr*scale,this.dpr*scale*.88);ctx.fillStyle=palette.primary;ctx.strokeStyle=palette.dark;ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(15,0);ctx.lineTo(7,-12);ctx.lineTo(-9,-10);ctx.lineTo(-14,0);ctx.lineTo(-7,12);ctx.lineTo(7,11);ctx.closePath();ctx.fill();ctx.stroke();ctx.strokeStyle=palette.trim;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(4,-8);ctx.lineTo(22,-20);ctx.moveTo(4,8);ctx.lineTo(22,20);ctx.stroke();ctx.strokeStyle=palette.glow;ctx.shadowBlur=10;ctx.shadowColor=palette.glow;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(9,-5);ctx.lineTo(12,0);ctx.lineTo(9,5);ctx.stroke();ctx.restore();}
-drawShoulder(point,yaw,palette,scale,side){const ctx=this.ctx,p=this.worldToScreen(point.x,point.y);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(yaw);ctx.scale(this.dpr*scale,this.dpr*scale*.85);ctx.fillStyle=palette.secondary;ctx.strokeStyle=palette.trim;ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(16,0);ctx.lineTo(4,-17*side);ctx.lineTo(-16,-14*side);ctx.lineTo(-20,5*side);ctx.lineTo(4,15*side);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle=palette.accent;ctx.fillRect(-5,-3*side,16,6*side||6);ctx.restore();}
-drawSegment(a,b,width,inner,outer,scale=1){const ctx=this.ctx,pa=this.worldToScreen(a.x,a.y),pb=this.worldToScreen(b.x,b.y);ctx.save();ctx.lineCap='round';ctx.strokeStyle=outer;ctx.lineWidth=width*this.dpr*scale;ctx.beginPath();ctx.moveTo(pa.x,pa.y);ctx.lineTo(pb.x,pb.y);ctx.stroke();ctx.strokeStyle=inner;ctx.lineWidth=width*this.dpr*scale*.58;ctx.stroke();ctx.restore();}
-drawRifle(rig,palette,scale,actor){const ctx=this.ctx,a=this.worldToScreen(rig.rifleBase.x,rig.rifleBase.y),b=this.worldToScreen(rig.muzzle.x,rig.muzzle.y);ctx.save();ctx.lineCap='square';ctx.strokeStyle=palette.dark;ctx.lineWidth=15*this.dpr*scale;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.strokeStyle=palette.secondary;ctx.lineWidth=9*this.dpr*scale;ctx.stroke();ctx.strokeStyle=palette.trim;ctx.lineWidth=2.2*this.dpr*scale;ctx.stroke();ctx.fillStyle=palette.glow;ctx.shadowBlur=actor.primaryKick*20;ctx.shadowColor=palette.glow;ctx.beginPath();ctx.arc(b.x,b.y,3.2*this.dpr*scale,0,Math.PI*2);ctx.fill();ctx.restore();}
-drawSaber(rig,palette,scale,actor){const ctx=this.ctx,a=this.worldToScreen(rig.saberBase.x,rig.saberBase.y),b=this.worldToScreen(rig.saberTip.x,rig.saberTip.y);ctx.save();ctx.lineCap='round';ctx.strokeStyle=palette.dark;ctx.lineWidth=10*this.dpr*scale;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(a.x+(b.x-a.x)*.2,a.y+(b.y-a.y)*.2);ctx.stroke();if(actor.saberPhase>0){ctx.globalCompositeOperation='lighter';ctx.shadowBlur=22;ctx.shadowColor=palette.glow;ctx.strokeStyle=rgba(palette.glow,.4);ctx.lineWidth=18*this.dpr*scale;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.strokeStyle=palette.glow;ctx.lineWidth=7*this.dpr*scale;ctx.stroke();ctx.strokeStyle='#ffffff';ctx.lineWidth=2.4*this.dpr*scale;ctx.stroke();}ctx.restore();}
-drawThrusters(rig,palette,actor,time,scale){if((actor.speed01||0)<.08&&actor.dashTimer<=0&&actor.overdriveTimer<=0)return;const ctx=this.ctx,power=actor.dashTimer>0?1.8:actor.overdriveTimer>0?1.25:.55+actor.speed01*.45;for(const node of[rig.thrusterL,rig.thrusterR]){const a=this.worldToScreen(node.x,node.y),tail={x:node.x-Math.cos(rig.torsoYaw)*(.55*power),y:node.y-Math.sin(rig.torsoYaw)*(.55*power)},b=this.worldToScreen(tail.x,tail.y);ctx.save();ctx.globalCompositeOperation='lighter';ctx.lineCap='round';ctx.shadowBlur=18;ctx.shadowColor=palette.glow;ctx.strokeStyle=rgba(palette.glow,.55);ctx.lineWidth=14*this.dpr*scale;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.strokeStyle='#fff';ctx.lineWidth=3*this.dpr*scale;ctx.stroke();ctx.restore();}}
-drawProjectiles(world){const ctx=this.ctx;for(const s of world.projectiles){const p=this.worldToScreen(s.x,s.y),tail=this.worldToScreen(s.x-Math.cos(s.angle)*.55,s.y-Math.sin(s.angle)*.55);ctx.save();ctx.globalCompositeOperation='lighter';ctx.lineCap='round';ctx.shadowBlur=15*this.dpr;ctx.shadowColor=s.color;ctx.strokeStyle=rgba(s.color,.38);ctx.lineWidth=(s.type==='sniper'?18:12)*this.dpr;ctx.beginPath();ctx.moveTo(tail.x,tail.y);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.strokeStyle=s.color;ctx.lineWidth=(s.type==='sniper'?7:5)*this.dpr;ctx.stroke();ctx.strokeStyle='#fff';ctx.lineWidth=1.8*this.dpr;ctx.stroke();ctx.restore();}}
-drawMissiles(world){const ctx=this.ctx;for(const m of world.missiles){const p=this.worldToScreen(m.x,m.y),tail=this.worldToScreen(m.x-Math.cos(m.angle)*.38,m.y-Math.sin(m.angle)*.38);ctx.save();ctx.globalCompositeOperation='lighter';ctx.strokeStyle='#ff914b';ctx.shadowBlur=12;ctx.shadowColor='#ff7a35';ctx.lineWidth=8*this.dpr;ctx.beginPath();ctx.moveTo(tail.x,tail.y);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(p.x,p.y,3.5*this.dpr,0,Math.PI*2);ctx.fill();ctx.restore();}}
-drawSlashes(world){const ctx=this.ctx;for(const slash of world.slashes){const life=clamp(slash.life/slash.maxLife,0,1),p=this.worldToScreen(slash.x,slash.y),r=slash.range*this.scale;ctx.save();ctx.translate(p.x,p.y);ctx.scale(1,.82);ctx.globalCompositeOperation='lighter';ctx.shadowBlur=24;ctx.shadowColor=slash.color;ctx.strokeStyle=rgba(slash.color,.28*life);ctx.lineWidth=28*this.dpr*life;ctx.beginPath();ctx.arc(0,0,r,slash.angle-1.15,slash.angle+1.15);ctx.stroke();ctx.strokeStyle=slash.color;ctx.lineWidth=8*this.dpr*life;ctx.stroke();ctx.strokeStyle='#fff';ctx.lineWidth=2.2*this.dpr*life;ctx.stroke();ctx.restore();}}
-drawHazards(world){const ctx=this.ctx;for(const h of world.hazards){const p=this.worldToScreen(h.x,h.y),progress=1-clamp(h.delay/h.maxDelay,0,1),r=h.radius*this.scale;ctx.save();ctx.translate(p.x,p.y);ctx.scale(1,.82);ctx.fillStyle=`rgba(255,54,92,${.08+.12*progress})`;ctx.strokeStyle=`rgba(255,110,128,${.45+.45*progress})`;ctx.lineWidth=(2+progress*4)*this.dpr;ctx.setLineDash([10*this.dpr,7*this.dpr]);ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.restore();}}
-drawVfx(world){const ctx=this.ctx;for(const v of world.vfx){const t=1-v.life/v.maxLife,p=this.worldToScreen(v.x,v.y),s=(v.scale||1)*this.scale;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(v.angle||0);ctx.globalCompositeOperation='lighter';ctx.globalAlpha=clamp(1-t,0,1)*(v.alpha??1);ctx.shadowBlur=18;ctx.shadowColor=v.color||'#fff';if(v.type==='muzzle'){ctx.fillStyle='#fff';ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-s*.45,-s*.18);ctx.lineTo(-s*.28,0);ctx.lineTo(-s*.45,s*.18);ctx.closePath();ctx.fill();ctx.strokeStyle=v.color;ctx.lineWidth=6*this.dpr;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-s*.5,0);ctx.stroke();}else if(v.type==='afterimage'){ctx.strokeStyle=v.color;ctx.lineWidth=12*this.dpr*(1-t);ctx.beginPath();ctx.arc(0,0,s*.45,0,Math.PI*2);ctx.stroke();}else if(['enemyHit','playerHit'].includes(v.type)){ctx.strokeStyle='#fff';ctx.lineWidth=5*this.dpr*(1-t);for(let i=0;i<6;i+=1){const a=i/6*Math.PI*2;ctx.beginPath();ctx.moveTo(Math.cos(a)*s*.08,Math.sin(a)*s*.08);ctx.lineTo(Math.cos(a)*s*(.25+t*.55),Math.sin(a)*s*(.25+t*.55));ctx.stroke();}ctx.strokeStyle=v.color;ctx.lineWidth=10*this.dpr*(1-t);ctx.beginPath();ctx.arc(0,0,s*(.08+t*.38),0,Math.PI*2);ctx.stroke();}else if(['explosion','bossPhase','overdrive'].includes(v.type)){const g=ctx.createRadialGradient(0,0,0,0,0,s*(.35+t*.75));g.addColorStop(0,'rgba(255,255,255,.95)');g.addColorStop(.25,rgba(v.color||'#ff6b45',.82));g.addColorStop(1,rgba(v.color||'#ff6b45',0));ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,s*(.35+t*.75),0,Math.PI*2);ctx.fill();ctx.strokeStyle=rgba(v.color||'#fff',.7*(1-t));ctx.lineWidth=6*this.dpr*(1-t);ctx.beginPath();ctx.arc(0,0,s*(.2+t*1.1),0,Math.PI*2);ctx.stroke();}else if(v.type==='dashStart'){ctx.strokeStyle=v.color;ctx.lineWidth=7*this.dpr*(1-t);ctx.beginPath();ctx.arc(0,0,s*(.2+t*.6),0,Math.PI*2);ctx.stroke();}ctx.restore();}}
-drawDamageNumbers(world){const ctx=this.ctx;ctx.save();ctx.textAlign='center';ctx.font=`700 ${15*this.dpr}px system-ui`;for(const n of world.damageNumbers){const p=this.worldToScreen(n.x,n.y);ctx.globalAlpha=clamp(n.life/n.maxLife,0,1);ctx.fillStyle=n.kill?'#fff3a6':'#ffffff';ctx.shadowBlur=8;ctx.shadowColor=n.kill?'#ff6f4a':'#4ae6ff';ctx.fillText(`${Math.round(n.value)}`,p.x,p.y);}ctx.restore();}
-drawDecoy(actor,time){const ctx=this.ctx,p=this.worldToScreen(actor.x,actor.y);ctx.save();ctx.translate(p.x,p.y);ctx.globalAlpha=clamp(actor.life/actor.maxLife,0,1)*.35;ctx.strokeStyle='#8ff8ff';ctx.lineWidth=3*this.dpr;ctx.beginPath();ctx.arc(0,0,28*this.dpr*(1+Math.sin(time*10)*.08),0,Math.PI*2);ctx.stroke();ctx.restore();}
-drawVignette(world){const ctx=this.ctx,g=ctx.createRadialGradient(this.width*.5,this.height*.5,this.height*.18,this.width*.5,this.height*.5,this.width*.72);g.addColorStop(.55,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.58)');ctx.fillStyle=g;ctx.fillRect(0,0,this.width,this.height);if(world.player&&world.player.hp/world.player.maxHp<.25){ctx.fillStyle=`rgba(160,0,30,${.08+.05*Math.sin(world.time*8)})`;ctx.fillRect(0,0,this.width,this.height);}}
-roundRect(x,y,w,h,r){const c=this.ctx;c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}}
+import { clamp, fromAngle, rgba } from '../core/math.js';
+import { computeMechRig } from '../combat/hardpointRig.js';
+
+export class Renderer {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d', { alpha:false, desynchronized:true });
+    this.dpr = 1;
+    this.width = 1;
+    this.height = 1;
+    this.scale = 52;
+    this.camera = { x:0, y:0, shake:0 };
+    this.resize();
+    addEventListener('resize', () => this.resize());
+    addEventListener('orientationchange', () => setTimeout(() => this.resize(), 120));
+  }
+
+  resize() {
+    const rect = this.canvas.getBoundingClientRect();
+    const mobile = matchMedia('(pointer:coarse)').matches;
+    this.dpr = Math.min(devicePixelRatio || 1, mobile ? 1.6 : 2);
+    this.width = Math.max(1, Math.round(rect.width * this.dpr));
+    this.height = Math.max(1, Math.round(rect.height * this.dpr));
+    if (this.canvas.width !== this.width || this.canvas.height !== this.height) {
+      this.canvas.width = this.width;
+      this.canvas.height = this.height;
+    }
+    this.scale = Math.min(this.width / 20.5, this.height / 13.5);
+  }
+
+  worldToScreen(x, y) {
+    const shakeX = Math.sin(performance.now() * .09) * this.camera.shake;
+    const shakeY = Math.cos(performance.now() * .11) * this.camera.shake;
+    return {
+      x:this.width*.5+(x-this.camera.x)*this.scale+shakeX,
+      y:this.height*.5+(y-this.camera.y)*this.scale*.82+shakeY,
+    };
+  }
+
+  screenToWorld(x, y) {
+    return {
+      x:(x*this.dpr-this.width*.5)/this.scale+this.camera.x,
+      y:(y*this.dpr-this.height*.5)/(this.scale*.82)+this.camera.y,
+    };
+  }
+
+  begin(world) {
+    const ctx = this.ctx;
+    ctx.setTransform(1,0,0,1,0,0);
+    const gradient = ctx.createLinearGradient(0,0,0,this.height);
+    gradient.addColorStop(0,'#071226');
+    gradient.addColorStop(.58,'#101c35');
+    gradient.addColorStop(1,'#030712');
+    ctx.fillStyle=gradient;
+    ctx.fillRect(0,0,this.width,this.height);
+    const target = world.player && !world.player.dead ? world.player : {x:0,y:0};
+    this.camera.x += (target.x*.16-this.camera.x)*.035;
+    this.camera.y += (target.y*.12-this.camera.y)*.035;
+    this.camera.shake *= .86;
+    this.drawArena(world);
+  }
+
+  drawArena(world) {
+    const ctx=this.ctx;
+    const bounds=world.bounds;
+    const tl=this.worldToScreen(bounds.left,bounds.top);
+    const br=this.worldToScreen(bounds.right,bounds.bottom);
+    ctx.save();
+    ctx.shadowBlur=28*this.dpr;
+    ctx.shadowColor='rgba(50,170,255,.25)';
+    const floor=ctx.createLinearGradient(tl.x,tl.y,br.x,br.y);
+    floor.addColorStop(0,'#1b3550');floor.addColorStop(.5,'#203c57');floor.addColorStop(1,'#11253d');
+    ctx.fillStyle=floor;
+    ctx.strokeStyle='#55b9ee';ctx.lineWidth=2*this.dpr;
+    this.roundRect(tl.x,tl.y,br.x-tl.x,br.y-tl.y,18*this.dpr);
+    ctx.fill();ctx.stroke();ctx.restore();
+
+    ctx.save();
+    ctx.globalAlpha=.28;
+    ctx.strokeStyle='#7fd5ff';ctx.lineWidth=.7*this.dpr;
+    for(let x=Math.ceil(bounds.left);x<=bounds.right;x+=1){
+      const a=this.worldToScreen(x,bounds.top),b=this.worldToScreen(x,bounds.bottom);
+      ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+    }
+    for(let y=Math.ceil(bounds.top);y<=bounds.bottom;y+=1){
+      const a=this.worldToScreen(bounds.left,y),b=this.worldToScreen(bounds.right,y);
+      ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+    }
+    ctx.restore();
+
+    this.drawLayout(world.room?.layout || 'open', bounds);
+    this.drawStars(world.time);
+  }
+
+  drawLayout(layout,bounds){
+    const ctx=this.ctx;
+    const structures=[];
+    if(layout==='pillars') structures.push([-4,-2,1.1],[4,-2,1.1],[-4,2,1.1],[4,2,1.1]);
+    if(layout==='lane') structures.push([-3.6,-1.4,.75],[-3.6,1.4,.75],[3.6,-1.4,.75],[3.6,1.4,.75]);
+    if(layout==='ring') for(let i=0;i<8;i+=1){const a=i/8*Math.PI*2;structures.push([Math.cos(a)*4.4,Math.sin(a)*3.1,.62]);}
+    if(layout==='islands') structures.push([-4,0,1.3],[0,-2.6,.9],[3.8,.6,1.15]);
+    if(layout==='gate') structures.push([-4.8,-1.5,1],[ -4.8,1.5,1],[4.8,-1.5,1],[4.8,1.5,1]);
+    for(const [x,y,r] of structures){
+      const p=this.worldToScreen(x,y);
+      ctx.save();ctx.translate(p.x,p.y);ctx.scale(1,.72);
+      const g=ctx.createRadialGradient(-r*this.scale*.2,-r*this.scale*.35,1,0,0,r*this.scale);
+      g.addColorStop(0,'#6c91ad');g.addColorStop(.45,'#263f58');g.addColorStop(1,'#101b2c');
+      ctx.fillStyle=g;ctx.strokeStyle='#78c7e9';ctx.lineWidth=1.3*this.dpr;
+      ctx.beginPath();ctx.arc(0,0,r*this.scale,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.restore();
+    }
+  }
+
+  drawStars(time){
+    const ctx=this.ctx;
+    ctx.save();ctx.globalAlpha=.38;ctx.fillStyle='#a8e9ff';
+    for(let i=0;i<42;i+=1){
+      const x=((i*97.3+time*6)%this.width);const y=(i*53.7)%Math.max(1,this.height*.26);
+      const s=((i%3)+1)*.45*this.dpr;ctx.fillRect(x,y,s,s);
+    }
+    ctx.restore();
+  }
+
+  render(world) {
+    this.begin(world);
+    this.drawHazards(world);
+    const actors=[...world.decoys,...world.enemies.filter(e=>!e.dead),...(world.player?[world.player]:[])].sort((a,b)=>a.y-b.y);
+    for(const actor of actors){
+      if(actor.decoy) this.drawDecoy(actor,world.time);
+      else this.drawMech(actor,actor===world.player,world.time);
+    }
+    this.drawSlashes(world);
+    this.drawProjectiles(world);
+    this.drawMissiles(world);
+    this.drawVfx(world);
+    this.drawDamageNumbers(world);
+    this.drawVignette(world);
+  }
+
+  drawMech(actor,isPlayer,time){
+    const ctx=this.ctx;
+    const rig=computeMechRig(actor,time);
+    const p=(point)=>this.worldToScreen(point.x,point.y);
+    const palette=isPlayer?actor.mech.palette:{
+      primary: actor.def?.color || '#ff5d73',
+      secondary: actor.elite?'#751f2d':'#3d2635',
+      accent:actor.boss?'#ffcf6b':'#ff8294',
+      trim:'#ffe3c7', glow:actor.def?.color||'#ff5d73', dark:'#170b15'
+    };
+    const scale=(actor.boss?1.52:actor.elite?1.18:1)*(1-(actor.spawn||0)*.35);
+    const alpha=clamp(1-(actor.spawn||0)*1.6,0,1);
+    ctx.save();ctx.globalAlpha=alpha;
+    const shadow=p({x:actor.x-.12,y:actor.y+.22});
+    ctx.save();ctx.translate(shadow.x,shadow.y);ctx.scale(1,.45);ctx.fillStyle='rgba(0,0,0,.42)';ctx.beginPath();ctx.ellipse(0,0,38*this.dpr*scale,23*this.dpr*scale,0,0,Math.PI*2);ctx.fill();ctx.restore();
+
+    if(actor.markTime>0){const c=p(actor);ctx.strokeStyle='#ffd85a';ctx.lineWidth=2*this.dpr;ctx.globalAlpha=.65+.25*Math.sin(time*12);ctx.beginPath();ctx.arc(c.x,c.y,35*this.dpr*scale,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=alpha;}
+    this.drawThrusters(rig,palette,actor,time,scale);
+    this.drawSegment(rig.wingL,rig.backpack,14*scale,palette.secondary,palette.glow,1);
+    this.drawSegment(rig.wingR,rig.backpack,14*scale,palette.secondary,palette.glow,1);
+    this.drawSegment(rig.hipR,rig.kneeR,18*scale,palette.dark,palette.primary,1.15);
+    this.drawSegment(rig.kneeR,rig.footR,20*scale,palette.primary,palette.secondary,1.25);
+    this.drawSegment(rig.hipL,rig.kneeL,18*scale,palette.dark,palette.primary,1.15);
+    this.drawSegment(rig.kneeL,rig.footL,20*scale,palette.primary,palette.secondary,1.25);
+
+    this.drawTorso(rig,palette,scale,actor);
+    this.drawShoulder(rig.shoulderR,rig.torsoYaw,palette,scale,1);
+    this.drawShoulder(rig.shoulderL,rig.torsoYaw,palette,scale,-1);
+    this.drawSegment(rig.shoulderR,rig.forearmR,15*scale,palette.dark,palette.primary,1.05);
+    this.drawSegment(rig.shoulderL,rig.forearmL,15*scale,palette.dark,palette.primary,1.05);
+    this.drawRifle(rig,palette,scale,actor);
+    this.drawSaber(rig,palette,scale,actor);
+    this.drawHead(rig,palette,scale,actor);
+
+    if(!isPlayer){
+      const c=p({x:actor.x,y:actor.y-.9*scale});
+      const w=44*this.dpr*scale;const ratio=clamp(actor.hp/actor.maxHp,0,1);
+      ctx.fillStyle='rgba(5,8,18,.72)';ctx.fillRect(c.x-w/2,c.y, w,4*this.dpr);
+      ctx.fillStyle=actor.boss?'#ff3e8b':actor.elite?'#ff9f48':'#ff6175';ctx.fillRect(c.x-w/2,c.y,w*ratio,4*this.dpr);
+    }
+    ctx.restore();
+  }
+
+  drawTorso(rig,palette,scale,actor){
+    const ctx=this.ctx,p=this.worldToScreen(rig.body.x,rig.body.y);
+    ctx.save();ctx.translate(p.x,p.y);ctx.rotate(rig.torsoYaw);ctx.scale(this.dpr*scale,this.dpr*scale*.86);
+    ctx.shadowBlur=actor.overdriveTimer>0?18:7;ctx.shadowColor=palette.glow;
+    const g=ctx.createLinearGradient(-22,-20,24,24);g.addColorStop(0,palette.primary);g.addColorStop(.52,palette.secondary);g.addColorStop(1,palette.dark);
+    ctx.fillStyle=g;ctx.strokeStyle=palette.trim;ctx.lineWidth=1.4;
+    ctx.beginPath();ctx.moveTo(26,0);ctx.lineTo(13,-25);ctx.lineTo(-12,-28);ctx.lineTo(-26,-11);ctx.lineTo(-23,12);ctx.lineTo(-8,27);ctx.lineTo(15,22);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.fillStyle=palette.accent;ctx.beginPath();ctx.moveTo(19,0);ctx.lineTo(2,-12);ctx.lineTo(-11,0);ctx.lineTo(2,12);ctx.closePath();ctx.fill();
+    ctx.fillStyle=palette.glow;ctx.shadowBlur=14;ctx.beginPath();ctx.arc(3,0,4.5,0,Math.PI*2);ctx.fill();ctx.restore();
+  }
+
+  drawHead(rig,palette,scale,actor){
+    const ctx=this.ctx,p=this.worldToScreen(rig.head.x,rig.head.y);
+    ctx.save();ctx.translate(p.x,p.y);ctx.rotate(rig.torsoYaw);ctx.scale(this.dpr*scale,this.dpr*scale*.88);
+    ctx.fillStyle=palette.primary;ctx.strokeStyle=palette.dark;ctx.lineWidth=1.4;
+    ctx.beginPath();ctx.moveTo(15,0);ctx.lineTo(7,-12);ctx.lineTo(-9,-10);ctx.lineTo(-14,0);ctx.lineTo(-7,12);ctx.lineTo(7,11);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.strokeStyle=palette.trim;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(4,-8);ctx.lineTo(22,-20);ctx.moveTo(4,8);ctx.lineTo(22,20);ctx.stroke();
+    ctx.strokeStyle=palette.glow;ctx.shadowBlur=10;ctx.shadowColor=palette.glow;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(9,-5);ctx.lineTo(12,0);ctx.lineTo(9,5);ctx.stroke();
+    ctx.restore();
+  }
+
+  drawShoulder(point,yaw,palette,scale,side){
+    const ctx=this.ctx,p=this.worldToScreen(point.x,point.y);
+    ctx.save();ctx.translate(p.x,p.y);ctx.rotate(yaw);ctx.scale(this.dpr*scale,this.dpr*scale*.85);
+    ctx.fillStyle=palette.secondary;ctx.strokeStyle=palette.trim;ctx.lineWidth=1.2;
+    ctx.beginPath();ctx.moveTo(16,0);ctx.lineTo(4,-17*side);ctx.lineTo(-16,-14*side);ctx.lineTo(-20,5*side);ctx.lineTo(4,15*side);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.fillStyle=palette.accent;ctx.fillRect(-5,-3*side,16,6*side||6);ctx.restore();
+  }
+
+  drawSegment(a,b,width,inner,outer,scale=1){
+    const ctx=this.ctx,pa=this.worldToScreen(a.x,a.y),pb=this.worldToScreen(b.x,b.y);
+    ctx.save();ctx.lineCap='round';ctx.strokeStyle=outer;ctx.lineWidth=width*this.dpr*scale;ctx.beginPath();ctx.moveTo(pa.x,pa.y);ctx.lineTo(pb.x,pb.y);ctx.stroke();ctx.strokeStyle=inner;ctx.lineWidth=width*this.dpr*scale*.58;ctx.stroke();ctx.restore();
+  }
+
+  drawRifle(rig,palette,scale,actor){
+    const ctx=this.ctx,a=this.worldToScreen(rig.rifleBase.x,rig.rifleBase.y),b=this.worldToScreen(rig.muzzle.x,rig.muzzle.y);
+    ctx.save();ctx.lineCap='square';ctx.strokeStyle=palette.dark;ctx.lineWidth=15*this.dpr*scale;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.strokeStyle=palette.secondary;ctx.lineWidth=9*this.dpr*scale;ctx.stroke();ctx.strokeStyle=palette.trim;ctx.lineWidth=2.2*this.dpr*scale;ctx.stroke();ctx.fillStyle=palette.glow;ctx.shadowBlur=actor.primaryKick*20;ctx.shadowColor=palette.glow;ctx.beginPath();ctx.arc(b.x,b.y,3.2*this.dpr*scale,0,Math.PI*2);ctx.fill();ctx.restore();
+  }
+
+  drawSaber(rig,palette,scale,actor){
+    const ctx=this.ctx,a=this.worldToScreen(rig.saberBase.x,rig.saberBase.y),b=this.worldToScreen(rig.saberTip.x,rig.saberTip.y);
+    ctx.save();ctx.lineCap='round';ctx.strokeStyle=palette.dark;ctx.lineWidth=10*this.dpr*scale;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(a.x+(b.x-a.x)*.2,a.y+(b.y-a.y)*.2);ctx.stroke();
+    if(actor.saberPhase>0){ctx.globalCompositeOperation='lighter';ctx.shadowBlur=22;ctx.shadowColor=palette.glow;ctx.strokeStyle=rgba(palette.glow,.4);ctx.lineWidth=18*this.dpr*scale;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.strokeStyle=palette.glow;ctx.lineWidth=7*this.dpr*scale;ctx.stroke();ctx.strokeStyle='#ffffff';ctx.lineWidth=2.4*this.dpr*scale;ctx.stroke();}
+    ctx.restore();
+  }
+
+  drawThrusters(rig,palette,actor,time,scale){
+    if((actor.speed01||0)<.08&&actor.dashTimer<=0&&actor.overdriveTimer<=0)return;
+    const ctx=this.ctx;const power=actor.dashTimer>0?1.8:actor.overdriveTimer>0?1.25:.55+actor.speed01*.45;
+    for(const node of [rig.thrusterL,rig.thrusterR]){
+      const a=this.worldToScreen(node.x,node.y),tail={x:node.x-Math.cos(rig.torsoYaw)*(.55*power),y:node.y-Math.sin(rig.torsoYaw)*(.55*power)},b=this.worldToScreen(tail.x,tail.y);
+      ctx.save();ctx.globalCompositeOperation='lighter';ctx.lineCap='round';ctx.shadowBlur=18;ctx.shadowColor=palette.glow;ctx.strokeStyle=rgba(palette.glow,.55);ctx.lineWidth=14*this.dpr*scale;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.strokeStyle='#fff';ctx.lineWidth=3*this.dpr*scale;ctx.stroke();ctx.restore();
+    }
+  }
+
+  drawProjectiles(world){
+    const ctx=this.ctx;
+    for(const s of world.projectiles){
+      const p=this.worldToScreen(s.x,s.y),tail=this.worldToScreen(s.x-Math.cos(s.angle)*.55,s.y-Math.sin(s.angle)*.55);
+      ctx.save();ctx.globalCompositeOperation='lighter';ctx.lineCap='round';ctx.shadowBlur=15*this.dpr;ctx.shadowColor=s.color;ctx.strokeStyle=rgba(s.color,.38);ctx.lineWidth=(s.type==='sniper'?18:12)*this.dpr;ctx.beginPath();ctx.moveTo(tail.x,tail.y);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.strokeStyle=s.color;ctx.lineWidth=(s.type==='sniper'?7:5)*this.dpr;ctx.stroke();ctx.strokeStyle='#fff';ctx.lineWidth=1.8*this.dpr;ctx.stroke();ctx.restore();
+    }
+  }
+
+  drawMissiles(world){
+    const ctx=this.ctx;
+    for(const m of world.missiles){
+      const p=this.worldToScreen(m.x,m.y),tail=this.worldToScreen(m.x-Math.cos(m.angle)*.38,m.y-Math.sin(m.angle)*.38);
+      ctx.save();ctx.globalCompositeOperation='lighter';ctx.strokeStyle='#ff914b';ctx.shadowBlur=12;ctx.shadowColor='#ff7a35';ctx.lineWidth=8*this.dpr;ctx.beginPath();ctx.moveTo(tail.x,tail.y);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(p.x,p.y,3.5*this.dpr,0,Math.PI*2);ctx.fill();ctx.restore();
+    }
+  }
+
+  drawSlashes(world){
+    const ctx=this.ctx;
+    for(const slash of world.slashes){
+      const life=clamp(slash.life/slash.maxLife,0,1);const p=this.worldToScreen(slash.x,slash.y);const r=slash.range*this.scale;
+      ctx.save();ctx.translate(p.x,p.y);ctx.scale(1,.82);ctx.globalCompositeOperation='lighter';ctx.shadowBlur=24;ctx.shadowColor=slash.color;ctx.strokeStyle=rgba(slash.color,.28*life);ctx.lineWidth=28*this.dpr*life;ctx.beginPath();ctx.arc(0,0,r,slash.angle-1.15,slash.angle+1.15);ctx.stroke();ctx.strokeStyle=slash.color;ctx.lineWidth=8*this.dpr*life;ctx.stroke();ctx.strokeStyle='#fff';ctx.lineWidth=2.2*this.dpr*life;ctx.stroke();ctx.restore();
+    }
+  }
+
+  drawHazards(world){
+    const ctx=this.ctx;
+    for(const h of world.hazards){
+      const p=this.worldToScreen(h.x,h.y),progress=1-clamp(h.delay/h.maxDelay,0,1),r=h.radius*this.scale;
+      ctx.save();ctx.translate(p.x,p.y);ctx.scale(1,.82);ctx.fillStyle=`rgba(255,54,92,${.08+.12*progress})`;ctx.strokeStyle=`rgba(255,110,128,${.45+.45*progress})`;ctx.lineWidth=(2+progress*4)*this.dpr;ctx.setLineDash([10*this.dpr,7*this.dpr]);ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.restore();
+    }
+  }
+
+  drawVfx(world){
+    const ctx=this.ctx;
+    for(const v of world.vfx){
+      const t=1-v.life/v.maxLife,p=this.worldToScreen(v.x,v.y),s=(v.scale||1)*this.scale;
+      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(v.angle||0);ctx.globalCompositeOperation='lighter';ctx.globalAlpha=clamp(1-t,0,1)*(v.alpha??1);ctx.shadowBlur=18;ctx.shadowColor=v.color||'#fff';
+      if(v.type==='muzzle'){ctx.fillStyle='#fff';ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-s*.45,-s*.18);ctx.lineTo(-s*.28,0);ctx.lineTo(-s*.45,s*.18);ctx.closePath();ctx.fill();ctx.strokeStyle=v.color;ctx.lineWidth=6*this.dpr;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-s*.5,0);ctx.stroke();}
+      else if(v.type==='afterimage'){ctx.strokeStyle=v.color;ctx.lineWidth=12*this.dpr*(1-t);ctx.beginPath();ctx.arc(0,0,s*.45,0,Math.PI*2);ctx.stroke();}
+      else if(['enemyHit','playerHit'].includes(v.type)){ctx.strokeStyle='#fff';ctx.lineWidth=5*this.dpr*(1-t);for(let i=0;i<6;i+=1){const a=i/6*Math.PI*2;ctx.beginPath();ctx.moveTo(Math.cos(a)*s*.08,Math.sin(a)*s*.08);ctx.lineTo(Math.cos(a)*s*(.25+t*.55),Math.sin(a)*s*(.25+t*.55));ctx.stroke();}ctx.strokeStyle=v.color;ctx.lineWidth=10*this.dpr*(1-t);ctx.beginPath();ctx.arc(0,0,s*(.08+t*.38),0,Math.PI*2);ctx.stroke();}
+      else if(['explosion','bossPhase','overdrive'].includes(v.type)){const g=ctx.createRadialGradient(0,0,0,0,0,s*(.35+t*.75));g.addColorStop(0,'rgba(255,255,255,.95)');g.addColorStop(.25,rgba(v.color||'#ff6b45',.82));g.addColorStop(1,rgba(v.color||'#ff6b45',0));ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,s*(.35+t*.75),0,Math.PI*2);ctx.fill();ctx.strokeStyle=rgba(v.color||'#fff',.7*(1-t));ctx.lineWidth=6*this.dpr*(1-t);ctx.beginPath();ctx.arc(0,0,s*(.2+t*1.1),0,Math.PI*2);ctx.stroke();}
+      else if(v.type==='dashStart'){ctx.strokeStyle=v.color;ctx.lineWidth=7*this.dpr*(1-t);ctx.beginPath();ctx.arc(0,0,s*(.2+t*.6),0,Math.PI*2);ctx.stroke();}
+      ctx.restore();
+    }
+  }
+
+  drawDamageNumbers(world){
+    const ctx=this.ctx;ctx.save();ctx.textAlign='center';ctx.font=`700 ${15*this.dpr}px system-ui`;
+    for(const n of world.damageNumbers){const p=this.worldToScreen(n.x,n.y);ctx.globalAlpha=clamp(n.life/n.maxLife,0,1);ctx.fillStyle=n.kill?'#fff3a6':'#ffffff';ctx.shadowBlur=8;ctx.shadowColor=n.kill?'#ff6f4a':'#4ae6ff';ctx.fillText(`${Math.round(n.value)}`,p.x,p.y);}
+    ctx.restore();
+  }
+
+  drawDecoy(actor,time){
+    const ctx=this.ctx,p=this.worldToScreen(actor.x,actor.y);ctx.save();ctx.translate(p.x,p.y);ctx.globalAlpha=clamp(actor.life/actor.maxLife,0,1)*.35;ctx.strokeStyle='#8ff8ff';ctx.lineWidth=3*this.dpr;ctx.beginPath();ctx.arc(0,0,28*this.dpr*(1+Math.sin(time*10)*.08),0,Math.PI*2);ctx.stroke();ctx.restore();
+  }
+
+  drawVignette(world){
+    const ctx=this.ctx;const g=ctx.createRadialGradient(this.width*.5,this.height*.5,this.height*.18,this.width*.5,this.height*.5,this.width*.72);g.addColorStop(.55,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.58)');ctx.fillStyle=g;ctx.fillRect(0,0,this.width,this.height);
+    if(world.player&&world.player.hp/world.player.maxHp<.25){ctx.fillStyle=`rgba(160,0,30,${.08+.05*Math.sin(world.time*8)})`;ctx.fillRect(0,0,this.width,this.height);}
+  }
+
+  roundRect(x,y,w,h,r){const c=this.ctx;c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+}

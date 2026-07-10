@@ -1,4 +1,3 @@
-// ---- src/core/math.js ----
 export const TAU = Math.PI * 2;
 export const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 export const lerp = (a, b, t) => a + (b - a) * t;
@@ -72,26 +71,3 @@ export const rgba = (hex, alpha = 1) => {
   const n = Number.parseInt(full, 16);
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
 };
-
-export class EventBus {
-  #listeners = new Map();
-  on(type, fn) { if (!this.#listeners.has(type)) this.#listeners.set(type, new Set()); this.#listeners.get(type).add(fn); return () => this.off(type, fn); }
-  once(type, fn) { const off = this.on(type, (payload) => { off(); fn(payload); }); return off; }
-  off(type, fn) { this.#listeners.get(type)?.delete(fn); }
-  emit(type, payload) { for (const fn of [...(this.#listeners.get(type) || [])]) fn(payload); }
-  clear() { this.#listeners.clear(); }
-}
-
-export class StateMachine {
-  constructor(initial, table = {}) { this.state = initial; this.time = 0; this.table = table; }
-  set(next, context) { if (next === this.state) return false; this.table[this.state]?.exit?.(context, next); const previous = this.state; this.state = next; this.time = 0; this.table[next]?.enter?.(context, previous); return true; }
-  update(dt, context) { this.time += dt; this.table[this.state]?.update?.(context, dt, this.time); }
-  is(...states) { return states.includes(this.state); }
-}
-
-export class GameLoop {
-  constructor({ update, render, fixedStep = 1 / 60, maxFrame = 0.1 }) { this.updateFn = update; this.renderFn = render; this.fixedStep = fixedStep; this.maxFrame = maxFrame; this.running = false; this.last = 0; this.accumulator = 0; this.raf = 0; this.boundTick = (t) => this.tick(t); }
-  start() { if (this.running) return; this.running = true; this.last = performance.now(); this.raf = requestAnimationFrame(this.boundTick); }
-  stop() { this.running = false; cancelAnimationFrame(this.raf); }
-  tick(now) { if (!this.running) return; let frame = Math.min((now - this.last) / 1000, this.maxFrame); if (!Number.isFinite(frame) || frame < 0) frame = 0; this.last = now; this.accumulator += frame; while (this.accumulator >= this.fixedStep) { this.updateFn(this.fixedStep); this.accumulator -= this.fixedStep; } this.renderFn(this.accumulator / this.fixedStep); this.raf = requestAnimationFrame(this.boundTick); }
-}

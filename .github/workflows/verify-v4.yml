@@ -1,0 +1,33 @@
+name: Verify Mecha 4.0
+
+on:
+  pull_request:
+    paths:
+      - "v4/**"
+      - ".github/workflows/verify-v4.yml"
+  push:
+    branches:
+      - main
+      - develop/4.0-core-slice
+    paths:
+      - "v4/**"
+      - ".github/workflows/verify-v4.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate JavaScript modules
+        shell: bash
+        run: find v4/src v4/tests v4/scripts -type f \( -name '*.js' -o -name '*.mjs' \) -print0 | xargs -0 -n1 node --check
+      - name: Run system tests
+        working-directory: v4
+        run: npm test
