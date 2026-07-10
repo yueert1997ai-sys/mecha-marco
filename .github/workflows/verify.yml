@@ -1,0 +1,54 @@
+name: Verify Web Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify required files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f index.html
+          test -f styles.css
+          test -f loader.js
+          test -f docs/HADES_ARCHITECTURE_4.0.md
+          for i in 01 02 03 04 05 06 07 08; do
+            test -s "chunks/game.part${i}.txt"
+          done
+
+      - name: Verify concatenated JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat chunks/game.part*.txt > /tmp/game.js
+          node --check /tmp/game.js
+
+      - name: Verify loader and page wiring
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'styles.css' index.html
+          grep -q 'loader.js' index.html
+          for i in 01 02 03 04 05 06 07 08; do
+            grep -q "game.part${i}.txt" loader.js
+          done
+
+      - name: Build summary
+        shell: bash
+        run: |
+          printf 'HTML bytes: '; wc -c < index.html
+          printf 'CSS bytes: '; wc -c < styles.css
+          printf 'Runtime bytes: '; cat chunks/game.part*.txt | wc -c
+          echo 'Static build verification passed.'
