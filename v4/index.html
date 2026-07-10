@@ -14,14 +14,21 @@
 <body>
   <main id="app">
     <canvas id="game-canvas" aria-label="天穹断刃战斗画面"></canvas>
+
     <section id="hud" class="hud hidden" aria-live="polite">
-      <div class="hud-top-left"><div class="meter hp-meter"><div id="hp-fill"></div><span id="hp-text">120 / 120</span></div><div class="meter overdrive-meter"><div id="overdrive-fill"></div><span>OVERDRIVE</span></div></div>
+      <div class="hud-top-left">
+        <div class="meter hp-meter"><div id="hp-fill"></div><span id="hp-text">120 / 120</span></div>
+        <div class="meter overdrive-meter"><div id="overdrive-fill"></div><span>OVERDRIVE</span></div>
+      </div>
       <div class="hud-top-center"><strong id="room-label">DEPTH 1</strong><div id="module-strip" class="module-strip"></div></div>
       <div class="hud-top-right" id="credits-label">● 0　◆ 0</div>
       <div id="boss-bar" class="boss-bar hidden"><span id="boss-name">守墓者·阿尔法</span><div><i id="boss-fill"></i></div></div>
     </section>
+
     <div id="toast" class="toast"></div>
+
     <section id="overlay" class="overlay show"><div id="panel" class="panel"></div></section>
+
     <section id="touch-controls" class="touch-controls hidden" aria-label="触控操作">
       <div class="stick move-stick" data-stick="move"><div class="stick-ring"></div><div class="stick-knob"></div><span>移动</span></div>
       <div class="stick aim-stick" data-stick="aim"><div class="stick-ring"></div><div class="stick-knob"></div><span>瞄准 / 射击</span></div>
@@ -31,6 +38,7 @@
       <button class="action-btn overdrive-btn" data-action="overdrive"><strong>超</strong><span>必杀</span></button>
       <button class="pause-btn" data-action="pause">Ⅱ</button>
     </section>
+
     <section class="rotate-warning"><div><strong>请将 iPhone 横屏</strong><p>4.0 触控界面按横屏战斗设计</p></div></section>
   </main>
   <script type="module" src="./src/main.js"></script>

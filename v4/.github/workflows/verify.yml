@@ -1,0 +1,22 @@
+name: Verify 4.0 Core Slice
+on:
+  push:
+    branches: ['main','develop/4.0-core-slice']
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm run syntax
+      - run: npm test
+      - name: Install Chromium
+        run: sudo apt-get update && sudo apt-get install -y chromium-browser || sudo apt-get install -y chromium
+      - run: npm run browser-smoke
+        env:
+          REQUIRE_BROWSER_SMOKE: '1'
