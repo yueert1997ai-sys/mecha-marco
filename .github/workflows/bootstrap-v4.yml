@@ -1,10 +1,12 @@
 name: Bootstrap Mecha 4.0 Source
 
 on:
-  push:
+  pull_request:
     branches:
-      - develop/4.0-core-slice
+      - main
+    types: [opened, synchronize, reopened]
     paths:
+      - ".bootstrap/v4/**"
       - ".github/workflows/bootstrap-v4.yml"
   workflow_dispatch:
 
