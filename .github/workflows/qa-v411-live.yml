@@ -3,6 +3,8 @@ name: Verify Live V4.1.1 Controls Camera
 on:
   push:
     branches: [qa/v411-postmerge-live]
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: read
