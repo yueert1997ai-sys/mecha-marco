@@ -39,6 +39,7 @@ const game = new Game({ renderer, input, ui, audio });
 let mech3d = null;
 let mech3dStatus = 'loading';
 document.documentElement.dataset.combatView = 'topdown';
+document.documentElement.dataset.mechSilhouette = 'upper-body';
 
 try {
   const { createMech3DRenderer } = await import('./render/mech3d41.js');
@@ -79,7 +80,7 @@ if (!smokeMode && 'serviceWorker' in navigator && location.protocol.startsWith('
 
 globalThis.__MECHA_MARCO__ = {
   game,
-  visualVersion:'4.1.3-topdown-view',
+  visualVersion:'4.1.4-topdown-silhouette',
   mech3dStatus:()=>mech3dStatus,
   snapshot: () => ({
     state:game.state,
@@ -89,6 +90,7 @@ globalThis.__MECHA_MARCO__ = {
     mech3d:mech3dStatus,
     renderMode:document.documentElement.dataset.mechRender,
     combatView:document.documentElement.dataset.combatView,
+    mechSilhouette:document.documentElement.dataset.mechSilhouette,
     player:game.player?{hp:game.player.hp,maxHp:game.player.maxHp,x:game.player.x,y:game.player.y}:null,
   }),
 };
