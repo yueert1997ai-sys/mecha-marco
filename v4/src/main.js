@@ -4,12 +4,16 @@ import { applyRendererPolish } from './render/polishRenderer.js';
 import { applyMechVisual41 } from './render/mechVisual41.js';
 import { tuneMech3DRenderer } from './render/mech3dTuning41.js';
 import { enhanceLiteEnemies42 } from './render/mechLiteEnhance42.js';
+import { enhanceLoadoutVisual415 } from './render/loadoutVisual415.js';
 import { applyTopDownCamera } from './render/topdownCamera.js';
 import { applyTopDownMechPose } from './render/topdownMechPose.js';
+import { applyArenaDetail415 } from './render/arenaDetail415.js';
 import { applyMobileFeel42 } from './combat/mobileFeel42.js';
+import { applyLoadoutRuntime415 } from './combat/loadoutRuntime415.js';
 import { InputRouter } from './input/inputRouter.js';
 import { AppUI } from './ui/appUI.js';
 import { applyMechPreview41 } from './ui/mechPreview41.js';
+import { applyUIPolish415 } from './ui/uiPolish415.js';
 import { SynthAudio } from './audio/synthAudio.js';
 import { Game } from './game.js';
 import { Enemy } from './actors/enemy.js';
@@ -19,13 +23,16 @@ import { applyCombatPolish } from './combat/polishCombat.js';
 applyRendererPolish(Renderer);
 applyMechVisual41(Renderer);
 applyMobileFeel42({ InputRouter, PlayerMech, Renderer });
+applyLoadoutRuntime415(PlayerMech);
 applyTopDownCamera(Renderer);
+applyArenaDetail415(Renderer);
 const drawCanvasMechFallback = Renderer.prototype.drawMech;
 Renderer.prototype.drawMech = function drawMechWithWebGLFallback(...args) {
   if (globalThis.__MECH_3D_READY__) return;
   return drawCanvasMechFallback.apply(this, args);
 };
 applyMechPreview41(AppUI);
+applyUIPolish415(AppUI);
 applyCombatPolish({ Game, Enemy, PlayerMech });
 
 const canvas = document.getElementById('game-canvas');
@@ -40,12 +47,14 @@ let mech3d = null;
 let mech3dStatus = 'loading';
 document.documentElement.dataset.combatView = 'topdown';
 document.documentElement.dataset.mechSilhouette = 'upper-body';
+document.documentElement.dataset.uiStyle = 'low-saturation-glass';
 
 try {
   const { createMech3DRenderer } = await import('./render/mech3d41.js');
   const tuned = tuneMech3DRenderer(await createMech3DRenderer(mechCanvas, renderer));
   const efficient = enhanceLiteEnemies42(tuned);
-  mech3d = applyTopDownMechPose(efficient);
+  const evolved = enhanceLoadoutVisual415(efficient);
+  mech3d = applyTopDownMechPose(evolved);
   globalThis.__MECH_3D_READY__ = true;
   mech3dStatus = 'ready';
   document.documentElement.dataset.mech3d = 'ready';
@@ -71,6 +80,10 @@ if (smokeMode) {
   loop.start();
 }
 
+addEventListener('mecha-loadout-changed',(event)=>{
+  const module=event.detail?.module;
+  if(module)ui.notify(`${module.name} 已安装 · 战斗模型同步升级`,1.9);
+});
 addEventListener('pointerdown', () => audio.unlock(), { once:true });
 addEventListener('keydown', () => audio.unlock(), { once:true });
 
@@ -80,7 +93,7 @@ if (!smokeMode && 'serviceWorker' in navigator && location.protocol.startsWith('
 
 globalThis.__MECHA_MARCO__ = {
   game,
-  visualVersion:'4.1.4-topdown-silhouette',
+  visualVersion:'4.1.5-visual-loadout-pass',
   mech3dStatus:()=>mech3dStatus,
   mech3dRenderer:()=>mech3d,
   snapshot: () => ({
@@ -92,6 +105,8 @@ globalThis.__MECHA_MARCO__ = {
     renderMode:document.documentElement.dataset.mechRender,
     combatView:document.documentElement.dataset.combatView,
     mechSilhouette:document.documentElement.dataset.mechSilhouette,
+    uiStyle:document.documentElement.dataset.uiStyle,
+    loadout:game.player?.visualLoadout||null,
     player:game.player?{hp:game.player.hp,maxHp:game.player.maxHp,x:game.player.x,y:game.player.y}:null,
   }),
 };
