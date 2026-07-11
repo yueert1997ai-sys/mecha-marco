@@ -1,0 +1,37 @@
+name: QA V4.1.6 Live Deploy
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for Pages 4.1.6
+        run: |
+          set -euo pipefail
+          base='https://yueert1997ai-sys.github.io/mecha-marco/v4'
+          for i in {1..30}; do
+            version="$(curl -fsS "$base/VERSION?attempt=$i" || true)"
+            html="$(curl -fsS "$base/?attempt=$i" || true)"
+            main="$(curl -fsS "$base/src/main.js?attempt=$i" || true)"
+            css="$(curl -fsS "$base/depth416.css?attempt=$i" || true)"
+            if [[ "$version" == *'4.1.6-control-transform-paints'* ]] \
+              && [[ "$html" == *'天穹断刃 4.1.6'* ]] \
+              && [[ "$html" == *'depth416.css'* ]] \
+              && [[ "$main" == *'4.1.6-control-transform-paints'* ]] \
+              && [[ "$main" == *'applyRogueTransform416'* ]] \
+              && [[ "$css" == *'.settings-screen416'* ]] \
+              && [[ "$css" == *'.paint-selector416'* ]]; then
+              echo 'Live 4.1.6 deployment verified.'
+              exit 0
+            fi
+            sleep 4
+          done
+          echo "Last version: $version"
+          exit 1
