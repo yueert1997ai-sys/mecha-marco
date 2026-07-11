@@ -28,6 +28,10 @@ jobs:
           test -s v4/sw.js
           test -s v4/src/main.js
           test -s v4/src/game.js
+          test -s v4/src/render/mechDesigns41.js
+          test -s v4/src/render/mechMeshPrimitives41.js
+          test -s v4/src/render/mechVisual41.js
+          test -s v4/src/ui/mechPreview41.js
           test -s docs/HADES_ARCHITECTURE_4.0.md
           test -s v4/docs/QA_REPORT_4.0.md
           test -s styles.css
@@ -80,13 +84,15 @@ jobs:
           done
           grep -q './v4/' /tmp/root.html
           curl -fsS http://127.0.0.1:4173/v3/ | grep -q 'v3.2'
-          curl -fsS http://127.0.0.1:4173/v4/ | grep -q '天穹断刃 4.0'
+          curl -fsS http://127.0.0.1:4173/v4/ | grep -q '天穹断刃 4.1'
           chrome="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
           test -n "$chrome"
           "$chrome" --headless=new --no-sandbox --disable-gpu --virtual-time-budget=7000 --dump-dom 'http://127.0.0.1:4173/v4/?smoke' >/tmp/v4-dom.html
           grep -q 'data-smoke-ready="true"' /tmp/v4-dom.html
           grep -q 'id="game-canvas"' /tmp/v4-dom.html
           grep -q 'id="panel"' /tmp/v4-dom.html
+          grep -q 'V4.1 FULL MECH REDESIGN' /tmp/v4-dom.html
+          grep -q 'mech-preview41' /tmp/v4-dom.html
 
       - name: Build summary
         shell: bash
