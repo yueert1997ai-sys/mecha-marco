@@ -1,0 +1,39 @@
+name: QA V4.1.5 Live Deploy
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for 4.1.5 Pages deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://yueert1997ai-sys.github.io/mecha-marco/v4'
+          ua='Mozilla/5.0 (iPhone; CPU iPhone OS 19_0 like Mac OS X) AppleWebKit/605.1.15 Version/19.0 Mobile/15E148 Safari/604.1'
+          for attempt in {1..36}; do
+            version_code=$(curl -L -A "$ua" -sS -o /tmp/version.txt -w '%{http_code}' "$base/VERSION?attempt=$attempt" || true)
+            html_code=$(curl -L -A "$ua" -sS -o /tmp/v4.html -w '%{http_code}' "$base/?v=415&attempt=$attempt" || true)
+            main_code=$(curl -L -A "$ua" -sS -o /tmp/main.js -w '%{http_code}' "$base/src/main.js?v=415&attempt=$attempt" || true)
+            css_code=$(curl -L -A "$ua" -sS -o /tmp/refine.css -w '%{http_code}' "$base/visual415-refine.css?v=415&attempt=$attempt" || true)
+            if [ "$version_code" = 200 ] && [ "$html_code" = 200 ] && [ "$main_code" = 200 ] && [ "$css_code" = 200 ] \
+              && grep -qx '4.1.5-visual-loadout-pass' /tmp/version.txt \
+              && grep -q '天穹断刃 4.1.5' /tmp/v4.html \
+              && grep -q 'visual415-refine.css' /tmp/v4.html \
+              && grep -q "visualVersion:'4.1.5-visual-loadout-pass'" /tmp/main.js \
+              && grep -q 'shop-actions .primary-cta' /tmp/refine.css; then
+              echo 'Live Pages is serving the complete 4.1.5 build.'
+              exit 0
+            fi
+            echo "Attempt $attempt: VERSION=$version_code HTML=$html_code MAIN=$main_code CSS=$css_code content=$(tr -d '\n' </tmp/version.txt 2>/dev/null || true)"
+            sleep 10
+          done
+          echo '4.1.5 did not become current within the wait window.'
+          exit 1
