@@ -11,6 +11,8 @@ const installPoseHook = (instance,entry) => {
   if(entry.__hades25dPoseInstalled)return entry;
   entry.__hades25dPoseInstalled=true;
   const applyPose=()=>{
+    if(entry.__hades25dPosePending===false)return;
+    entry.__hades25dPosePending=false;
     const actor=entry.actorRef;
     const world=instance.__hades25dWorld;
     if(!actor||!world)return;
@@ -70,12 +72,15 @@ const installPoseHook = (instance,entry) => {
     }
   };
 
-  if(entry.contactShadow)entry.contactShadow.onBeforeRender=applyPose;
-  else{
-    let firstMesh=null;
-    entry.root.traverse((node)=>{if(!firstMesh&&node.isMesh)firstMesh=node;});
-    if(firstMesh)firstMesh.onBeforeRender=applyPose;
-  }
+  let hooked=false;
+  entry.root.traverse((node)=>{
+    if(!node.isMesh)return;
+    const materials=Array.isArray(node.material)?node.material:[node.material];
+    if(materials.some((material)=>material?.transparent))return;
+    node.onBeforeRender=applyPose;
+    hooked=true;
+  });
+  if(!hooked&&entry.contactShadow)entry.contactShadow.onBeforeRender=applyPose;
   return entry;
 };
 
@@ -101,6 +106,7 @@ export function applyHades25DMechPose(instance){
   const previousRender=instance.render.bind(instance);
   instance.render=function renderHades25D(world){
     instance.__hades25dWorld=world;
+    for(const entry of instance.actors.values())entry.__hades25dPosePending=true;
     return previousRender(world);
   };
   return instance;
