@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MECH_VISUAL_41, PLAYER_VISUALS, getVisualDesign } from '../src/render/mechDesigns41.js';
+import { project } from '../src/render/mechMeshPrimitives41.js';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const read=(file)=>readFile(path.join(root,file),'utf8');
@@ -34,6 +35,15 @@ test('enemy roles resolve to distinct armored silhouettes',()=>{
   assert.ok(boss.body.chest>melee.body.chest);
 });
 
+test('projected armor points stay finite when optional coordinates are omitted',()=>{
+  const renderer={scale:40,worldToScreen:(x,y)=>({x:x*40+400,y:y*30+200})};
+  const actor={x:0,y:0,yaw:0};
+  const value=project(renderer,actor,{f:.5,z:1.5},{back:0,side:0,bob:0},1.2);
+  assert.ok(Number.isFinite(value.x));
+  assert.ok(Number.isFinite(value.y));
+  assert.ok(Number.isFinite(value.d));
+});
+
 test('runtime activates projected armor meshes, hardpoints and redesigned previews',async()=>{
   const main=await read('src/main.js');
   const visual=await read('src/render/mechVisual41.js');
@@ -45,6 +55,7 @@ test('runtime activates projected armor meshes, hardpoints and redesigned previe
   assert.match(visual,/Renderer\.prototype\.drawMech/);
   assert.match(primitive,/faces=\[/);
   assert.match(primitive,/panelColor/);
+  assert.match(primitive,/const ps=finite\(p\.s\)/);
   assert.match(preview,/V4\.1 FULL MECH REDESIGN/);
   assert.match(preview,/mech-preview41/);
 });
