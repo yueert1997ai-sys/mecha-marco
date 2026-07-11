@@ -1,4 +1,4 @@
-const CACHE='mecha-marco-v4-20260712-control-transform-paints-r1';
+const CACHE='mecha-marco-v4-20260712-control-transform-paints-r2';
 const CORE=[
   './',
   './index.html',
@@ -29,6 +29,7 @@ const CORE=[
   './src/ui/mechPreview41.js',
   './src/ui/uiPolish415.js',
   './src/ui/depthUI416.js',
+  './src/ui/branding416.js',
   './src/combat/polishCombat.js',
   './src/combat/mobileFeel42.js',
   './src/combat/loadoutRuntime415.js',
