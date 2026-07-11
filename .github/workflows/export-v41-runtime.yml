@@ -1,0 +1,26 @@
+name: Export V4.1 Runtime
+
+on:
+  push:
+    branches: [qa/v41-runtime-export]
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify redesigned runtime
+        run: |
+          cd v4
+          npm run syntax
+          npm test
+      - name: Upload runtime
+        uses: actions/upload-artifact@v4
+        with:
+          name: mecha-marco-v41-runtime
+          path: v4
+          if-no-files-found: error
+          retention-days: 1
