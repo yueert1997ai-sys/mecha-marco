@@ -44,25 +44,33 @@ test('projected armor points stay finite when optional coordinates are omitted',
   assert.ok(Number.isFinite(value.d));
 });
 
-test('runtime activates real WebGL mechs with a Canvas fallback',async()=>{
+test('runtime activates tuned WebGL mechs with Canvas fallback and independent HUD',async()=>{
   const html=await read('index.html');
   const main=await read('src/main.js');
   const webgl=await read('src/render/mech3d41.js');
+  const tuning=await read('src/render/mech3dTuning41.js');
   const fallback=await read('src/render/mechVisual41.js');
   const primitive=await read('src/render/mechMeshPrimitives41.js');
   const preview=await read('src/ui/mechPreview41.js');
+  const sw=await read('sw.js');
   assert.match(html,/type="importmap"/);
   assert.match(html,/three@0\.149\.0/);
   assert.match(html,/id="mech-3d-canvas"/);
   assert.match(main,/createMech3DRenderer/);
+  assert.match(main,/tuneMech3DRenderer/);
   assert.match(main,/__MECH_3D_READY__/);
   assert.match(webgl,/WebGLRenderer/);
   assert.match(webgl,/ExtrudeGeometry/);
   assert.match(webgl,/MeshStandardMaterial/);
   assert.match(webgl,/vanguard:[\s\S]*bulwark:[\s\S]*starwing:/);
+  assert.match(tuning,/ensureActor/);
+  assert.match(tuning,/contactShadow/);
+  assert.match(tuning,/healthBar/);
+  assert.match(tuning,/toneMappingExposure=\.58/);
   assert.match(fallback,/Renderer\.prototype\.drawMech/);
   assert.match(primitive,/faces=\[/);
   assert.match(primitive,/ps=finite\(p\.s\)/);
   assert.match(preview,/V4\.1 FULL MECH REDESIGN/);
   assert.match(preview,/mech-preview41/);
+  assert.match(sw,/mech3dTuning41\.js/);
 });
