@@ -1,4 +1,4 @@
-const CACHE='mecha-marco-v4-20260711-visual-loadout-r1';
+const CACHE='mecha-marco-v4-20260711-visual-loadout-r2';
 const CORE=[
   './',
   './index.html',
@@ -6,6 +6,7 @@ const CORE=[
   './iphone17.css',
   './mech3d41.css',
   './visual415.css',
+  './visual415-refine.css',
   './manifest.webmanifest',
   './src/main.js',
   './src/meta/loadoutProfile.js',
