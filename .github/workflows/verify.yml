@@ -34,6 +34,7 @@ jobs:
           test -s v4/src/render/mechMeshPrimitives41.js
           test -s v4/src/render/mechVisual41.js
           test -s v4/src/render/mech3d41.js
+          test -s v4/src/render/mech3dTuning41.js
           test -s v4/src/ui/mechPreview41.js
           test -s docs/HADES_ARCHITECTURE_4.0.md
           test -s v4/docs/QA_REPORT_4.0.md
