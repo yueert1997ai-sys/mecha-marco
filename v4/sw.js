@@ -1,4 +1,4 @@
-const CACHE='mecha-marco-v4-20260711-devicefix';
+const CACHE='mecha-marco-v4-20260711-full-redesign';
 const CORE=[
   './',
   './index.html',
@@ -6,6 +6,10 @@ const CORE=[
   './iphone17.css',
   './src/main.js',
   './src/render/polishRenderer.js',
+  './src/render/mechDesigns41.js',
+  './src/render/mechMeshPrimitives41.js',
+  './src/render/mechVisual41.js',
+  './src/ui/mechPreview41.js',
   './src/combat/polishCombat.js',
 ];
 self.addEventListener('install',(event)=>event.waitUntil(caches.open(CACHE).then((c)=>c.addAll(CORE)).then(()=>self.skipWaiting())));
