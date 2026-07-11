@@ -41,7 +41,7 @@ body,
   background: rgba(114, 226, 255, .28);
 }
 
-.base-panel {
+.panel.base-panel {
   padding: clamp(14px, 2vh, 24px) clamp(16px, 2vw, 28px);
 }
 
@@ -131,6 +131,26 @@ body,
   .touch-controls {
     padding-bottom: max(6px, var(--safe-bottom));
   }
+
+  .hud-top-right {
+    margin-right: 52px;
+  }
+
+  .saber-btn {
+    right: calc(clamp(150px, 17vw, 190px) + var(--safe-right));
+  }
+
+  .dash-btn {
+    right: calc(clamp(150px, 17vw, 190px) + var(--safe-right));
+  }
+
+  .missile-btn {
+    right: calc(clamp(210px, 23vw, 260px) + var(--safe-right));
+  }
+
+  .overdrive-btn {
+    right: calc(clamp(270px, 29vw, 320px) + var(--safe-right));
+  }
 }
 
 @media (orientation: landscape) and (pointer: coarse) and (max-height: 560px) {
@@ -139,8 +159,7 @@ body,
     padding-bottom: max(5px, var(--safe-bottom));
   }
 
-  .panel,
-  .base-panel {
+  .panel {
     width: calc(100vw - var(--safe-left) - var(--safe-right) - 16px);
     height: calc(var(--viewport-h) - var(--safe-top) - var(--safe-bottom) - 10px);
     max-height: none;
@@ -249,8 +268,7 @@ body,
 }
 
 @media (orientation: landscape) and (pointer: coarse) and (max-height: 430px) {
-  .panel,
-  .base-panel {
+  .panel {
     padding-top: 7px;
     padding-bottom: 7px;
   }
