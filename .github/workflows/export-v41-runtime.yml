@@ -3,6 +3,8 @@ name: Export V4.1 Runtime
 on:
   push:
     branches: [qa/v41-runtime-export]
+  pull_request:
+    branches: [feat/v4-1-full-mech-redesign]
 
 permissions:
   contents: read
