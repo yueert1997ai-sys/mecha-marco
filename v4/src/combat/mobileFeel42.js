@@ -61,6 +61,11 @@ export function applyMobileFeel42({ InputRouter, PlayerMech, Renderer }) {
     this.touch[kind] = state;
   };
 
+  const resetForRoom = PlayerMech.prototype.resetForRoom;
+  PlayerMech.prototype.resetForRoom = function resetInsideArena(position = { x:0, y:4.5 }) {
+    return resetForRoom.call(this, { ...position, y:Math.min(position.y,3.55) });
+  };
+
   PlayerMech.prototype.update = function updateResponsiveMech(dt, input, world) {
     if (this.dead) return;
     this.ability.tick(dt);
