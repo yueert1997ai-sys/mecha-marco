@@ -14,6 +14,7 @@ import { applyMobileFeel42 } from './combat/mobileFeel42.js';
 import { applyLoadoutRuntime415 } from './combat/loadoutRuntime415.js';
 import { applyRogueTransform416 } from './combat/rogueTransform416.js';
 import { applyContinuousCampaign42 } from './run/continuousCampaign42.js';
+import { applyContinuousCampaignPolish42 } from './run/continuousCampaignPolish42.js';
 import { installTransformModules416 } from './data/transformModules416.js';
 import { InputRouter } from './input/inputRouter.js';
 import { AppUI } from './ui/appUI.js';
@@ -51,6 +52,7 @@ applyPaintDock416(AppUI);
 applyCampaignUI42(AppUI);
 applyRogueTransform416({ PlayerMech, Game });
 applyContinuousCampaign42({ Game });
+applyContinuousCampaignPolish42(Game);
 
 const canvas = document.getElementById('game-canvas');
 const mechCanvas = document.getElementById('mech-3d-canvas');
