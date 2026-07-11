@@ -46,7 +46,8 @@ test('current documentation describes top-down upper-body continuous campaign',a
   assert.match(readme,/不再使用斜俯视/);
   assert.match(readme,/不再是每关返回路线页面|取消“每打完一关就返回全屏路线页面”/);
   assert.match(design,/普通段落之间不返回路线页面/);
-  assert.match(architecture,/固定斜俯视角.*已过期/s);
+  assert.match(architecture,/固定斜俯视角/);
+  assert.match(architecture,/历史表述（已过期）/);
   assert.match(architecture,/历史房间循环（部分过期）/);
   assert.match(qa,/当前未验证内容/);
   assert.match(qa,/实体 iPhone 17 Pro Max/);
