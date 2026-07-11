@@ -1,0 +1,22 @@
+name: Export V4 Runtime
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/export-v4-runtime.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Upload merged v4 runtime
+        uses: actions/upload-artifact@v4
+        with:
+          name: mecha-marco-v4-runtime
+          path: v4
+          if-no-files-found: error
+          retention-days: 1
