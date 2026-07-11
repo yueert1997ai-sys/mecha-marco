@@ -17,8 +17,8 @@ test('mobile feel patch improves stick response, boost fire and arena camera',as
   assert.match(source,/clamp\(target\.x \* \.08/);
   assert.match(source,/this\.height \* \.58/);
   assert.match(main,/applyMobileFeel42/);
-  assert.match(main,/drawMechWithHybridRenderer/);
-  assert.match(main,/ready-hybrid/);
+  assert.match(main,/drawMechWithWebGLFallback/);
+  assert.match(main,/dataset\.mechRender = 'webgl'/);
   assert.match(main,/4\.1\.1-controls-camera-polish/);
 });
 
@@ -29,6 +29,7 @@ test('3D tuning adds readable anime-mecha posture, lock feedback and mobile budg
   assert.match(source,/buildTargetReticle/);
   assert.match(source,/selectTarget/);
   assert.match(source,/coarse\?1:1\.5/);
-  assert.match(source,/filter\(\(enemy\)=>enemy\.elite\|\|enemy\.boss\)/);
+  assert.match(source,/!isPlayer&&!actor\.elite&&!actor\.boss/);
+  assert.match(source,/try\{originalRender\(world\)\}/);
   assert.match(source,/entry\.root\.rotation\.y=-\.12-side\*\.14/);
 });
