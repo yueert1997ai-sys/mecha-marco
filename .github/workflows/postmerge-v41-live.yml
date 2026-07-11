@@ -1,0 +1,54 @@
+name: Verify Live V4.1 WebGL
+
+on:
+  push:
+    branches: [qa/v41-postmerge-live]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  live-v41:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for exact 4.1 deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://yueert1997ai-sys.github.io/mecha-marco/v4'
+          ok=0
+          for i in {1..42}; do
+            code=$(curl -L -sS -o /tmp/v41.html -w '%{http_code}' "$base/?v=410-$i" || true)
+            if [ "$code" = '200' ] \
+              && grep -q '天穹断刃 4.1' /tmp/v41.html \
+              && grep -q 'id="mech-3d-canvas"' /tmp/v41.html \
+              && grep -q 'three@0.149.0' /tmp/v41.html; then
+              ok=1
+              break
+            fi
+            echo "Attempt $i: code=$code"
+            sleep 10
+          done
+          test "$ok" = '1'
+      - name: Verify live 3D assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://yueert1997ai-sys.github.io/mecha-marco/v4'
+          curl -fsSL "$base/src/render/mech3d41.js?v=410" -o /tmp/mech3d.js
+          curl -fsSL "$base/src/render/mech3dTuning41.js?v=410" -o /tmp/tuning.js
+          curl -fsSL "$base/src/main.js?v=410" -o /tmp/main.js
+          curl -fsSL "$base/mech3d41.css?v=410" -o /tmp/mech3d.css
+          grep -q 'WebGLRenderer' /tmp/mech3d.js
+          grep -q 'ExtrudeGeometry' /tmp/mech3d.js
+          grep -q 'healthBar' /tmp/tuning.js
+          grep -q 'contactShadow' /tmp/tuning.js
+          grep -q 'createMech3DRenderer' /tmp/main.js
+          grep -q 'mech-3d-canvas' /tmp/mech3d.css
+      - name: Verify exact live version
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL 'https://yueert1997ai-sys.github.io/mecha-marco/v4/VERSION?v=410' | grep -q '4.1.0-full-redesign'
