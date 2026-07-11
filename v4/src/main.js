@@ -3,6 +3,7 @@ import { Renderer } from './render/renderer.js';
 import { applyRendererPolish } from './render/polishRenderer.js';
 import { applyMechVisual41 } from './render/mechVisual41.js';
 import { tuneMech3DRenderer } from './render/mech3dTuning41.js';
+import { enhanceLiteEnemies42 } from './render/mechLiteEnhance42.js';
 import { applyMobileFeel42 } from './combat/mobileFeel42.js';
 import { InputRouter } from './input/inputRouter.js';
 import { AppUI } from './ui/appUI.js';
@@ -37,7 +38,7 @@ let mech3dStatus = 'loading';
 
 try {
   const { createMech3DRenderer } = await import('./render/mech3d41.js');
-  mech3d = tuneMech3DRenderer(await createMech3DRenderer(mechCanvas, renderer));
+  mech3d = enhanceLiteEnemies42(tuneMech3DRenderer(await createMech3DRenderer(mechCanvas, renderer)));
   globalThis.__MECH_3D_READY__ = true;
   mech3dStatus = 'ready';
   document.documentElement.dataset.mech3d = 'ready';
