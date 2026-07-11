@@ -1,0 +1,53 @@
+name: QA V4.1.2 Hades 2.5D
+
+on:
+  push:
+    branches: [qa/v412-hades25d-visual]
+  pull_request:
+    branches: [fix/v4-1-2-hades25d-view]
+
+permissions:
+  contents: read
+
+jobs:
+  visual-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Verify source and tests
+        run: |
+          cd v4
+          npm run syntax
+          npm test
+      - name: Install Playwright Python
+        run: python3 -m pip install --user playwright
+      - name: Locate Chrome
+        run: |
+          chrome="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          test -n "$chrome"
+          echo "CHROME_BIN=$chrome" >> "$GITHUB_ENV"
+      - name: Verify pinned Three.js module
+        run: |
+          curl -fsS 'https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.module.js' -o /tmp/three.module.js
+          test -s /tmp/three.module.js
+      - name: Run real mobile Hades 2.5D QA
+        id: hadesqa
+        continue-on-error: true
+        run: |
+          mkdir -p v4/qa-artifacts-v412
+          set -o pipefail
+          python3 v4/scripts/hades25d-qa.py 2>&1 | tee v4/qa-artifacts-v412/run.log
+      - name: Upload screenshots and metrics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mecha-marco-v412-hades25d-qa
+          path: v4/qa-artifacts-v412
+          if-no-files-found: error
+          retention-days: 1
+      - name: Fail when Hades QA failed
+        if: steps.hadesqa.outcome == 'failure'
+        run: exit 1
