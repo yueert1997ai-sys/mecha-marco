@@ -1,6 +1,6 @@
 {
   "name": "mecha-marco-v4",
-  "version": "4.0.2-device-regression",
+  "version": "4.1.0-full-redesign",
   "private": true,
   "type": "module",
   "scripts": {

@@ -1,11 +1,18 @@
-const CACHE='mecha-marco-v4-20260711-devicefix';
+const CACHE='mecha-marco-v4-20260711-webgl-redesign-r2';
 const CORE=[
   './',
   './index.html',
   './styles.css',
   './iphone17.css',
+  './mech3d41.css',
   './src/main.js',
   './src/render/polishRenderer.js',
+  './src/render/mechDesigns41.js',
+  './src/render/mechMeshPrimitives41.js',
+  './src/render/mechVisual41.js',
+  './src/render/mech3d41.js',
+  './src/render/mech3dTuning41.js',
+  './src/ui/mechPreview41.js',
   './src/combat/polishCombat.js',
 ];
 self.addEventListener('install',(event)=>event.waitUntil(caches.open(CACHE).then((c)=>c.addAll(CORE)).then(()=>self.skipWaiting())));
