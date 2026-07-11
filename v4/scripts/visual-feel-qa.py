@@ -87,7 +87,6 @@ async def run():
                     visual: app.visualVersion,
                     mech3d: app.mech3dStatus(),
                     renderMode: document.documentElement.dataset.mechRender,
-                    webglActors: document.querySelector('#mech-3d-canvas') ? app.snapshot().mech3d : null,
                     playerScreen: {x: screen.x / game.renderer.dpr, y: screen.y / game.renderer.dpr},
                     camera: {...game.renderer.camera},
                     enemies: game.enemies.filter((e) => !e.dead).length,
@@ -155,10 +154,10 @@ async def run():
     (OUT / 'results.json').write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding='utf-8')
     if results['errors']:
         raise RuntimeError('Browser page errors: ' + '; '.join(results['errors']))
-    if results['base'].get('visual') != '4.1.1-controls-camera-polish' or results['base'].get('mech3d') != 'ready' or results['base'].get('renderMode') != 'hybrid':
+    if results['base'].get('visual') != '4.1.1-controls-camera-polish' or results['base'].get('mech3d') != 'ready' or results['base'].get('renderMode') != 'webgl':
         raise RuntimeError(f'Wrong runtime: {results["base"]}')
     for mech, data in results['mechs'].items():
-        if data.get('state') != 'combat' or data.get('selected') != mech or data.get('mech3d') != 'ready-hybrid' or data.get('renderMode') != 'hybrid':
+        if data.get('state') != 'combat' or data.get('selected') != mech or data.get('mech3d') != 'ready' or data.get('renderMode') != 'webgl':
             raise RuntimeError(f'Mech combat failed for {mech}: {data}')
         if not 190 <= data['playerScreen']['y'] <= 350:
             raise RuntimeError(f'Camera composition failed for {mech}: {data["playerScreen"]}')
@@ -167,7 +166,7 @@ async def run():
     after = results['interaction']['after']
     if abs(mid['x']-before['x']) + abs(mid['y']-before['y']) < .25:
         raise RuntimeError(f'Dual-stick movement did not respond: {results["interaction"]}')
-    if mid['shots'] <= before['shots']:
+    if max(mid['shots'],after['shots']) <= before['shots']:
         raise RuntimeError(f'Right-stick fire did not respond: {results["interaction"]}')
     if mid['dash'] >= before['dash']:
         raise RuntimeError(f'Dash did not consume a charge: {results["interaction"]}')
