@@ -1,6 +1,6 @@
 {
   "name": "mecha-marco-v4",
-  "version": "4.0.0-core-slice",
+  "version": "4.0.2-device-regression",
   "private": true,
   "type": "module",
   "scripts": {
