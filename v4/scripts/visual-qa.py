@@ -10,6 +10,10 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'qa-artifacts'
 PORT = 18745
 
+async def wait_webgl(page):
+    await page.wait_for_function("document.documentElement.dataset.mech3d === 'ready'", timeout=30000)
+    return await page.evaluate("() => ({status: globalThis.__MECHA_MARCO__?.mech3dStatus?.(), version: globalThis.__MECHA_3D_VERSION__, webgl: Boolean(document.querySelector('#mech-3d-canvas')?.getContext('webgl2') || document.querySelector('#mech-3d-canvas')?.getContext('webgl'))})")
+
 async def run():
     OUT.mkdir(exist_ok=True)
     chrome = os.environ.get('CHROME_BIN', '/usr/bin/google-chrome')
@@ -25,7 +29,7 @@ async def run():
             browser = await p.chromium.launch(
                 headless=True,
                 executable_path=chrome,
-                args=['--no-sandbox', '--disable-dev-shm-usage'],
+                args=['--no-sandbox', '--disable-dev-shm-usage', '--enable-unsafe-swiftshader'],
             )
             context = await browser.new_context(
                 viewport={'width': 956, 'height': 440},
@@ -36,9 +40,10 @@ async def run():
             )
             page = await context.new_page()
             page.on('pageerror', lambda exc: results['errors'].append(str(exc)))
-            base_url = f'http://127.0.0.1:{PORT}/?v=410'
+            base_url = f'http://127.0.0.1:{PORT}/?v=411'
 
             await page.goto(base_url, wait_until='networkidle')
+            webgl = await wait_webgl(page)
             await page.wait_for_selector('[data-mech="vanguard"]')
             await page.screenshot(path=OUT / 'base-956x440.png')
             results['base'] = await page.evaluate('''() => ({
@@ -53,9 +58,11 @@ async def run():
                 rect: node.getBoundingClientRect().toJSON(),
               })),
             })''')
+            results['base']['webgl'] = webgl
 
             for mech in ['vanguard', 'bulwark', 'starwing']:
                 await page.goto(base_url + '&mech=' + mech, wait_until='networkidle')
+                await wait_webgl(page)
                 await page.wait_for_selector(f'[data-mech="{mech}"]')
                 await page.click(f'[data-mech="{mech}"]')
                 await page.click('#start-run')
@@ -65,16 +72,18 @@ async def run():
                   return Math.max(0, game.run.graph.nodes[game.run.depth].choices.findIndex((choice) => choice.type === 'combat'));
                 }''')
                 await page.click(f'.route-card[data-index="{index}"]')
-                await page.wait_for_timeout(1400)
+                await page.wait_for_timeout(1800)
                 await page.screenshot(path=OUT / f'combat-{mech}-956x440.png')
                 results['combat'][mech] = await page.evaluate('''() => ({
                   state: globalThis.__MECHA_MARCO__?.game?.state,
                   selected: globalThis.__MECHA_MARCO__?.game?.selectedMech,
                   enemies: globalThis.__MECHA_MARCO__?.game?.enemies?.length,
                   visual: globalThis.__MECHA_MARCO__?.visualVersion,
+                  mech3d: globalThis.__MECHA_MARCO__?.mech3dStatus?.(),
+                  modelVersion: globalThis.__MECHA_3D_VERSION__,
                   canvas: {
-                    width: document.querySelector('canvas')?.width,
-                    height: document.querySelector('canvas')?.height,
+                    game: {width: document.querySelector('#game-canvas')?.width, height: document.querySelector('#game-canvas')?.height},
+                    mech: {width: document.querySelector('#mech-3d-canvas')?.width, height: document.querySelector('#mech-3d-canvas')?.height},
                   },
                   controls: [...document.querySelectorAll('.stick,.action-btn,.pause-btn')].map((node) => ({
                     className: node.className,
@@ -84,6 +93,7 @@ async def run():
 
             await page.set_viewport_size({'width': 844, 'height': 390})
             await page.goto(base_url + '&compact=1', wait_until='networkidle')
+            await wait_webgl(page)
             await page.wait_for_selector('.mech-grid')
             await page.screenshot(path=OUT / 'base-844x390.png')
             results['compact'] = await page.evaluate('''() => ({
@@ -92,6 +102,7 @@ async def run():
               panelScroll: document.querySelector('#panel')?.scrollTop,
               cards: [...document.querySelectorAll('[data-mech]')].map((node) => node.getBoundingClientRect().toJSON()),
               cta: document.querySelector('#start-run')?.getBoundingClientRect().toJSON(),
+              mech3d: globalThis.__MECHA_MARCO__?.mech3dStatus?.(),
             })''')
             await browser.close()
     finally:
@@ -103,8 +114,10 @@ async def run():
     (OUT / 'results.json').write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding='utf-8')
     if results['errors']:
         raise RuntimeError('Browser page errors: ' + '; '.join(results['errors']))
+    if results['base'].get('webgl', {}).get('status') != 'ready':
+        raise RuntimeError(f'WebGL renderer did not start: {results["base"].get("webgl")}')
     for mech, value in results['combat'].items():
-        if value.get('state') != 'combat' or value.get('selected') != mech:
+        if value.get('state') != 'combat' or value.get('selected') != mech or value.get('mech3d') != 'ready':
             raise RuntimeError(f'Combat verification failed for {mech}: {value}')
 
 if __name__ == '__main__':
