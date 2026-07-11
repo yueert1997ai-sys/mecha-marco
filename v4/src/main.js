@@ -1,6 +1,7 @@
 import { GameLoop } from './core/gameLoop.js';
 import { Renderer } from './render/renderer.js';
 import { applyRendererPolish } from './render/polishRenderer.js';
+import { applyMechVisual41 } from './render/mechVisual41.js';
 import { InputRouter } from './input/inputRouter.js';
 import { AppUI } from './ui/appUI.js';
 import { SynthAudio } from './audio/synthAudio.js';
@@ -10,6 +11,7 @@ import { PlayerMech } from './actors/player.js';
 import { applyCombatPolish } from './combat/polishCombat.js';
 
 applyRendererPolish(Renderer);
+applyMechVisual41(Renderer);
 applyCombatPolish({ Game, Enemy, PlayerMech });
 
 const canvas = document.getElementById('game-canvas');
@@ -37,6 +39,7 @@ if (!smokeMode && 'serviceWorker' in navigator && location.protocol.startsWith('
 
 globalThis.__MECHA_MARCO__ = {
   game,
+  visualVersion:'4.1.0-full-redesign',
   snapshot: () => ({
     state:game.state,
     depth:game.run?.depth ?? null,
