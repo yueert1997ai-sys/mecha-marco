@@ -39,7 +39,7 @@ test('3D tuning adds readable posture, lock feedback and low-cost mobile crowds'
   assert.match(sw,/mechLiteEnhance42\.js/);
 });
 
-test('top-down view uses one flat projection for arena, touch and actors',async()=>{
+test('top-down view uses one flat projection and upper-body mech silhouettes',async()=>{
   const camera=await read('src/render/topdownCamera.js');
   const pose=await read('src/render/topdownMechPose.js');
   const main=await read('src/main.js');
@@ -51,15 +51,20 @@ test('top-down view uses one flat projection for arena, touch and actors',async(
   assert.match(camera,/drawLayoutTopDown/);
   assert.doesNotMatch(camera,/shear/);
   assert.doesNotMatch(camera,/platformDepth/);
+  assert.match(pose,/LEG_MESH/);
+  assert.match(pose,/leg\.hip\.visible=false/);
+  assert.match(pose,/topDownSilhouette/);
+  assert.match(pose,/topdown-rear-deck/);
   assert.match(pose,/entry\.root\.rotation\.z=-aim-Math\.PI\*\.5/);
-  assert.match(pose,/entry\.root\.rotation\.x=\.08/);
+  assert.match(pose,/entry\.root\.rotation\.x=\.025/);
   assert.match(pose,/entry\.root\.rotation\.y=0/);
   assert.match(pose,/reticle\.scale\.y=reticle\.scale\.x/);
   assert.match(main,/applyTopDownCamera/);
   assert.match(main,/applyTopDownMechPose/);
   assert.match(main,/dataset\.combatView = 'topdown'/);
-  assert.match(main,/4\.1\.3-topdown-view/);
+  assert.match(main,/dataset\.mechSilhouette = 'upper-body'/);
+  assert.match(main,/4\.1\.4-topdown-silhouette/);
   assert.match(sw,/topdownCamera\.js/);
   assert.match(sw,/topdownMechPose\.js/);
-  assert.equal(version.trim(),'4.1.3-topdown-view');
+  assert.equal(version.trim(),'4.1.4-topdown-silhouette');
 });
