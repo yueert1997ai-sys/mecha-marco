@@ -15,9 +15,9 @@ export function applyMechPreview41(AppUI){
     this.panel.querySelectorAll('[data-mech]').forEach((card)=>{
       const id=card.dataset.mech,box=card.querySelector('.mech-emblem');
       if(!box)return;
-      box.className='mech-preview41';
+      box.className='mech-emblem mech-preview41';
       box.removeAttribute('style');
-      box.style.cssText='width:68px;height:68px;display:grid;place-items:center;border-radius:14px;background:linear-gradient(145deg,rgba(25,39,59,.96),rgba(5,11,23,.98));border:1px solid rgba(139,235,255,.34);box-shadow:inset 0 0 22px rgba(87,211,255,.08),0 0 20px rgba(54,179,255,.08);overflow:hidden';
+      box.style.cssText='display:grid;place-items:center;background:linear-gradient(145deg,rgba(25,39,59,.96),rgba(5,11,23,.98));border:1px solid rgba(139,235,255,.34);box-shadow:inset 0 0 22px rgba(87,211,255,.08),0 0 20px rgba(54,179,255,.08);overflow:hidden';
       box.innerHTML=SVG[id]||SVG.vanguard;
       const svg=box.querySelector('svg');if(svg)svg.style.cssText='width:92%;height:92%;filter:drop-shadow(0 0 5px rgba(117,235,255,.35))';
     });
