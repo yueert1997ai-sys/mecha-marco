@@ -14,11 +14,15 @@ export function tuneMech3DRenderer(instance){
 
   const shadowMaterial=new THREE.MeshBasicMaterial({color:0x02050b,transparent:true,opacity:.34,depthWrite:false});
   const shadowGeometry=new THREE.CircleGeometry(1,24);
+  const healthGeometry=new THREE.PlaneGeometry(1,1);
   const shadows=new Set();
+  const bars=new Set();
   const ensureName=typeof instance.ensureActor==='function'?'ensureActor':'ensure';
   const originalEnsure=instance[ensureName].bind(instance);
   instance[ensureName]=function ensureTuned(actor,isPlayer){
     const entry=originalEnsure(actor,isPlayer);
+    entry.actorRef=actor;
+    entry.isPlayer=isPlayer;
     if(!entry.root.userData.cameraTuned){
       entry.root.userData.cameraTuned=true;
       entry.root.rotation.order='ZXY';
@@ -45,6 +49,20 @@ export function tuneMech3DRenderer(instance){
       entry.contactShadow=shadow;
       shadows.add(shadow);
     }
+    if(!isPlayer&&!entry.healthBar){
+      const group=new THREE.Group();
+      const background=new THREE.Mesh(healthGeometry,new THREE.MeshBasicMaterial({color:0x040914,transparent:true,opacity:.86,depthTest:false,depthWrite:false}));
+      const fillColor=actor.boss?0xff3e8b:actor.elite?0xff9f48:0xff6175;
+      const fill=new THREE.Mesh(healthGeometry,new THREE.MeshBasicMaterial({color:fillColor,transparent:true,opacity:.96,depthTest:false,depthWrite:false}));
+      background.renderOrder=20;
+      fill.renderOrder=21;
+      fill.position.z=.2;
+      group.add(background,fill);
+      group.position.z=45;
+      instance.scene.add(group);
+      entry.healthBar={group,background,fill};
+      bars.add(group);
+    }
     return entry;
   };
 
@@ -55,6 +73,7 @@ export function tuneMech3DRenderer(instance){
     instance.renderer.render=()=>{};
     try{originalRender(world)}finally{instance.renderer.render=liveDraw}
     const liveShadows=new Set();
+    const liveBars=new Set();
     for(const entry of instance.actors.values()){
       const designId=entry.root.userData.design.id;
       const player=['vanguard','bulwark','starwing'].includes(designId);
@@ -67,12 +86,32 @@ export function tuneMech3DRenderer(instance){
         entry.contactShadow.material.opacity=player?.32:.26;
         liveShadows.add(entry.contactShadow);
       }
+      if(entry.healthBar&&entry.actorRef){
+        const actor=entry.actorRef;
+        const ratio=Math.max(0,Math.min(1,actor.hp/Math.max(1,actor.maxHp)));
+        const width=actor.boss?72:actor.elite?48:38;
+        const height=actor.boss?5:3.5;
+        const group=entry.healthBar.group;
+        group.visible=!actor.dead;
+        group.position.x=entry.root.position.x;
+        group.position.y=entry.root.position.y+(actor.boss?54:40);
+        group.scale.set(width,height,1);
+        entry.healthBar.fill.scale.x=ratio;
+        entry.healthBar.fill.position.x=-(1-ratio)*.5;
+        liveBars.add(group);
+      }
     }
     for(const shadow of [...shadows]){
       if(liveShadows.has(shadow))continue;
       instance.scene.remove(shadow);
       shadow.material.dispose();
       shadows.delete(shadow);
+    }
+    for(const bar of [...bars]){
+      if(liveBars.has(bar))continue;
+      instance.scene.remove(bar);
+      for(const child of bar.children)child.material.dispose();
+      bars.delete(bar);
     }
     draw(instance.scene,instance.camera);
   };
