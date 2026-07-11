@@ -70,6 +70,9 @@ function selectTarget(world){
 export function tuneMech3DRenderer(instance){
   if(!instance||instance.__cameraTuned)return instance;
   instance.__cameraTuned=true;
+  const coarse=matchMedia('(pointer:coarse)').matches||navigator.maxTouchPoints>0;
+  instance.renderer.setPixelRatio(Math.min(devicePixelRatio||1,coarse?1.15:1.5));
+  instance.resize();
   instance.renderer.toneMappingExposure=.68;
   for(const light of instance.scene.children){
     if(light.isHemisphereLight)light.intensity=.68;
@@ -80,7 +83,7 @@ export function tuneMech3DRenderer(instance){
   }
 
   const shadowMaterial=new THREE.MeshBasicMaterial({color:0x02050b,transparent:true,opacity:.38,depthWrite:false});
-  const shadowGeometry=new THREE.CircleGeometry(1,28);
+  const shadowGeometry=new THREE.CircleGeometry(1,24);
   const healthGeometry=new THREE.PlaneGeometry(1,1);
   const shadows=new Set();
   const bars=new Set();
@@ -94,8 +97,8 @@ export function tuneMech3DRenderer(instance){
     if(!entry.root.userData.cameraTuned){
       entry.root.userData.cameraTuned=true;
       entry.root.rotation.order='ZXY';
-      entry.root.rotation.x=isPlayer?.5:.56;
-      entry.root.rotation.y=-.08;
+      entry.root.rotation.x=isPlayer?.48:.54;
+      entry.root.rotation.y=-.12;
       entry.root.traverse((node)=>{
         if(!node.material)return;
         const materials=Array.isArray(node.material)?node.material:[node.material];
@@ -107,12 +110,12 @@ export function tuneMech3DRenderer(instance){
             material.flatShading=true;
             material.needsUpdate=true;
           }else if(material.isLineBasicMaterial){
-            material.color.set(0x0a111c);
-            material.opacity=.9;
+            if(!isPlayer&&!actor.elite&&!actor.boss)node.visible=false;
+            else{material.color.set(0x0a111c);material.opacity=.9}
           }
         }
       });
-      addMechanicalDetails(entry);
+      if(isPlayer||actor.elite||actor.boss)addMechanicalDetails(entry);
       const shadow=new THREE.Mesh(shadowGeometry,shadowMaterial.clone());
       shadow.renderOrder=-5;
       shadow.position.z=-30;
@@ -144,7 +147,7 @@ export function tuneMech3DRenderer(instance){
       const actor=entry.actorRef;
       const designId=entry.root.userData.design.id;
       const player=['vanguard','bulwark','starwing'].includes(designId);
-      entry.root.scale.multiplyScalar(player?.76:.66);
+      entry.root.scale.multiplyScalar(player?.75:.63);
       if(actor){
         const speed=clamp(Math.hypot(actor.vx||0,actor.vy||0)/Math.max(1,actor.stats?.moveSpeed||actor.def?.speed||6));
         const moveAngle=speed>.02?Math.atan2(actor.vy||0,actor.vx||0):(actor.aim||0);
@@ -152,11 +155,11 @@ export function tuneMech3DRenderer(instance){
         const side=Math.sin(relative)*speed;
         const forward=Math.cos(relative)*speed;
         const dash=actor.dashTimer>0?1:0;
-        entry.root.rotation.x=(player?.5:.56)+forward*.07+dash*.09;
-        entry.root.rotation.y=-.08-side*.18;
+        entry.root.rotation.x=(player?.48:.54)+forward*.06+dash*.08;
+        entry.root.rotation.y=-.12-side*.14;
         const parts=entry.root.userData.parts;
-        if(parts?.torso)parts.torso.rotation.z=-side*.055;
-        if(parts?.head)parts.head.rotation.z=side*.045;
+        if(parts?.torso)parts.torso.rotation.z=-side*.05;
+        if(parts?.head)parts.head.rotation.z=side*.04;
         for(const arm of parts?.arms||[]){
           const recoil=actor.primaryKick||0;
           if(arm.side>0)arm.shoulder.rotation.z+=-.12-recoil*.08;
