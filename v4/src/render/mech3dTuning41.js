@@ -39,7 +39,7 @@ function addMechanicalDetails(entry){
 function buildTargetReticle(scene){
   const group=new THREE.Group();
   const material=new THREE.MeshBasicMaterial({color:0x84f5ff,transparent:true,opacity:.82,depthTest:false,depthWrite:false,blending:THREE.AdditiveBlending});
-  const ring=new THREE.Mesh(new THREE.RingGeometry(.78,1,36),material);
+  const ring=new THREE.Mesh(new THREE.RingGeometry(.78,1,20),material);
   group.add(ring);
   const barGeometry=new THREE.PlaneGeometry(.42,.055);
   for(let i=0;i<4;i+=1){
@@ -71,7 +71,7 @@ export function tuneMech3DRenderer(instance){
   if(!instance||instance.__cameraTuned)return instance;
   instance.__cameraTuned=true;
   const coarse=matchMedia('(pointer:coarse)').matches||navigator.maxTouchPoints>0;
-  instance.renderer.setPixelRatio(Math.min(devicePixelRatio||1,coarse?1.15:1.5));
+  instance.renderer.setPixelRatio(Math.min(devicePixelRatio||1,coarse?1:1.5));
   instance.resize();
   instance.renderer.toneMappingExposure=.68;
   for(const light of instance.scene.children){
@@ -83,7 +83,7 @@ export function tuneMech3DRenderer(instance){
   }
 
   const shadowMaterial=new THREE.MeshBasicMaterial({color:0x02050b,transparent:true,opacity:.38,depthWrite:false});
-  const shadowGeometry=new THREE.CircleGeometry(1,24);
+  const shadowGeometry=new THREE.CircleGeometry(1,20);
   const healthGeometry=new THREE.PlaneGeometry(1,1);
   const shadows=new Set();
   const bars=new Set();
@@ -110,12 +110,12 @@ export function tuneMech3DRenderer(instance){
             material.flatShading=true;
             material.needsUpdate=true;
           }else if(material.isLineBasicMaterial){
-            if(!isPlayer&&!actor.elite&&!actor.boss)node.visible=false;
-            else{material.color.set(0x0a111c);material.opacity=.9}
+            material.color.set(0x0a111c);
+            material.opacity=.9;
           }
         }
       });
-      if(isPlayer||actor.elite||actor.boss)addMechanicalDetails(entry);
+      addMechanicalDetails(entry);
       const shadow=new THREE.Mesh(shadowGeometry,shadowMaterial.clone());
       shadow.renderOrder=-5;
       shadow.position.z=-30;
@@ -140,7 +140,8 @@ export function tuneMech3DRenderer(instance){
   instance.render=function renderTuned(world){
     const liveDraw=instance.renderer.render;
     instance.renderer.render=()=>{};
-    try{originalRender(world)}finally{instance.renderer.render=liveDraw}
+    const webglWorld={...world,enemies:(world.enemies||[]).filter((enemy)=>enemy.elite||enemy.boss)};
+    try{originalRender(webglWorld)}finally{instance.renderer.render=liveDraw}
     const liveShadows=new Set();
     const liveBars=new Set();
     for(const entry of instance.actors.values()){
@@ -176,7 +177,7 @@ export function tuneMech3DRenderer(instance){
       }
       if(entry.healthBar&&actor){
         const ratio=clamp(actor.hp/Math.max(1,actor.maxHp));
-        const width=actor.boss?72:actor.elite?48:38;
+        const width=actor.boss?72:48;
         const height=actor.boss?5:3.5;
         const group=entry.healthBar.group;
         group.visible=!actor.dead;
