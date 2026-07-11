@@ -39,7 +39,7 @@ test('3D tuning adds readable posture, lock feedback and low-cost mobile crowds'
   assert.match(sw,/mechLiteEnhance42\.js/);
 });
 
-test('top-down view uses one flat projection and upper-body mech silhouettes',async()=>{
+test('top-down view keeps upper-body silhouettes while 4.1.5 adds visual loadouts',async()=>{
   const camera=await read('src/render/topdownCamera.js');
   const pose=await read('src/render/topdownMechPose.js');
   const main=await read('src/main.js');
@@ -61,10 +61,12 @@ test('top-down view uses one flat projection and upper-body mech silhouettes',as
   assert.match(pose,/reticle\.scale\.y=reticle\.scale\.x/);
   assert.match(main,/applyTopDownCamera/);
   assert.match(main,/applyTopDownMechPose/);
+  assert.match(main,/enhanceLoadoutVisual415/);
   assert.match(main,/dataset\.combatView = 'topdown'/);
   assert.match(main,/dataset\.mechSilhouette = 'upper-body'/);
-  assert.match(main,/4\.1\.4-topdown-silhouette/);
+  assert.match(main,/4\.1\.5-visual-loadout-pass/);
   assert.match(sw,/topdownCamera\.js/);
   assert.match(sw,/topdownMechPose\.js/);
-  assert.equal(version.trim(),'4.1.4-topdown-silhouette');
+  assert.match(sw,/loadoutVisual415\.js/);
+  assert.equal(version.trim(),'4.1.5-visual-loadout-pass');
 });
