@@ -56,6 +56,7 @@ async def transition(page,current):
 
 async def main():
     errors=[]
+    network_errors=[]
     metrics={'visited':[],'transitions':[]}
     async with async_playwright() as p:
         browser=await p.chromium.launch(executable_path=CHROME,args=['--no-sandbox','--enable-unsafe-swiftshader','--disable-dev-shm-usage'])
@@ -68,7 +69,8 @@ async def main():
         )
         page=await context.new_page()
         page.on('pageerror',lambda error: errors.append(f'pageerror:{error}'))
-        page.on('console',lambda msg: errors.append(f'console:{msg.text}') if msg.type=='error' else None)
+        page.on('console',lambda msg: errors.append(f'console:{msg.text}') if msg.type=='error' and 'Failed to load resource' not in msg.text else None)
+        page.on('response',lambda response: network_errors.append(f'{response.status}:{response.url}') if response.status>=400 and not response.url.endswith(('favicon.ico','apple-touch-icon.png','apple-touch-icon-precomposed.png')) else None)
         await page.goto(BASE_URL,wait_until='networkidle',timeout=30000)
         await page.wait_for_function("() => window.__MECHA_MARCO__ && window.__MECHA_MARCO__.mech3dStatus() === 'ready'",timeout=20000)
         await page.screenshot(path=str(OUT/'00-base.png'))
@@ -131,6 +133,7 @@ async def main():
         assert 'WENHAO MA' in report
         assert 'MA-00' in report
         assert '人格匹配率' in report
+        assert not await page.locator('#toast').evaluate("el => el.classList.contains('show')")
         run=await page.evaluate("window.__MECHA_MARCO__.game.run")
         assert run['routeFlags']['dock']=='arsenal'
         assert run['routeFlags']['tomb']=='archive'
@@ -138,9 +141,10 @@ async def main():
         assert run['roomsCleared']==12
         metrics['final']={'roomsCleared':run['roomsCleared'],'routes':run['routeFlags'],'recognition':run['recognitionCount'],'archives':run['archiveFragments']}
         metrics['errors']=errors
+        metrics['networkErrors']=network_errors
         (OUT/'metrics.json').write_text(json.dumps(metrics,ensure_ascii=False,indent=2),encoding='utf-8')
-        if errors:
-            raise AssertionError('\n'.join(errors))
+        if errors or network_errors:
+            raise AssertionError('\n'.join(errors+network_errors))
         await browser.close()
 
 if __name__=='__main__':
