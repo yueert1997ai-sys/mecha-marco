@@ -1,4 +1,4 @@
-const CACHE='mecha-marco-v4-20260711-hades25d-r1';
+const CACHE='mecha-marco-v4-20260711-topdown-r1';
 const CORE=[
   './',
   './index.html',
@@ -14,8 +14,8 @@ const CORE=[
   './src/render/mech3d41.js',
   './src/render/mech3dTuning41.js',
   './src/render/mechLiteEnhance42.js',
-  './src/render/hades25dCamera.js',
-  './src/render/hades25dMechPose.js',
+  './src/render/topdownCamera.js',
+  './src/render/topdownMechPose.js',
   './src/ui/mechPreview41.js',
   './src/combat/polishCombat.js',
   './src/combat/mobileFeel42.js',
