@@ -1,0 +1,58 @@
+name: Verify Live V4.1.1 Controls Camera
+
+on:
+  push:
+    branches: [qa/v411-postmerge-live]
+
+permissions:
+  contents: read
+
+jobs:
+  live-v411:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for exact 4.1.1 deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://yueert1997ai-sys.github.io/mecha-marco/v4'
+          ok=0
+          for i in {1..48}; do
+            version="$(curl -fsS "$base/VERSION?deploy=411" || true)"
+            main="$(curl -fsS "$base/src/main.js?deploy=411" || true)"
+            feel="$(curl -fsS "$base/src/combat/mobileFeel42.js?deploy=411" || true)"
+            tuning="$(curl -fsS "$base/src/render/mech3dTuning41.js?deploy=411" || true)"
+            enhance="$(curl -fsS "$base/src/render/mechLiteEnhance42.js?deploy=411" || true)"
+            sw="$(curl -fsS "$base/sw.js?deploy=411" || true)"
+            if grep -q '4.1.1-controls-camera-polish' <<<"$version" \
+              && grep -q "visualVersion:'4.1.1-controls-camera-polish'" <<<"$main" \
+              && grep -q 'resetInsideArena' <<<"$feel" \
+              && grep -q 'updateBoostFire' <<<"$feel" \
+              && grep -q 'buildLiteEnemy' <<<"$tuning" \
+              && grep -q 'coarse?.9:1.5' <<<"$tuning" \
+              && grep -q 'liteEnemyEnhanced' <<<"$enhance" \
+              && grep -q 'controls-camera-r5' <<<"$sw"; then
+              ok=1
+              break
+            fi
+            sleep 5
+          done
+          test "$ok" = 1
+      - name: Verify live WebGL runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          chrome="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          test -n "$chrome"
+          "$chrome" --headless=new --no-sandbox --enable-unsafe-swiftshader --disable-dev-shm-usage --virtual-time-budget=15000 --dump-dom 'https://yueert1997ai-sys.github.io/mecha-marco/v4/?smoke=1&deploy=411' >/tmp/v411-live.html
+          grep -q 'data-smoke-ready="true"' /tmp/v411-live.html
+          grep -q 'data-mech3d="ready"' /tmp/v411-live.html
+          grep -q 'data-mech-render="webgl"' /tmp/v411-live.html
+          grep -q 'id="mech-3d-canvas"' /tmp/v411-live.html
+      - name: Verify exact live assets
+        run: |
+          base='https://yueert1997ai-sys.github.io/mecha-marco/v4'
+          curl -fsS "$base/VERSION?final=411" | grep -q '4.1.1-controls-camera-polish'
+          curl -fsS "$base/src/render/mechLiteEnhance42.js?final=411" | grep -q 'parts.arms.push'
+          curl -fsS "$base/docs/QA_REPORT_4.0.md?final=411" | grep -q '39.35ms'
