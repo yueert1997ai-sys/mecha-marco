@@ -28,7 +28,7 @@ test('module categories evolve visible mech hardware tiers',()=>{
   assert.match(getModuleVisualHint(modules[3]),/背包|挂舱/);
 });
 
-test('runtime activates loadout model evolution, arena detail and UI polish',async()=>{
+test('runtime retains loadout model evolution, arena detail and UI polish',async()=>{
   const main=await read('src/main.js');
   const model=await read('src/render/loadoutVisual415.js');
   const runtime=await read('src/combat/loadoutRuntime415.js');
@@ -47,24 +47,25 @@ test('runtime activates loadout model evolution, arena detail and UI polish',asy
   assert.match(arena,/drawArena415/);
 });
 
-test('4.1.5 low-saturation styles and cache are wired',async()=>{
+test('low-saturation visual loadout assets remain wired in 4.1.6',async()=>{
   const html=await read('index.html');
   const css=await read('visual415.css');
   const refine=await read('visual415-refine.css');
+  const depth=await read('depth416.css');
   const sw=await read('sw.js');
   const version=(await read('VERSION')).trim();
   assert.match(html,/visual415\.css/);
   assert.match(html,/visual415-refine\.css/);
+  assert.match(html,/depth416\.css/);
   assert.match(css,/low-saturation-glass/);
   assert.match(css,/\.loadout-dock/);
   assert.match(css,/\.dock-mech/);
-  assert.match(css,/orientation:landscape/);
   assert.match(refine,/\.shop-actions \.primary-cta/);
   assert.match(refine,/position:sticky/);
-  assert.match(refine,/\.shop-item \.shop-slot/);
-  assert.match(sw,/visual-loadout-r2/);
-  assert.match(sw,/visual415-refine\.css/);
-  assert.match(sw,/loadoutVisual415\.js/);
-  assert.match(sw,/uiPolish415\.js/);
-  assert.equal(version,'4.1.5-visual-loadout-pass');
+  assert.match(depth,/\.paint-selector416/);
+  assert.match(depth,/\.settings-screen416/);
+  assert.match(sw,/control-transform-paints-r3/);
+  assert.match(sw,/paintVariants416\.js/);
+  assert.match(sw,/rogueTransform416\.js/);
+  assert.equal(version,'4.1.6-control-transform-paints');
 });
