@@ -1,6 +1,6 @@
 {
   "name": "mecha-marco-v4",
-  "version": "4.1.5-visual-loadout-pass",
+  "version": "4.1.6-control-transform-paints",
   "private": true,
   "type": "module",
   "scripts": {
