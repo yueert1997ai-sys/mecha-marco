@@ -1,0 +1,1 @@
+Validate Pages live smoke after enabling push-to-main trigger.
