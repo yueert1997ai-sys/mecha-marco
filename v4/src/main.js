@@ -13,6 +13,11 @@ import { applyCombatPolish } from './combat/polishCombat.js';
 
 applyRendererPolish(Renderer);
 applyMechVisual41(Renderer);
+const drawCanvasMechFallback = Renderer.prototype.drawMech;
+Renderer.prototype.drawMech = function drawMechWithWebGLFallback(...args) {
+  if (globalThis.__MECH_3D_READY__) return;
+  return drawCanvasMechFallback.apply(this, args);
+};
 applyMechPreview41(AppUI);
 applyCombatPolish({ Game, Enemy, PlayerMech });
 
