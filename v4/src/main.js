@@ -17,12 +17,8 @@ applyRendererPolish(Renderer);
 applyMechVisual41(Renderer);
 applyMobileFeel42({ InputRouter, PlayerMech, Renderer });
 const drawCanvasMechFallback = Renderer.prototype.drawMech;
-Renderer.prototype.drawMech = function drawMechWithHybridRenderer(...args) {
-  const [actor,isPlayer] = args;
-  if (globalThis.__MECH_3D_READY__) {
-    if (!isPlayer && !actor?.elite && !actor?.boss) return drawCanvasMechFallback.apply(this, args);
-    return;
-  }
+Renderer.prototype.drawMech = function drawMechWithWebGLFallback(...args) {
+  if (globalThis.__MECH_3D_READY__) return;
   return drawCanvasMechFallback.apply(this, args);
 };
 applyMechPreview41(AppUI);
@@ -43,9 +39,9 @@ try {
   const { createMech3DRenderer } = await import('./render/mech3d41.js');
   mech3d = tuneMech3DRenderer(await createMech3DRenderer(mechCanvas, renderer));
   globalThis.__MECH_3D_READY__ = true;
-  mech3dStatus = 'ready-hybrid';
+  mech3dStatus = 'ready';
   document.documentElement.dataset.mech3d = 'ready';
-  document.documentElement.dataset.mechRender = 'hybrid';
+  document.documentElement.dataset.mechRender = 'webgl';
 } catch (error) {
   globalThis.__MECH_3D_READY__ = false;
   mech3dStatus = 'fallback';
