@@ -1,0 +1,50 @@
+name: Export V4.1 WebGL Tuned QA
+
+on:
+  push:
+    branches: [qa/v41-webgl-tuned]
+  pull_request:
+    branches: [feat/v4-1-full-mech-redesign]
+
+permissions:
+  contents: read
+
+jobs:
+  visual-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify redesigned runtime
+        run: |
+          cd v4
+          npm run syntax
+          npm test
+      - name: Install browser QA dependency
+        run: python3 -m pip install --user playwright
+      - name: Locate Chrome
+        run: |
+          chrome="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          echo "CHROME_BIN=$chrome" >> "$GITHUB_ENV"
+      - name: Verify pinned Three.js module
+        run: |
+          curl -fsS 'https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.module.js' -o /tmp/three.module.js
+          test -s /tmp/three.module.js
+      - name: Run WebGL browser interaction and screenshots
+        id: visualqa
+        continue-on-error: true
+        shell: bash
+        run: |
+          mkdir -p v4/qa-artifacts
+          set -o pipefail
+          python3 v4/scripts/visual-qa.py 2>&1 | tee v4/qa-artifacts/run.log
+      - name: Upload visual QA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mecha-marco-v41-webgl-tuned-qa
+          path: v4/qa-artifacts
+          if-no-files-found: error
+          retention-days: 1
+      - name: Fail when WebGL QA failed
+        if: steps.visualqa.outcome != 'success'
+        run: exit 1
