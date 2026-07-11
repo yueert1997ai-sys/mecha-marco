@@ -1,0 +1,1 @@
+Trigger PR verification for PWA fallback hardening and live Pages smoke.
