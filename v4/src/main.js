@@ -1,9 +1,16 @@
 import { GameLoop } from './core/gameLoop.js';
 import { Renderer } from './render/renderer.js';
+import { applyRendererPolish } from './render/polishRenderer.js';
 import { InputRouter } from './input/inputRouter.js';
 import { AppUI } from './ui/appUI.js';
 import { SynthAudio } from './audio/synthAudio.js';
 import { Game } from './game.js';
+import { Enemy } from './actors/enemy.js';
+import { PlayerMech } from './actors/player.js';
+import { applyCombatPolish } from './combat/polishCombat.js';
+
+applyRendererPolish(Renderer);
+applyCombatPolish({ Game, Enemy, PlayerMech });
 
 const canvas = document.getElementById('game-canvas');
 const touchRoot = document.getElementById('touch-controls');
