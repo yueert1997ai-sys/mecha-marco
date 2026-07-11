@@ -19,10 +19,25 @@ jobs:
           cd v4
           npm run syntax
           npm test
+      - name: Install browser QA dependency
+        run: python3 -m pip install --user playwright
+      - name: Locate Chrome
+        run: |
+          chrome="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          echo "CHROME_BIN=$chrome" >> "$GITHUB_ENV"
+      - name: Run real browser interaction and screenshots
+        run: python3 v4/scripts/visual-qa.py
       - name: Upload runtime
         uses: actions/upload-artifact@v4
         with:
           name: mecha-marco-v41-runtime
           path: v4
+          if-no-files-found: error
+          retention-days: 1
+      - name: Upload visual QA
+        uses: actions/upload-artifact@v4
+        with:
+          name: mecha-marco-v41-visual-qa
+          path: v4/qa-artifacts
           if-no-files-found: error
           retention-days: 1
