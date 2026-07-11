@@ -26,16 +26,22 @@ jobs:
           test -s v4/styles.css
           test -s v4/iphone17.css
           test -s v4/mech3d41.css
+          test -s v4/visual415.css
           test -s v4/manifest.webmanifest
           test -s v4/sw.js
           test -s v4/src/main.js
           test -s v4/src/game.js
+          test -s v4/src/meta/loadoutProfile.js
           test -s v4/src/render/mechDesigns41.js
           test -s v4/src/render/mechMeshPrimitives41.js
           test -s v4/src/render/mechVisual41.js
           test -s v4/src/render/mech3d41.js
           test -s v4/src/render/mech3dTuning41.js
+          test -s v4/src/render/loadoutVisual415.js
+          test -s v4/src/render/arenaDetail415.js
           test -s v4/src/ui/mechPreview41.js
+          test -s v4/src/ui/uiPolish415.js
+          test -s v4/src/combat/loadoutRuntime415.js
           test -s docs/HADES_ARCHITECTURE_4.0.md
           test -s v4/docs/QA_REPORT_4.0.md
           test -s styles.css
@@ -54,6 +60,7 @@ jobs:
           grep -q '../loader.js' v3/index.html
           grep -q './src/main.js' v4/index.html
           grep -q './manifest.webmanifest' v4/index.html
+          grep -q './visual415.css' v4/index.html
           grep -q 'id="mech-3d-canvas"' v4/index.html
           grep -q 'three@0.149.0' v4/index.html
 
@@ -90,7 +97,7 @@ jobs:
           done
           grep -q './v4/' /tmp/root.html
           curl -fsS http://127.0.0.1:4173/v3/ | grep -q 'v3.2'
-          curl -fsS http://127.0.0.1:4173/v4/ | grep -q '天穹断刃 4.1'
+          curl -fsS http://127.0.0.1:4173/v4/ | grep -q '天穹断刃 4.1.5'
           curl -fsS 'https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.module.js' -o /tmp/three.module.js
           test -s /tmp/three.module.js
           chrome="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
@@ -98,10 +105,11 @@ jobs:
           "$chrome" --headless=new --no-sandbox --enable-unsafe-swiftshader --disable-dev-shm-usage --virtual-time-budget=12000 --dump-dom 'http://127.0.0.1:4173/v4/?smoke' >/tmp/v4-dom.html
           grep -q 'data-smoke-ready="true"' /tmp/v4-dom.html
           grep -q 'data-mech3d="ready"' /tmp/v4-dom.html
+          grep -q 'data-ui-style="low-saturation-glass"' /tmp/v4-dom.html
           grep -q 'id="game-canvas"' /tmp/v4-dom.html
           grep -q 'id="mech-3d-canvas"' /tmp/v4-dom.html
           grep -q 'id="panel"' /tmp/v4-dom.html
-          grep -q 'V4.1 FULL MECH REDESIGN' /tmp/v4-dom.html
+          grep -q 'V4.1.5 VISUAL LOADOUT' /tmp/v4-dom.html
           grep -q 'mech-preview41' /tmp/v4-dom.html
 
       - name: Build summary
@@ -111,4 +119,4 @@ jobs:
           printf 'Legacy v3 HTML bytes: '; wc -c < v3/index.html
           printf 'V4 HTML bytes: '; wc -c < v4/index.html
           printf 'V4 source bytes: '; find v4/src -type f -name '*.js' -print0 | xargs -0 cat | wc -c
-          echo 'Root routing, legacy fallback, WebGL mechs and browser verification passed.'
+          echo 'Root routing, legacy fallback, WebGL loadout evolution and browser verification passed.'
