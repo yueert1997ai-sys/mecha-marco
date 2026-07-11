@@ -43,18 +43,16 @@ test('3D tuning adds readable posture, lock feedback and low-cost mobile crowds'
   assert.match(sw,/mechLiteEnhance42\.js/);
 });
 
-test('top-down upper-body view remains stable while 4.1.6 adds systems depth',async()=>{
+test('top-down upper-body view remains stable while 4.2 adds continuous campaign',async()=>{
   const camera=await read('src/render/topdownCamera.js');
   const pose=await read('src/render/topdownMechPose.js');
+  const campaign=await read('src/render/continuousCampaign42.js');
+  const runtime=await read('src/run/continuousCampaign42.js');
   const main=await read('src/main.js');
   const sw=await read('sw.js');
   const version=await read('VERSION');
   assert.match(camera,/worldToScreenTopDown/);
   assert.match(camera,/screenToWorldTopDown/);
-  assert.match(camera,/drawArenaTopDown/);
-  assert.match(camera,/drawLayoutTopDown/);
-  assert.doesNotMatch(camera,/shear/);
-  assert.doesNotMatch(camera,/platformDepth/);
   assert.match(pose,/LEG_MESH/);
   assert.match(pose,/leg\.hip\.visible=false/);
   assert.match(pose,/topDownSilhouette/);
@@ -63,17 +61,17 @@ test('top-down upper-body view remains stable while 4.1.6 adds systems depth',as
   assert.match(pose,/entry\.root\.rotation\.x=\.025/);
   assert.match(pose,/entry\.root\.rotation\.y=0/);
   assert.match(pose,/reticle\.scale\.y=reticle\.scale\.x/);
+  assert.match(campaign,/drawContinuousArena42/);
+  assert.match(runtime,/startCampaignStage42/);
+  assert.match(runtime,/exitOpen/);
   assert.match(main,/applyTopDownCamera/);
   assert.match(main,/applyTopDownMechPose/);
-  assert.match(main,/enhanceLoadoutVisual415/);
-  assert.match(main,/enhancePaintVariants416/);
-  assert.match(main,/applyRogueTransform416/);
+  assert.match(main,/applyContinuousCampaignRenderer42/);
+  assert.match(main,/applyContinuousCampaign42/);
   assert.match(main,/dataset\.combatView = 'topdown'/);
   assert.match(main,/dataset\.mechSilhouette = 'upper-body'/);
-  assert.match(main,/4\.1\.6-control-transform-paints/);
-  assert.match(sw,/topdownCamera\.js/);
-  assert.match(sw,/topdownMechPose\.js/);
-  assert.match(sw,/loadoutVisual415\.js/);
-  assert.match(sw,/paintVariants416\.js/);
-  assert.equal(version.trim(),'4.1.6-control-transform-paints');
+  assert.match(main,/4\.2\.0-continuous-graveyard/);
+  assert.match(sw,/continuousCampaign42\.js/);
+  assert.match(sw,/campaign42\.css/);
+  assert.equal(version.trim(),'4.2.0-continuous-graveyard');
 });

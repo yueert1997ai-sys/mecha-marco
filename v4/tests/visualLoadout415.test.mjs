@@ -47,16 +47,18 @@ test('runtime retains loadout model evolution, arena detail and UI polish',async
   assert.match(arena,/drawArena415/);
 });
 
-test('low-saturation visual loadout assets remain wired in 4.1.6',async()=>{
+test('low-saturation loadout assets remain wired in continuous campaign',async()=>{
   const html=await read('index.html');
   const css=await read('visual415.css');
   const refine=await read('visual415-refine.css');
   const depth=await read('depth416.css');
+  const campaign=await read('campaign42.css');
   const sw=await read('sw.js');
   const version=(await read('VERSION')).trim();
   assert.match(html,/visual415\.css/);
   assert.match(html,/visual415-refine\.css/);
   assert.match(html,/depth416\.css/);
+  assert.match(html,/campaign42\.css/);
   assert.match(css,/low-saturation-glass/);
   assert.match(css,/\.loadout-dock/);
   assert.match(css,/\.dock-mech/);
@@ -64,8 +66,12 @@ test('low-saturation visual loadout assets remain wired in 4.1.6',async()=>{
   assert.match(refine,/position:sticky/);
   assert.match(depth,/\.paint-selector416/);
   assert.match(depth,/\.settings-screen416/);
-  assert.match(sw,/control-transform-paints-r3/);
+  assert.match(campaign,/\.campaign-progress42/);
+  assert.match(campaign,/\.campaign-comms42/);
+  assert.match(sw,/continuous-graveyard-r2/);
   assert.match(sw,/paintVariants416\.js/);
   assert.match(sw,/rogueTransform416\.js/);
-  assert.equal(version,'4.1.6-control-transform-paints');
+  assert.match(sw,/regionOrbitalGraveyard42\.js/);
+  assert.match(sw,/continuousCampaignPolish42\.js/);
+  assert.equal(version,'4.2.0-continuous-graveyard');
 });

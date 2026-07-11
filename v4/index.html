@@ -7,7 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="天穹断刃">
-  <title>天穹断刃 4.1.6 · Mecha Marco</title>
+  <title>天穹断刃 4.2.0 · Mecha Marco</title>
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icon.svg">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="stylesheet" href="./styles.css">
   <link rel="stylesheet" href="./iphone17.css">
@@ -15,6 +17,7 @@
   <link rel="stylesheet" href="./visual415.css">
   <link rel="stylesheet" href="./visual415-refine.css">
   <link rel="stylesheet" href="./depth416.css">
+  <link rel="stylesheet" href="./campaign42.css">
   <script type="importmap">
   {
     "imports": {
@@ -26,22 +29,18 @@
 <body>
   <main id="app">
     <canvas id="game-canvas" aria-label="天穹断刃战斗画面"></canvas>
-    <canvas id="mech-3d-canvas" aria-label="4.1 WebGL 机体显示层"></canvas>
-
+    <canvas id="mech-3d-canvas" aria-label="4.2 WebGL 机体显示层"></canvas>
     <section id="hud" class="hud hidden" aria-live="polite">
       <div class="hud-top-left">
         <div class="meter hp-meter"><div id="hp-fill"></div><span id="hp-text">120 / 120</span></div>
         <div class="meter overdrive-meter"><div id="overdrive-fill"></div><span>OVERDRIVE</span></div>
       </div>
-      <div class="hud-top-center"><strong id="room-label">DEPTH 1</strong><div id="module-strip" class="module-strip"></div></div>
+      <div class="hud-top-center"><strong id="room-label">OG-01</strong><div id="module-strip" class="module-strip"></div></div>
       <div class="hud-top-right" id="credits-label">● 0　◆ 0</div>
       <div id="boss-bar" class="boss-bar hidden"><span id="boss-name">守墓者·阿尔法</span><div><i id="boss-fill"></i></div></div>
     </section>
-
     <div id="toast" class="toast"></div>
-
     <section id="overlay" class="overlay show"><div id="panel" class="panel"></div></section>
-
     <section id="touch-controls" class="touch-controls hidden" aria-label="触控操作">
       <div class="stick move-stick" data-stick="move"><div class="stick-ring"></div><div class="stick-knob"></div><span>移动</span></div>
       <div class="stick aim-stick" data-stick="aim"><div class="stick-ring"></div><div class="stick-knob"></div><span>瞄准 / 射击</span></div>
@@ -51,8 +50,7 @@
       <button class="action-btn overdrive-btn" data-action="overdrive"><strong>超</strong><span>必杀</span></button>
       <button class="pause-btn" data-action="pause">Ⅱ</button>
     </section>
-
-    <section class="rotate-warning"><div><strong>请将 iPhone 横屏</strong><p>4.1.6 触控界面按横屏战斗设计</p></div></section>
+    <section class="rotate-warning"><div><strong>请将 iPhone 横屏</strong><p>4.2 连续战线按横屏战斗设计</p></div></section>
   </main>
   <script type="module" src="./src/main.js"></script>
 </body>

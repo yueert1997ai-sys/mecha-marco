@@ -9,9 +9,12 @@ import { enhancePaintVariants416 } from './render/paintVariants416.js';
 import { applyTopDownCamera } from './render/topdownCamera.js';
 import { applyTopDownMechPose } from './render/topdownMechPose.js';
 import { applyArenaDetail415 } from './render/arenaDetail415.js';
+import { applyContinuousCampaignRenderer42 } from './render/continuousCampaign42.js';
 import { applyMobileFeel42 } from './combat/mobileFeel42.js';
 import { applyLoadoutRuntime415 } from './combat/loadoutRuntime415.js';
 import { applyRogueTransform416 } from './combat/rogueTransform416.js';
+import { applyContinuousCampaign42 } from './run/continuousCampaign42.js';
+import { applyContinuousCampaignPolish42 } from './run/continuousCampaignPolish42.js';
 import { installTransformModules416 } from './data/transformModules416.js';
 import { InputRouter } from './input/inputRouter.js';
 import { AppUI } from './ui/appUI.js';
@@ -20,6 +23,8 @@ import { applyUIPolish415 } from './ui/uiPolish415.js';
 import { applyDepthUI416 } from './ui/depthUI416.js';
 import { applyBranding416 } from './ui/branding416.js';
 import { applyPaintDock416 } from './ui/paintDock416.js';
+import { applyCampaignUI42 } from './ui/campaignUI42.js';
+import { applyCampaignUIPolish42 } from './ui/campaignUIPolish42.js';
 import { SynthAudio } from './audio/synthAudio.js';
 import { Game } from './game.js';
 import { Enemy } from './actors/enemy.js';
@@ -33,6 +38,7 @@ applyMobileFeel42({ InputRouter, PlayerMech, Renderer });
 applyLoadoutRuntime415(PlayerMech);
 applyTopDownCamera(Renderer);
 applyArenaDetail415(Renderer);
+applyContinuousCampaignRenderer42(Renderer);
 const drawCanvasMechFallback = Renderer.prototype.drawMech;
 Renderer.prototype.drawMech = function drawMechWithWebGLFallback(...args) {
   if (globalThis.__MECH_3D_READY__) return;
@@ -44,7 +50,11 @@ applyBranding416(AppUI);
 applyCombatPolish({ Game, Enemy, PlayerMech });
 applyDepthUI416({ AppUI, Game, InputRouter, PlayerMech });
 applyPaintDock416(AppUI);
+applyCampaignUI42(AppUI);
+applyCampaignUIPolish42(AppUI);
 applyRogueTransform416({ PlayerMech, Game });
+applyContinuousCampaign42({ Game });
+applyContinuousCampaignPolish42(Game);
 
 const canvas = document.getElementById('game-canvas');
 const mechCanvas = document.getElementById('mech-3d-canvas');
@@ -60,6 +70,8 @@ document.documentElement.dataset.combatView = 'topdown';
 document.documentElement.dataset.mechSilhouette = 'upper-body';
 document.documentElement.dataset.uiStyle = 'low-saturation-glass';
 document.documentElement.dataset.rogueDepth = 'transform-doctrines';
+document.documentElement.dataset.campaignMode = 'continuous-12-stage';
+document.documentElement.dataset.narrativeArc = 'ma00-restoration';
 
 try {
   const { createMech3DRenderer } = await import('./render/mech3d41.js');
@@ -106,12 +118,16 @@ if (!smokeMode && 'serviceWorker' in navigator && location.protocol.startsWith('
 
 globalThis.__MECHA_MARCO__ = {
   game,
-  visualVersion:'4.1.6-control-transform-paints',
+  visualVersion:'4.2.0-continuous-graveyard',
   mech3dStatus:()=>mech3dStatus,
   mech3dRenderer:()=>mech3d,
   snapshot: () => ({
     state:game.state,
     depth:game.run?.depth ?? null,
+    stage:game.run?.stageIndex ?? null,
+    stageName:game.room?.stage42?.name ?? null,
+    campaignMode:document.documentElement.dataset.campaignMode,
+    exitOpen:game.run?.exitOpen ?? false,
     enemies:game.enemies.filter((e)=>!e.dead).length,
     projectiles:game.projectiles.length,
     mech3d:mech3dStatus,
