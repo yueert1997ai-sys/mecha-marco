@@ -4,6 +4,7 @@ import { applyRendererPolish } from './render/polishRenderer.js';
 import { applyMechVisual41 } from './render/mechVisual41.js';
 import { InputRouter } from './input/inputRouter.js';
 import { AppUI } from './ui/appUI.js';
+import { applyMechPreview41 } from './ui/mechPreview41.js';
 import { SynthAudio } from './audio/synthAudio.js';
 import { Game } from './game.js';
 import { Enemy } from './actors/enemy.js';
@@ -12,6 +13,7 @@ import { applyCombatPolish } from './combat/polishCombat.js';
 
 applyRendererPolish(Renderer);
 applyMechVisual41(Renderer);
+applyMechPreview41(AppUI);
 applyCombatPolish({ Game, Enemy, PlayerMech });
 
 const canvas = document.getElementById('game-canvas');
