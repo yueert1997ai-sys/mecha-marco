@@ -5,21 +5,26 @@ import { applyMechVisual41 } from './render/mechVisual41.js';
 import { tuneMech3DRenderer } from './render/mech3dTuning41.js';
 import { enhanceLiteEnemies42 } from './render/mechLiteEnhance42.js';
 import { enhanceLoadoutVisual415 } from './render/loadoutVisual415.js';
+import { enhancePaintVariants416 } from './render/paintVariants416.js';
 import { applyTopDownCamera } from './render/topdownCamera.js';
 import { applyTopDownMechPose } from './render/topdownMechPose.js';
 import { applyArenaDetail415 } from './render/arenaDetail415.js';
 import { applyMobileFeel42 } from './combat/mobileFeel42.js';
 import { applyLoadoutRuntime415 } from './combat/loadoutRuntime415.js';
+import { applyRogueTransform416 } from './combat/rogueTransform416.js';
+import { installTransformModules416 } from './data/transformModules416.js';
 import { InputRouter } from './input/inputRouter.js';
 import { AppUI } from './ui/appUI.js';
 import { applyMechPreview41 } from './ui/mechPreview41.js';
 import { applyUIPolish415 } from './ui/uiPolish415.js';
+import { applyDepthUI416 } from './ui/depthUI416.js';
 import { SynthAudio } from './audio/synthAudio.js';
 import { Game } from './game.js';
 import { Enemy } from './actors/enemy.js';
 import { PlayerMech } from './actors/player.js';
 import { applyCombatPolish } from './combat/polishCombat.js';
 
+installTransformModules416();
 applyRendererPolish(Renderer);
 applyMechVisual41(Renderer);
 applyMobileFeel42({ InputRouter, PlayerMech, Renderer });
@@ -34,6 +39,8 @@ Renderer.prototype.drawMech = function drawMechWithWebGLFallback(...args) {
 applyMechPreview41(AppUI);
 applyUIPolish415(AppUI);
 applyCombatPolish({ Game, Enemy, PlayerMech });
+applyDepthUI416({ AppUI, Game, InputRouter, PlayerMech });
+applyRogueTransform416({ PlayerMech, Game });
 
 const canvas = document.getElementById('game-canvas');
 const mechCanvas = document.getElementById('mech-3d-canvas');
@@ -48,13 +55,15 @@ let mech3dStatus = 'loading';
 document.documentElement.dataset.combatView = 'topdown';
 document.documentElement.dataset.mechSilhouette = 'upper-body';
 document.documentElement.dataset.uiStyle = 'low-saturation-glass';
+document.documentElement.dataset.rogueDepth = 'transform-doctrines';
 
 try {
   const { createMech3DRenderer } = await import('./render/mech3d41.js');
   const tuned = tuneMech3DRenderer(await createMech3DRenderer(mechCanvas, renderer));
   const efficient = enhanceLiteEnemies42(tuned);
   const evolved = enhanceLoadoutVisual415(efficient);
-  mech3d = applyTopDownMechPose(evolved);
+  const painted = enhancePaintVariants416(evolved);
+  mech3d = applyTopDownMechPose(painted);
   globalThis.__MECH_3D_READY__ = true;
   mech3dStatus = 'ready';
   document.documentElement.dataset.mech3d = 'ready';
@@ -93,7 +102,7 @@ if (!smokeMode && 'serviceWorker' in navigator && location.protocol.startsWith('
 
 globalThis.__MECHA_MARCO__ = {
   game,
-  visualVersion:'4.1.5-visual-loadout-pass',
+  visualVersion:'4.1.6-control-transform-paints',
   mech3dStatus:()=>mech3dStatus,
   mech3dRenderer:()=>mech3d,
   snapshot: () => ({
@@ -106,7 +115,10 @@ globalThis.__MECHA_MARCO__ = {
     combatView:document.documentElement.dataset.combatView,
     mechSilhouette:document.documentElement.dataset.mechSilhouette,
     uiStyle:document.documentElement.dataset.uiStyle,
+    rogueDepth:document.documentElement.dataset.rogueDepth,
     loadout:game.player?.visualLoadout||null,
+    paint:game.player?.mech?.paintId||null,
+    sensitivity:game.input?.tuning416||null,
     player:game.player?{hp:game.player.hp,maxHp:game.player.maxHp,x:game.player.x,y:game.player.y}:null,
   }),
 };
