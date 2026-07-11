@@ -110,12 +110,12 @@ export function tuneMech3DRenderer(instance){
             material.flatShading=true;
             material.needsUpdate=true;
           }else if(material.isLineBasicMaterial){
-            material.color.set(0x0a111c);
-            material.opacity=.9;
+            if(!isPlayer&&!actor.elite&&!actor.boss)node.visible=false;
+            else{material.color.set(0x0a111c);material.opacity=.9}
           }
         }
       });
-      addMechanicalDetails(entry);
+      if(isPlayer||actor.elite||actor.boss)addMechanicalDetails(entry);
       const shadow=new THREE.Mesh(shadowGeometry,shadowMaterial.clone());
       shadow.renderOrder=-5;
       shadow.position.z=-30;
@@ -140,8 +140,7 @@ export function tuneMech3DRenderer(instance){
   instance.render=function renderTuned(world){
     const liveDraw=instance.renderer.render;
     instance.renderer.render=()=>{};
-    const webglWorld={...world,enemies:(world.enemies||[]).filter((enemy)=>enemy.elite||enemy.boss)};
-    try{originalRender(webglWorld)}finally{instance.renderer.render=liveDraw}
+    try{originalRender(world)}finally{instance.renderer.render=liveDraw}
     const liveShadows=new Set();
     const liveBars=new Set();
     for(const entry of instance.actors.values()){
@@ -177,7 +176,7 @@ export function tuneMech3DRenderer(instance){
       }
       if(entry.healthBar&&actor){
         const ratio=clamp(actor.hp/Math.max(1,actor.maxHp));
-        const width=actor.boss?72:48;
+        const width=actor.boss?72:actor.elite?48:38;
         const height=actor.boss?5:3.5;
         const group=entry.healthBar.group;
         group.visible=!actor.dead;
