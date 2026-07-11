@@ -1,10 +1,11 @@
-const CACHE='mecha-marco-v4-20260711-webgl-redesign-r2';
+const CACHE='mecha-marco-v4-20260711-webgl-redesign-r3';
 const CORE=[
   './',
   './index.html',
   './styles.css',
   './iphone17.css',
   './mech3d41.css',
+  './manifest.webmanifest',
   './src/main.js',
   './src/render/polishRenderer.js',
   './src/render/mechDesigns41.js',
@@ -19,5 +20,18 @@ self.addEventListener('install',(event)=>event.waitUntil(caches.open(CACHE).then
 self.addEventListener('activate',(event)=>event.waitUntil(caches.keys().then((keys)=>Promise.all(keys.filter((k)=>k!==CACHE).map((k)=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',(event)=>{
   if(event.request.method!=='GET')return;
-  event.respondWith(fetch(event.request).then((response)=>{const copy=response.clone();caches.open(CACHE).then((c)=>c.put(event.request,copy));return response;}).catch(()=>caches.match(event.request).then((r)=>r||caches.match('./index.html'))));
+  event.respondWith(
+    fetch(event.request)
+      .then((response)=>{
+        const copy=response.clone();
+        caches.open(CACHE).then((c)=>c.put(event.request,copy));
+        return response;
+      })
+      .catch(async()=>{
+        const cached=await caches.match(event.request);
+        if(cached)return cached;
+        if(event.request.mode==='navigate')return caches.match('./index.html');
+        return Response.error();
+      })
+  );
 });
