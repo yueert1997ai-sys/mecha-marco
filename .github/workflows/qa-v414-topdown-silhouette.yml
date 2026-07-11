@@ -3,6 +3,8 @@ name: QA V4.1.4 Top-down Silhouette
 on:
   push:
     branches: [qa/v414-topdown-silhouette]
+  pull_request:
+    branches: [fix/v4-1-4-topdown-silhouette]
 
 permissions:
   contents: read
