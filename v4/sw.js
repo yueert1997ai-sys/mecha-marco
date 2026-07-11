@@ -1,4 +1,4 @@
-const CACHE='mecha-marco-v4-20260711-webgl-redesign';
+const CACHE='mecha-marco-v4-20260711-webgl-redesign-r2';
 const CORE=[
   './',
   './index.html',
@@ -11,6 +11,7 @@ const CORE=[
   './src/render/mechMeshPrimitives41.js',
   './src/render/mechVisual41.js',
   './src/render/mech3d41.js',
+  './src/render/mech3dTuning41.js',
   './src/ui/mechPreview41.js',
   './src/combat/polishCombat.js',
 ];
