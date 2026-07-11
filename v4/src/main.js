@@ -19,6 +19,7 @@ import { applyMechPreview41 } from './ui/mechPreview41.js';
 import { applyUIPolish415 } from './ui/uiPolish415.js';
 import { applyDepthUI416 } from './ui/depthUI416.js';
 import { applyBranding416 } from './ui/branding416.js';
+import { applyPaintDock416 } from './ui/paintDock416.js';
 import { SynthAudio } from './audio/synthAudio.js';
 import { Game } from './game.js';
 import { Enemy } from './actors/enemy.js';
@@ -42,6 +43,7 @@ applyUIPolish415(AppUI);
 applyBranding416(AppUI);
 applyCombatPolish({ Game, Enemy, PlayerMech });
 applyDepthUI416({ AppUI, Game, InputRouter, PlayerMech });
+applyPaintDock416(AppUI);
 applyRogueTransform416({ PlayerMech, Game });
 
 const canvas = document.getElementById('game-canvas');
