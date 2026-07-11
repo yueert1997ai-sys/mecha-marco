@@ -1,0 +1,48 @@
+name: QA V4.1.5 Visual Loadout
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  visual-qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Verify source and tests
+        run: |
+          cd v4
+          npm run syntax
+          npm test
+      - name: Install Playwright Python
+        run: python3 -m pip install --user playwright
+      - name: Locate Chrome
+        run: |
+          chrome="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          test -n "$chrome"
+          echo "CHROME_BIN=$chrome" >> "$GITHUB_ENV"
+      - name: Run real mobile visual loadout QA
+        id: visualqa
+        continue-on-error: true
+        run: |
+          mkdir -p v4/qa-artifacts-v415
+          set -o pipefail
+          python3 v4/scripts/visual-loadout-qa.py 2>&1 | tee v4/qa-artifacts-v415/run.log
+      - name: Upload screenshots and metrics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mecha-marco-v415-visual-loadout
+          path: v4/qa-artifacts-v415
+          if-no-files-found: error
+          retention-days: 1
+      - name: Fail when visual QA failed
+        if: steps.visualqa.outcome == 'failure'
+        run: exit 1
