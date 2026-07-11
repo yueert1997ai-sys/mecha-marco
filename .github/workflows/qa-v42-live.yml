@@ -18,19 +18,26 @@ jobs:
           base='https://yueert1997ai-sys.github.io/mecha-marco/v4'
           ready=0
           for i in {1..40}; do
-            if curl -fsS "$base/VERSION?run=$GITHUB_RUN_ID-$i" | grep -q '4.2.0-continuous-graveyard'; then
+            if curl -fsS "$base/VERSION?run=$GITHUB_RUN_ID-$i" -o /tmp/version && grep -q '4.2.0-continuous-graveyard' /tmp/version; then
               ready=1
               break
             fi
             sleep 3
           done
           test "$ready" = 1
-          curl -fsS "$base/?run=$GITHUB_RUN_ID" | grep -q '天穹断刃 4.2.0'
-          curl -fsS "$base/?run=$GITHUB_RUN_ID" | grep -q './campaign42.css'
-          curl -fsS "$base/src/main.js?run=$GITHUB_RUN_ID" | grep -q 'continuous-12-stage'
-          curl -fsS "$base/src/main.js?run=$GITHUB_RUN_ID" | grep -q 'ma00-restoration'
-          curl -fsS "$base/src/data/regionOrbitalGraveyard42.js?run=$GITHUB_RUN_ID" | grep -q '轨道墓场核心'
-          curl -fsS "$base/src/run/continuousCampaign42.js?run=$GITHUB_RUN_ID" | grep -q 'startCampaignStage42'
-          curl -fsS "$base/src/ui/campaignUI42.js?run=$GITHUB_RUN_ID" | grep -q 'WENHAO MA'
-          curl -fsS "$base/campaign42.css?run=$GITHUB_RUN_ID" | grep -q 'campaign-progress42'
-          curl -fsS "$base/icon.svg?run=$GITHUB_RUN_ID" | grep -q '<svg'
+          curl -fsS "$base/?run=$GITHUB_RUN_ID" -o /tmp/index
+          curl -fsS "$base/src/main.js?run=$GITHUB_RUN_ID" -o /tmp/main
+          curl -fsS "$base/src/data/regionOrbitalGraveyard42.js?run=$GITHUB_RUN_ID" -o /tmp/region
+          curl -fsS "$base/src/run/continuousCampaign42.js?run=$GITHUB_RUN_ID" -o /tmp/runtime
+          curl -fsS "$base/src/ui/campaignUI42.js?run=$GITHUB_RUN_ID" -o /tmp/ui
+          curl -fsS "$base/campaign42.css?run=$GITHUB_RUN_ID" -o /tmp/css
+          curl -fsS "$base/icon.svg?run=$GITHUB_RUN_ID" -o /tmp/icon
+          grep -q '天穹断刃 4.2.0' /tmp/index
+          grep -q './campaign42.css' /tmp/index
+          grep -q 'continuous-12-stage' /tmp/main
+          grep -q 'ma00-restoration' /tmp/main
+          grep -q '轨道墓场核心' /tmp/region
+          grep -q 'startCampaignStage42' /tmp/runtime
+          grep -q 'WENHAO MA' /tmp/ui
+          grep -q 'campaign-progress42' /tmp/css
+          grep -q '<svg' /tmp/icon
