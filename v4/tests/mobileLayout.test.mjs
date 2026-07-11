@@ -45,3 +45,13 @@ test('renderer and combat polish modules are activated', async () => {
   assert.match(combatPolish, /hitPause/);
   assert.match(combatPolish, /impactRing/);
 });
+
+test('real device regressions keep safe-area panels and touch targets separated', async () => {
+  const css = await read('iphone17.css');
+  assert.match(css, /\.panel\.base-panel\s*\{/);
+  assert.doesNotMatch(css, /(^|\n)\.base-panel\s*\{/);
+  assert.match(css, /\.hud-top-right[\s\S]*margin-right:\s*52px/);
+  assert.match(css, /\.saber-btn[\s\S]*clamp\(150px,\s*17vw,\s*190px\)/);
+  assert.match(css, /\.missile-btn[\s\S]*clamp\(210px,\s*23vw,\s*260px\)/);
+  assert.match(css, /\.overdrive-btn[\s\S]*clamp\(270px,\s*29vw,\s*320px\)/);
+});

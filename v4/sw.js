@@ -1,4 +1,4 @@
-const CACHE='mecha-marco-v4-20260711-iphone17-polish';
+const CACHE='mecha-marco-v4-20260711-devicefix';
 const CORE=[
   './',
   './index.html',
