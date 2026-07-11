@@ -11,10 +11,19 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="stylesheet" href="./styles.css">
   <link rel="stylesheet" href="./iphone17.css">
+  <link rel="stylesheet" href="./mech3d41.css">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.module.js"
+    }
+  }
+  </script>
 </head>
 <body>
   <main id="app">
     <canvas id="game-canvas" aria-label="天穹断刃战斗画面"></canvas>
+    <canvas id="mech-3d-canvas" aria-label="4.1 WebGL 机体显示层"></canvas>
 
     <section id="hud" class="hud hidden" aria-live="polite">
       <div class="hud-top-left">
