@@ -3,6 +3,7 @@ import { Renderer } from './render/renderer.js';
 import { applyRendererPolish } from './render/polishRenderer.js';
 import { applyMechVisual41 } from './render/mechVisual41.js';
 import { tuneMech3DRenderer } from './render/mech3dTuning41.js';
+import { applyMobileFeel42 } from './combat/mobileFeel42.js';
 import { InputRouter } from './input/inputRouter.js';
 import { AppUI } from './ui/appUI.js';
 import { applyMechPreview41 } from './ui/mechPreview41.js';
@@ -14,6 +15,7 @@ import { applyCombatPolish } from './combat/polishCombat.js';
 
 applyRendererPolish(Renderer);
 applyMechVisual41(Renderer);
+applyMobileFeel42({ InputRouter, PlayerMech, Renderer });
 const drawCanvasMechFallback = Renderer.prototype.drawMech;
 Renderer.prototype.drawMech = function drawMechWithWebGLFallback(...args) {
   if (globalThis.__MECH_3D_READY__) return;
@@ -68,7 +70,7 @@ if (!smokeMode && 'serviceWorker' in navigator && location.protocol.startsWith('
 
 globalThis.__MECHA_MARCO__ = {
   game,
-  visualVersion:'4.1.0-full-redesign',
+  visualVersion:'4.1.1-controls-camera-polish',
   mech3dStatus:()=>mech3dStatus,
   snapshot: () => ({
     state:game.state,
