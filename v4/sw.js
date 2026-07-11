@@ -1,4 +1,4 @@
-const CACHE='mecha-marco-v4-20260711-topdown-r1';
+const CACHE='mecha-marco-v4-20260711-topdown-silhouette-r1';
 const CORE=[
   './',
   './index.html',
