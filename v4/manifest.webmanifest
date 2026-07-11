@@ -1,10 +1,13 @@
 {
   "name": "天穹断刃 · Mecha Marco",
   "short_name": "天穹断刃",
-  "description": "Hades 式房间选择与动作槽位构筑的机甲动作肉鸽。",
+  "description": "驾驶原创机甲连续突破轨道墓场十二段封锁，在单局中重构武装、外观与战斗协议。",
   "start_url": "./",
   "display": "standalone",
   "orientation": "landscape",
   "background_color": "#071226",
-  "theme_color": "#071226"
+  "theme_color": "#071226",
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
 }
