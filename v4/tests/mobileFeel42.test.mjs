@@ -12,6 +12,8 @@ test('mobile feel patch improves stick response, boost fire and arena camera',as
   const main=await read('src/main.js');
   assert.match(source,/curveStick/);
   assert.match(source,/length\(output\) > \.18/);
+  assert.match(source,/resetInsideArena/);
+  assert.match(source,/Math\.min\(position\.y,3\.55\)/);
   assert.match(source,/updateBoostFire/);
   assert.match(source,/lookAhead/);
   assert.match(source,/clamp\(target\.x \* \.08/);
@@ -24,6 +26,9 @@ test('mobile feel patch improves stick response, boost fire and arena camera',as
 
 test('3D tuning adds readable posture, lock feedback and low-cost mobile crowds',async()=>{
   const source=await read('src/render/mech3dTuning41.js');
+  const enhance=await read('src/render/mechLiteEnhance42.js');
+  const main=await read('src/main.js');
+  const sw=await read('sw.js');
   assert.match(source,/addMechanicalDetails/);
   assert.match(source,/flatShading=true/);
   assert.match(source,/buildTargetReticle/);
@@ -33,4 +38,8 @@ test('3D tuning adds readable posture, lock feedback and low-cost mobile crowds'
   assert.match(source,/liteEnemyDesign/);
   assert.match(source,/!isPlayer&&!actor\.elite&&!actor\.boss/);
   assert.match(source,/entry\.root\.rotation\.y=-\.12-side\*\.14/);
+  assert.match(enhance,/liteEnemyEnhanced/);
+  assert.match(enhance,/parts\.arms\.push/);
+  assert.match(main,/enhanceLiteEnemies42/);
+  assert.match(sw,/mechLiteEnhance42\.js/);
 });
