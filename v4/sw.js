@@ -1,4 +1,4 @@
-const CACHE='mecha-marco-v4-20260711-controls-camera-r4';
+const CACHE='mecha-marco-v4-20260711-controls-camera-r5';
 const CORE=[
   './',
   './index.html',
@@ -13,6 +13,7 @@ const CORE=[
   './src/render/mechVisual41.js',
   './src/render/mech3d41.js',
   './src/render/mech3dTuning41.js',
+  './src/render/mechLiteEnhance42.js',
   './src/ui/mechPreview41.js',
   './src/combat/polishCombat.js',
   './src/combat/mobileFeel42.js',
