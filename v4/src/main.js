@@ -82,6 +82,7 @@ globalThis.__MECHA_MARCO__ = {
   game,
   visualVersion:'4.1.4-topdown-silhouette',
   mech3dStatus:()=>mech3dStatus,
+  mech3dRenderer:()=>mech3d,
   snapshot: () => ({
     state:game.state,
     depth:game.run?.depth ?? null,
