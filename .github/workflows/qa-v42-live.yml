@@ -1,0 +1,36 @@
+name: QA V4.2 Live Deploy
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  live-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify GitHub Pages serves 4.2
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://yueert1997ai-sys.github.io/mecha-marco/v4'
+          ready=0
+          for i in {1..40}; do
+            if curl -fsS "$base/VERSION?run=$GITHUB_RUN_ID-$i" | grep -q '4.2.0-continuous-graveyard'; then
+              ready=1
+              break
+            fi
+            sleep 3
+          done
+          test "$ready" = 1
+          curl -fsS "$base/?run=$GITHUB_RUN_ID" | grep -q '天穹断刃 4.2.0'
+          curl -fsS "$base/?run=$GITHUB_RUN_ID" | grep -q './campaign42.css'
+          curl -fsS "$base/src/main.js?run=$GITHUB_RUN_ID" | grep -q 'continuous-12-stage'
+          curl -fsS "$base/src/main.js?run=$GITHUB_RUN_ID" | grep -q 'ma00-restoration'
+          curl -fsS "$base/src/data/regionOrbitalGraveyard42.js?run=$GITHUB_RUN_ID" | grep -q '轨道墓场核心'
+          curl -fsS "$base/src/run/continuousCampaign42.js?run=$GITHUB_RUN_ID" | grep -q 'startCampaignStage42'
+          curl -fsS "$base/src/ui/campaignUI42.js?run=$GITHUB_RUN_ID" | grep -q 'WENHAO MA'
+          curl -fsS "$base/campaign42.css?run=$GITHUB_RUN_ID" | grep -q 'campaign-progress42'
+          curl -fsS "$base/icon.svg?run=$GITHUB_RUN_ID" | grep -q '<svg'
