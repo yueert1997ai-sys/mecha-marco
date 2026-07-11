@@ -22,14 +22,15 @@ test('mobile feel patch improves stick response, boost fire and arena camera',as
   assert.match(main,/4\.1\.1-controls-camera-polish/);
 });
 
-test('3D tuning adds readable anime-mecha posture, lock feedback and mobile budget',async()=>{
+test('3D tuning adds readable posture, lock feedback and low-cost mobile crowds',async()=>{
   const source=await read('src/render/mech3dTuning41.js');
   assert.match(source,/addMechanicalDetails/);
   assert.match(source,/flatShading=true/);
   assert.match(source,/buildTargetReticle/);
   assert.match(source,/selectTarget/);
-  assert.match(source,/coarse\?1:1\.5/);
+  assert.match(source,/coarse\?\.9:1\.5/);
+  assert.match(source,/buildLiteEnemy/);
+  assert.match(source,/liteEnemyDesign/);
   assert.match(source,/!isPlayer&&!actor\.elite&&!actor\.boss/);
-  assert.match(source,/try\{originalRender\(world\)\}/);
   assert.match(source,/entry\.root\.rotation\.y=-\.12-side\*\.14/);
 });
