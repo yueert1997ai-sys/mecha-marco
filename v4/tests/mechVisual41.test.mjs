@@ -66,11 +66,13 @@ test('runtime activates tuned WebGL mechs with Canvas fallback and independent H
   assert.match(tuning,/ensureActor/);
   assert.match(tuning,/contactShadow/);
   assert.match(tuning,/healthBar/);
-  assert.match(tuning,/toneMappingExposure=\.58/);
+  assert.match(tuning,/toneMappingExposure=\.68/);
+  assert.match(tuning,/buildTargetReticle/);
   assert.match(fallback,/Renderer\.prototype\.drawMech/);
   assert.match(primitive,/faces=\[/);
   assert.match(primitive,/ps=finite\(p\.s\)/);
   assert.match(preview,/V4\.1 FULL MECH REDESIGN/);
   assert.match(preview,/mech-preview41/);
   assert.match(sw,/mech3dTuning41\.js/);
+  assert.match(sw,/mobileFeel42\.js/);
 });
