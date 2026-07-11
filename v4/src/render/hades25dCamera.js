@@ -38,17 +38,17 @@ export function applyHades25DCamera(Renderer) {
   Renderer.prototype.worldToScreen = function worldToScreenHades25D(x,y) {
     const dx=x-this.camera.x;
     const dy=y-this.camera.y;
-    const shakeX=Math.sin(performance.now()*.09)*this.camera.shake;
-    const shakeY=Math.cos(performance.now()*.11)*this.camera.shake;
+    const shake=this._hades25dShake||{x:0,y:0};
     return {
-      x:this.width*.5+(dx-dy*VIEW.shear)*this.scale+shakeX,
-      y:this.height*VIEW.centerY+(dx*VIEW.xLift+dy*VIEW.yScale)*this.scale+shakeY,
+      x:this.width*.5+(dx-dy*VIEW.shear)*this.scale+shake.x,
+      y:this.height*VIEW.centerY+(dx*VIEW.xLift+dy*VIEW.yScale)*this.scale+shake.y,
     };
   };
 
   Renderer.prototype.screenToWorld = function screenToWorldHades25D(x,y) {
-    const sx=(x*this.dpr-this.width*.5)/this.scale;
-    const sy=(y*this.dpr-this.height*VIEW.centerY)/this.scale;
+    const shake=this._hades25dShake||{x:0,y:0};
+    const sx=(x*this.dpr-this.width*.5-shake.x)/this.scale;
+    const sy=(y*this.dpr-this.height*VIEW.centerY-shake.y)/this.scale;
     const determinant=VIEW.yScale+VIEW.shear*VIEW.xLift;
     const dx=(sx*VIEW.yScale+VIEW.shear*sy)/determinant;
     const dy=(sy-VIEW.xLift*sx)/determinant;
@@ -74,6 +74,11 @@ export function applyHades25DCamera(Renderer) {
     this.camera.x+=(desiredX-this.camera.x)*follow;
     this.camera.y+=(desiredY-this.camera.y)*follow;
     this.camera.shake*=.82;
+    const now=performance.now();
+    this._hades25dShake={
+      x:Math.sin(now*.09)*this.camera.shake,
+      y:Math.cos(now*.11)*this.camera.shake,
+    };
     this.drawArena(world);
   };
 
