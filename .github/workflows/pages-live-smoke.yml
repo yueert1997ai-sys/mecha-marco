@@ -14,7 +14,54 @@ jobs:
   live-smoke:
     runs-on: ubuntu-latest
     steps:
-      - name: Wait for GitHub Pages deployment
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Wait for current GitHub Pages deployment
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://yueert1997ai-sys.github.io/mecha-marco'
+          ua='Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1'
+
+          mapfile -t changed_files < <(
+            git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" |
+              grep -E '^(index\.html|styles\.css|loader\.js|chunks/|v3/|v4/)' || true
+          )
+
+          if [ "${#changed_files[@]}" -eq 0 ]; then
+            echo 'No published files changed in this commit.'
+            exit 0
+          fi
+
+          for attempt in {1..36}; do
+            all_current=1
+            for path in "${changed_files[@]}"; do
+              if [ ! -f "$path" ]; then
+                continue
+              fi
+              mkdir -p "/tmp/live/$(dirname "$path")"
+              code=$(curl -L -A "$ua" -sS -o "/tmp/live/$path" -w '%{http_code}' "$base/$path?sha=$GITHUB_SHA" || true)
+              if [ "$code" != '200' ] || ! cmp -s "$path" "/tmp/live/$path"; then
+                all_current=0
+                echo "Attempt $attempt: waiting for $path (HTTP $code)"
+                break
+              fi
+            done
+            if [ "$all_current" = '1' ]; then
+              echo "GitHub Pages matches commit $GITHUB_SHA"
+              exit 0
+            fi
+            sleep 10
+          done
+
+          echo "GitHub Pages did not publish commit $GITHUB_SHA within the wait window."
+          exit 1
+
+      - name: Wait for GitHub Pages availability
         shell: bash
         run: |
           set -euo pipefail
