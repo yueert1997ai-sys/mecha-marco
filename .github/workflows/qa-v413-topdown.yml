@@ -3,6 +3,8 @@ name: QA V4.1.3 Top-down
 on:
   push:
     branches: [qa/v413-topdown-visual]
+  pull_request:
+    branches: [fix/v4-1-3-topdown-view]
 
 permissions:
   contents: read
