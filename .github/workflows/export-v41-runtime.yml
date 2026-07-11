@@ -26,8 +26,15 @@ jobs:
           chrome="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
           echo "CHROME_BIN=$chrome" >> "$GITHUB_ENV"
       - name: Run real browser interaction and screenshots
-        run: python3 v4/scripts/visual-qa.py
+        id: visualqa
+        continue-on-error: true
+        shell: bash
+        run: |
+          mkdir -p v4/qa-artifacts
+          set -o pipefail
+          python3 v4/scripts/visual-qa.py 2>&1 | tee v4/qa-artifacts/run.log
       - name: Upload runtime
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: mecha-marco-v41-runtime
@@ -35,9 +42,13 @@ jobs:
           if-no-files-found: error
           retention-days: 1
       - name: Upload visual QA
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: mecha-marco-v41-visual-qa
           path: v4/qa-artifacts
           if-no-files-found: error
           retention-days: 1
+      - name: Fail when visual QA failed
+        if: steps.visualqa.outcome != 'success'
+        run: exit 1
