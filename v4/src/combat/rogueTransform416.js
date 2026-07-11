@@ -15,6 +15,7 @@ export function applyRogueTransform416({PlayerMech,Game}){
     this.__lanceCounter416=0;
     this.__rearCounter416=0;
     this.__doctrineCounter416=0;
+    this.__bastionPulseCooldown416=0;
     return reset.apply(this,args);
   };
 
@@ -94,7 +95,9 @@ export function applyRogueTransform416({PlayerMech,Game}){
     const before=world.missiles.length;
     updateOrdnance.call(this,world);
     const added=world.missiles.length-before;
-    if(added<=0||!this.stats.effects?.ordnanceSentry)return;
+    if(added<=0)return;
+    for(const missile of world.missiles.slice(before))missile.color=this.mech.palette.accent;
+    if(!this.stats.effects?.ordnanceSentry)return;
     world.missiles.splice(before,added);
     world.protocolSentries416||=[];
     world.protocolSentries416.push({x:this.x,y:this.y,life:5.8,cooldown:.12,color:this.mech.palette.glow,damage:this.stats.ordnanceDamage*.48});
@@ -106,12 +109,9 @@ export function applyRogueTransform416({PlayerMech,Game}){
   PlayerMech.prototype.takeDamage=function takeDamage416(world,damage,source,type='enemy'){
     const result=takeDamage.call(this,world,damage,source,type);
     const doctrine=buildDoctrineProfile416(this.modules||[]);
-    if(doctrine.bastionResonance&&result>0){
-      this.__bastionPulseCooldown416=Math.max(0,(this.__bastionPulseCooldown416||0)-.2);
-      if(this.__bastionPulseCooldown416<=0){
-        world.damageEnemiesInCircle(this,1.15,10,{type:'bastion-counter',stagger:.14,knockback:1.5});
-        this.__bastionPulseCooldown416=1.6;
-      }
+    if(doctrine.bastionResonance&&result>0&&this.__bastionPulseCooldown416<=0){
+      world.damageEnemiesInCircle(this,1.15,10,{type:'bastion-counter',stagger:.14,knockback:1.5});
+      this.__bastionPulseCooldown416=1.6;
     }
     if(this.dead&&this.stats.effects?.lastStandProtocol&&!this.__lastStandUsed416){
       this.__lastStandUsed416=true;this.dead=false;this.hp=1;this.invulnerable=1.15;this.overdriveTimer=Math.max(this.overdriveTimer,3.2);
@@ -137,6 +137,7 @@ export function applyRogueTransform416({PlayerMech,Game}){
 
   const updateCombat=Game.prototype.updateCombat;
   Game.prototype.updateCombat=function updateCombat416(dt){
+    if(this.player)this.player.__bastionPulseCooldown416=Math.max(0,(this.player.__bastionPulseCooldown416||0)-dt);
     updateCombat.call(this,dt);
     if(this.state!=='combat')return;
     this.protocolSentries416||=[];
