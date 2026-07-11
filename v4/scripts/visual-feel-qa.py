@@ -68,6 +68,7 @@ async def run():
             results['base'] = await page.evaluate('''() => ({
               visual: globalThis.__MECHA_MARCO__?.visualVersion,
               mech3d: document.documentElement.dataset.mech3d,
+              renderMode: document.documentElement.dataset.mechRender,
               viewport: {w: innerWidth, h: innerHeight},
               cards: [...document.querySelectorAll('[data-mech]')].map((node) => node.getBoundingClientRect().toJSON()),
               cta: document.querySelector('#start-run')?.getBoundingClientRect().toJSON(),
@@ -85,6 +86,8 @@ async def run():
                     selected: game.selectedMech,
                     visual: app.visualVersion,
                     mech3d: app.mech3dStatus(),
+                    renderMode: document.documentElement.dataset.mechRender,
+                    webglActors: document.querySelector('#mech-3d-canvas') ? app.snapshot().mech3d : null,
                     playerScreen: {x: screen.x / game.renderer.dpr, y: screen.y / game.renderer.dpr},
                     camera: {...game.renderer.camera},
                     enemies: game.enemies.filter((e) => !e.dead).length,
@@ -152,10 +155,10 @@ async def run():
     (OUT / 'results.json').write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding='utf-8')
     if results['errors']:
         raise RuntimeError('Browser page errors: ' + '; '.join(results['errors']))
-    if results['base'].get('visual') != '4.1.1-controls-camera-polish' or results['base'].get('mech3d') != 'ready':
+    if results['base'].get('visual') != '4.1.1-controls-camera-polish' or results['base'].get('mech3d') != 'ready' or results['base'].get('renderMode') != 'hybrid':
         raise RuntimeError(f'Wrong runtime: {results["base"]}')
     for mech, data in results['mechs'].items():
-        if data.get('state') != 'combat' or data.get('selected') != mech or data.get('mech3d') != 'ready':
+        if data.get('state') != 'combat' or data.get('selected') != mech or data.get('mech3d') != 'ready-hybrid' or data.get('renderMode') != 'hybrid':
             raise RuntimeError(f'Mech combat failed for {mech}: {data}')
         if not 190 <= data['playerScreen']['y'] <= 350:
             raise RuntimeError(f'Camera composition failed for {mech}: {data["playerScreen"]}')
