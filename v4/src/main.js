@@ -17,8 +17,12 @@ applyRendererPolish(Renderer);
 applyMechVisual41(Renderer);
 applyMobileFeel42({ InputRouter, PlayerMech, Renderer });
 const drawCanvasMechFallback = Renderer.prototype.drawMech;
-Renderer.prototype.drawMech = function drawMechWithWebGLFallback(...args) {
-  if (globalThis.__MECH_3D_READY__) return;
+Renderer.prototype.drawMech = function drawMechWithHybridRenderer(...args) {
+  const [actor,isPlayer] = args;
+  if (globalThis.__MECH_3D_READY__) {
+    if (!isPlayer && !actor?.elite && !actor?.boss) return drawCanvasMechFallback.apply(this, args);
+    return;
+  }
   return drawCanvasMechFallback.apply(this, args);
 };
 applyMechPreview41(AppUI);
@@ -39,12 +43,14 @@ try {
   const { createMech3DRenderer } = await import('./render/mech3d41.js');
   mech3d = tuneMech3DRenderer(await createMech3DRenderer(mechCanvas, renderer));
   globalThis.__MECH_3D_READY__ = true;
-  mech3dStatus = 'ready';
+  mech3dStatus = 'ready-hybrid';
   document.documentElement.dataset.mech3d = 'ready';
+  document.documentElement.dataset.mechRender = 'hybrid';
 } catch (error) {
   globalThis.__MECH_3D_READY__ = false;
   mech3dStatus = 'fallback';
   document.documentElement.dataset.mech3d = 'fallback';
+  document.documentElement.dataset.mechRender = 'canvas';
   console.warn('WebGL mech renderer unavailable; using projected Canvas fallback.', error);
 }
 
@@ -78,6 +84,7 @@ globalThis.__MECHA_MARCO__ = {
     enemies:game.enemies.filter((e)=>!e.dead).length,
     projectiles:game.projectiles.length,
     mech3d:mech3dStatus,
+    renderMode:document.documentElement.dataset.mechRender,
     player:game.player?{hp:game.player.hp,maxHp:game.player.maxHp,x:game.player.x,y:game.player.y}:null,
   }),
 };
