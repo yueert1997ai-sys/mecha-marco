@@ -10,8 +10,9 @@ export function tuneMech3DRenderer(instance){
     }
   }
 
-  const originalEnsure=instance.ensure.bind(instance);
-  instance.ensure=function ensureTuned(actor,isPlayer){
+  const ensureName=typeof instance.ensureActor==='function'?'ensureActor':'ensure';
+  const originalEnsure=instance[ensureName].bind(instance);
+  instance[ensureName]=function ensureTuned(actor,isPlayer){
     const entry=originalEnsure(actor,isPlayer);
     if(!entry.root.userData.cameraTuned){
       entry.root.userData.cameraTuned=true;
@@ -38,7 +39,8 @@ export function tuneMech3DRenderer(instance){
     instance.renderer.render=()=>{};
     try{originalRender(world)}finally{instance.renderer.render=liveDraw}
     for(const entry of instance.actors.values()){
-      const player=entry.root.userData.design.id==='vanguard'||entry.root.userData.design.id==='bulwark'||entry.root.userData.design.id==='starwing';
+      const designId=entry.root.userData.design.id;
+      const player=['vanguard','bulwark','starwing'].includes(designId);
       entry.root.scale.multiplyScalar(player?.58:.54);
     }
     draw(instance.scene,instance.camera);
