@@ -1,4 +1,4 @@
-const CACHE='mecha-marco-v4-20260711-webgl-redesign-r3';
+const CACHE='mecha-marco-v4-20260711-controls-camera-r4';
 const CORE=[
   './',
   './index.html',
@@ -15,6 +15,7 @@ const CORE=[
   './src/render/mech3dTuning41.js',
   './src/ui/mechPreview41.js',
   './src/combat/polishCombat.js',
+  './src/combat/mobileFeel42.js',
 ];
 self.addEventListener('install',(event)=>event.waitUntil(caches.open(CACHE).then((c)=>c.addAll(CORE)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',(event)=>event.waitUntil(caches.keys().then((keys)=>Promise.all(keys.filter((k)=>k!==CACHE).map((k)=>caches.delete(k)))).then(()=>self.clients.claim())));
