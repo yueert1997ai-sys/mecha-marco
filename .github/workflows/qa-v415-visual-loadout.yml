@@ -35,6 +35,19 @@ jobs:
           mkdir -p v4/qa-artifacts-v415
           set -o pipefail
           python3 v4/scripts/visual-loadout-qa.py 2>&1 | tee v4/qa-artifacts-v415/run.log
+      - name: Collect web build diagnostics
+        if: always()
+        run: |
+          {
+            echo '=== WORKFLOW FILES ==='
+            find .github/workflows -maxdepth 1 -type f -print | sort
+            echo '=== WEBGL STEP MATCH ==='
+            grep -R -n "Browser WebGL smoke test" .github/workflows || true
+            echo '=== SCRIPT MATCHES ==='
+            grep -R -n "4.1.4-topdown-silhouette\|4.1.5-visual-loadout-pass\|mech3dStatus\|data-mech3d" .github/workflows v4/scripts v4/tests || true
+            echo '=== WORKFLOW CONTENT ==='
+            for file in .github/workflows/*; do echo "--- $file"; cat "$file"; done
+          } > v4/qa-artifacts-v415/web-build-diagnostics.txt
       - name: Upload screenshots and metrics
         if: always()
         uses: actions/upload-artifact@v4
