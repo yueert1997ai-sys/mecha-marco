@@ -39,7 +39,7 @@ test('3D tuning adds readable posture, lock feedback and low-cost mobile crowds'
   assert.match(sw,/mechLiteEnhance42\.js/);
 });
 
-test('Hades 2.5D view uses an oblique arena and keeps mechs upright',async()=>{
+test('Hades 2.5D view uses an oblique arena and keeps mechs upright before matrix calculation',async()=>{
   const camera=await read('src/render/hades25dCamera.js');
   const pose=await read('src/render/hades25dMechPose.js');
   const main=await read('src/main.js');
@@ -52,10 +52,11 @@ test('Hades 2.5D view uses an oblique arena and keeps mechs upright',async()=>{
   assert.match(camera,/platformDepth:18/);
   assert.match(camera,/drawLayoutHades25D/);
   assert.match(pose,/signedScreenAngle/);
-  assert.match(pose,/entry\.root\.rotation\.x=\(player\?\.17:\.20\)/);
-  assert.match(pose,/entry\.root\.rotation\.z=clamp/);
-  assert.match(pose,/parts\.weapon\.rotation\.z=-aimAngle\*\.82/);
-  assert.match(pose,/entry\.contactShadow\.position\.y=groundY-1/);
+  assert.match(pose,/liveActors/);
+  assert.match(pose,/actor\.yaw=-Math\.PI\/2\+clamp\(screenAngle\*\.04,-\.07,\.07\)/);
+  assert.match(pose,/actor\.primarySpreadVisual=clamp\(-screenAngle\/3,-\.52,\.52\)/);
+  assert.match(pose,/reticle\.geometry\.scale\(1,\.46,1\)/);
+  assert.match(pose,/finally/);
   assert.match(main,/applyHades25DCamera/);
   assert.match(main,/applyHades25DMechPose/);
   assert.match(main,/dataset\.combatView = 'hades25d'/);
