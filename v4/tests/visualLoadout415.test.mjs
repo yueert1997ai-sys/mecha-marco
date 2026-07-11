@@ -47,17 +47,23 @@ test('runtime activates loadout model evolution, arena detail and UI polish',asy
   assert.match(arena,/drawArena415/);
 });
 
-test('4.1.5 low-saturation stylesheet and cache are wired',async()=>{
+test('4.1.5 low-saturation styles and cache are wired',async()=>{
   const html=await read('index.html');
   const css=await read('visual415.css');
+  const refine=await read('visual415-refine.css');
   const sw=await read('sw.js');
   const version=(await read('VERSION')).trim();
   assert.match(html,/visual415\.css/);
+  assert.match(html,/visual415-refine\.css/);
   assert.match(css,/low-saturation-glass/);
   assert.match(css,/\.loadout-dock/);
   assert.match(css,/\.dock-mech/);
   assert.match(css,/orientation:landscape/);
-  assert.match(sw,/visual-loadout-r1/);
+  assert.match(refine,/\.shop-actions \.primary-cta/);
+  assert.match(refine,/position:sticky/);
+  assert.match(refine,/\.shop-item \.shop-slot/);
+  assert.match(sw,/visual-loadout-r2/);
+  assert.match(sw,/visual415-refine\.css/);
   assert.match(sw,/loadoutVisual415\.js/);
   assert.match(sw,/uiPolish415\.js/);
   assert.equal(version,'4.1.5-visual-loadout-pass');
