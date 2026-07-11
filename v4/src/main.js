@@ -4,6 +4,8 @@ import { applyRendererPolish } from './render/polishRenderer.js';
 import { applyMechVisual41 } from './render/mechVisual41.js';
 import { tuneMech3DRenderer } from './render/mech3dTuning41.js';
 import { enhanceLiteEnemies42 } from './render/mechLiteEnhance42.js';
+import { applyHades25DCamera } from './render/hades25dCamera.js';
+import { applyHades25DMechPose } from './render/hades25dMechPose.js';
 import { applyMobileFeel42 } from './combat/mobileFeel42.js';
 import { InputRouter } from './input/inputRouter.js';
 import { AppUI } from './ui/appUI.js';
@@ -17,6 +19,7 @@ import { applyCombatPolish } from './combat/polishCombat.js';
 applyRendererPolish(Renderer);
 applyMechVisual41(Renderer);
 applyMobileFeel42({ InputRouter, PlayerMech, Renderer });
+applyHades25DCamera(Renderer);
 const drawCanvasMechFallback = Renderer.prototype.drawMech;
 Renderer.prototype.drawMech = function drawMechWithWebGLFallback(...args) {
   if (globalThis.__MECH_3D_READY__) return;
@@ -35,10 +38,13 @@ const audio = new SynthAudio();
 const game = new Game({ renderer, input, ui, audio });
 let mech3d = null;
 let mech3dStatus = 'loading';
+document.documentElement.dataset.combatView = 'hades25d';
 
 try {
   const { createMech3DRenderer } = await import('./render/mech3d41.js');
-  mech3d = enhanceLiteEnemies42(tuneMech3DRenderer(await createMech3DRenderer(mechCanvas, renderer)));
+  const tuned = tuneMech3DRenderer(await createMech3DRenderer(mechCanvas, renderer));
+  const efficient = enhanceLiteEnemies42(tuned);
+  mech3d = applyHades25DMechPose(efficient);
   globalThis.__MECH_3D_READY__ = true;
   mech3dStatus = 'ready';
   document.documentElement.dataset.mech3d = 'ready';
@@ -73,7 +79,7 @@ if (!smokeMode && 'serviceWorker' in navigator && location.protocol.startsWith('
 
 globalThis.__MECHA_MARCO__ = {
   game,
-  visualVersion:'4.1.1-controls-camera-polish',
+  visualVersion:'4.1.2-hades25d-view',
   mech3dStatus:()=>mech3dStatus,
   snapshot: () => ({
     state:game.state,
@@ -82,6 +88,7 @@ globalThis.__MECHA_MARCO__ = {
     projectiles:game.projectiles.length,
     mech3d:mech3dStatus,
     renderMode:document.documentElement.dataset.mechRender,
+    combatView:document.documentElement.dataset.combatView,
     player:game.player?{hp:game.player.hp,maxHp:game.player.maxHp,x:game.player.x,y:game.player.y}:null,
   }),
 };
