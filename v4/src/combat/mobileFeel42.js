@@ -158,7 +158,7 @@ export function applyMobileFeel42({ InputRouter, PlayerMech, Renderer }) {
     };
   };
 
-  Renderer.prototype.begin = function beginWithCombatCamera(world) {
+  Renderer.prototype.begin = function beginWithArenaCamera(world) {
     const ctx = this.ctx;
     ctx.setTransform(1,0,0,1,0,0);
     const gradient = ctx.createLinearGradient(0,0,0,this.height);
@@ -170,18 +170,12 @@ export function applyMobileFeel42({ InputRouter, PlayerMech, Renderer }) {
 
     const player = world.player && !world.player.dead ? world.player : null;
     const target = player || { x:0, y:0, aim:-Math.PI / 2, speed01:0 };
-    const lookAhead = player ? 1.05 + (player.speed01 || 0) * .55 : 0;
-    const desiredX = target.x + Math.cos(target.aim || -Math.PI / 2) * lookAhead;
-    const desiredY = target.y + Math.sin(target.aim || -Math.PI / 2) * lookAhead * .72;
-    const gap = Math.hypot(desiredX - this.camera.x, desiredY - this.camera.y);
-    if (gap > 7.5) {
-      this.camera.x = desiredX;
-      this.camera.y = desiredY;
-    } else {
-      const follow = player?.dashTimer > 0 ? .23 : .15;
-      this.camera.x += (desiredX - this.camera.x) * follow;
-      this.camera.y += (desiredY - this.camera.y) * follow;
-    }
+    const lookAhead = player ? .42 + (player.speed01 || 0) * .18 : 0;
+    const desiredX = clamp(target.x * .08 + Math.cos(target.aim || -Math.PI / 2) * lookAhead, -.75, .75);
+    const desiredY = clamp(target.y * .06 + Math.sin(target.aim || -Math.PI / 2) * lookAhead * .58, -.55, .55);
+    const follow = player?.dashTimer > 0 ? .18 : .11;
+    this.camera.x += (desiredX - this.camera.x) * follow;
+    this.camera.y += (desiredY - this.camera.y) * follow;
     this.camera.shake *= .84;
     this.drawArena(world);
   };
