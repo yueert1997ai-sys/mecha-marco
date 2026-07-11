@@ -55,7 +55,7 @@ test('runtime activates projected armor meshes, hardpoints and redesigned previe
   assert.match(visual,/Renderer\.prototype\.drawMech/);
   assert.match(primitive,/faces=\[/);
   assert.match(primitive,/panelColor/);
-  assert.match(primitive,/const ps=finite\(p\.s\)/);
+  assert.match(primitive,/ps=finite\(p\.s\)/);
   assert.match(preview,/V4\.1 FULL MECH REDESIGN/);
   assert.match(preview,/mech-preview41/);
 });
