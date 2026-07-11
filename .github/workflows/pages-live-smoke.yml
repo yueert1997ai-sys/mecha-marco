@@ -22,7 +22,7 @@ jobs:
           for i in {1..36}; do
             root_code=$(curl -L -A "$ua" -sS -o /tmp/root.html -w '%{http_code}' "$base/?release=4" || true)
             v4_code=$(curl -L -A "$ua" -sS -o /tmp/v4.html -w '%{http_code}' "$base/v4/?smoke=1" || true)
-            if [ "$root_code" = '200' ] && [ "$v4_code" = '200' ] && grep -q './v4/' /tmp/root.html && grep -q '天穹断刃 4.0' /tmp/v4.html; then
+            if [ "$root_code" = '200' ] && [ "$v4_code" = '200' ] && grep -q './v4/' /tmp/root.html && grep -Eq '天穹断刃 4\.[0-9]' /tmp/v4.html; then
               ok=1
               break
             fi
