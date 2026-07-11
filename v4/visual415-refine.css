@@ -1,0 +1,71 @@
+/* 4.1.5 screenshot review refinements */
+html[data-ui-style="low-saturation-glass"] .shop-item .shop-slot{
+  color:#9fb1bf!important;
+  background:rgba(151,174,190,.055);
+  border-color:rgba(188,211,225,.1);
+}
+html[data-ui-style="low-saturation-glass"] .shop-actions{
+  position:sticky;
+  bottom:-1px;
+  z-index:5;
+  padding:9px 0 1px;
+  background:linear-gradient(180deg,rgba(7,11,20,0),rgba(7,11,20,.92) 34%);
+  backdrop-filter:blur(10px);
+}
+html[data-ui-style="low-saturation-glass"] .shop-actions .primary-cta{
+  background:linear-gradient(180deg,#c7d6df,#8da6b7)!important;
+  color:#08111a!important;
+  border-color:rgba(220,237,246,.2)!important;
+}
+html[data-ui-style="low-saturation-glass"] .shop-actions #shop-repair{
+  color:#ced8de;
+  background:rgba(122,143,158,.08);
+}
+html[data-ui-style="low-saturation-glass"] .shop-actions button:disabled{
+  color:#74818b;
+}
+html[data-ui-style="low-saturation-glass"] .action-btn{
+  color:#e7edf1;
+  background:radial-gradient(circle at 36% 28%,rgba(222,232,238,.18),rgba(75,91,106,.28) 37%,rgba(7,11,18,.76) 76%);
+  border-color:rgba(205,222,232,.12);
+  box-shadow:0 9px 25px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.08);
+}
+html[data-ui-style="low-saturation-glass"] .action-btn strong{font-weight:650;text-shadow:none}
+html[data-ui-style="low-saturation-glass"] .action-btn span{color:#9fadb8}
+html[data-ui-style="low-saturation-glass"] .saber-btn{box-shadow:0 9px 25px rgba(0,0,0,.24),inset 0 0 20px rgba(126,174,188,.08)}
+html[data-ui-style="low-saturation-glass"] .dash-btn{box-shadow:0 9px 25px rgba(0,0,0,.24),inset 0 0 20px rgba(145,137,178,.08)}
+html[data-ui-style="low-saturation-glass"] .missile-btn{box-shadow:0 9px 25px rgba(0,0,0,.24),inset 0 0 20px rgba(180,151,124,.08)}
+html[data-ui-style="low-saturation-glass"] .overdrive-btn{box-shadow:0 9px 25px rgba(0,0,0,.24),inset 0 0 20px rgba(171,136,164,.08)}
+html[data-ui-style="low-saturation-glass"] .module-strip{max-width:min(430px,46vw);margin-inline:auto;flex-wrap:wrap;row-gap:3px}
+html[data-ui-style="low-saturation-glass"] .module-strip span{
+  background:rgba(9,14,23,.52);
+  border-color:rgba(195,218,231,.07);
+  color:#9faeb8;
+}
+html[data-ui-style="low-saturation-glass"] .module-strip.has-duo span:last-child{
+  color:#c3b796;
+  border-color:rgba(194,177,126,.18);
+}
+html[data-ui-style="low-saturation-glass"] .pause-btn{
+  color:#dbe4e9;
+  background:rgba(7,11,18,.55);
+  border-color:rgba(205,222,232,.12);
+}
+html[data-ui-style="low-saturation-glass"] .hud-top-left{filter:saturate(.78)}
+html[data-ui-style="low-saturation-glass"] .boss-bar{filter:saturate(.8)}
+html[data-ui-style="low-saturation-glass"] .loadout-dock{
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.025),0 16px 38px rgba(0,0,0,.12);
+}
+html[data-ui-style="low-saturation-glass"] .dock-preview:after{
+  content:"";
+  position:absolute;
+  inset:8px;
+  border:1px solid rgba(183,207,221,.035);
+  border-radius:11px;
+  pointer-events:none;
+}
+@media (orientation:landscape) and (pointer:coarse) and (max-height:560px){
+  html[data-ui-style="low-saturation-glass"] .shop-actions{padding-top:7px}
+  html[data-ui-style="low-saturation-glass"] .shop-actions button{min-height:34px}
+  html[data-ui-style="low-saturation-glass"] .module-strip{max-width:38vw}
+}
