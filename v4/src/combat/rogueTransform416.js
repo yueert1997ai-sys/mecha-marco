@@ -39,7 +39,7 @@ export function applyRogueTransform416({PlayerMech,Game}){
       world.spawnProjectile({owner:'player',x:this.x,y:this.y,angle:this.aim+Math.PI,speed:this.stats.projectileSpeed*.9,damage:this.stats.primaryDamage*.72,color:this.mech.palette.accent,life:.9,radius:.16,pierce:1,ricochet:0,type:'rear-beam',source:{x:this.x,y:this.y}});
     }
 
-    if(doctrine.auroraResonance&&this.__doctrineCounter416%4===0){
+    if(doctrine.auroraResonance&&this.__doctrineCounter416%(doctrine.auroraMastery?3:4)===0){
       for(const offset of[-.16,.16])world.spawnProjectile({owner:'player',x:rig.muzzle.x,y:rig.muzzle.y,angle:this.aim+offset,speed:this.stats.projectileSpeed*.96,damage:this.stats.primaryDamage*.48,color:this.mech.palette.glow,life:1.0,radius:.11,pierce:0,ricochet:0,type:'aurora-resonance',source:{x:this.x,y:this.y}});
     }
 
@@ -82,11 +82,11 @@ export function applyRogueTransform416({PlayerMech,Game}){
       pulse(world,this.x,this.y,this.mech.palette.glow,'phaseBlink',1.6);
     }
 
-    if(doctrine.bastionResonance)world.damageEnemiesInCircle(this,1.05,14,{type:'bastion-resonance',stagger:.22,knockback:2.2});
+    if(doctrine.bastionResonance)world.damageEnemiesInCircle(this,doctrine.bastionMastery?1.35:1.05,doctrine.bastionMastery?22:14,{type:'bastion-resonance',stagger:.22,knockback:2.2});
     if(doctrine.eclipseResonance){
       world.spawnDecoy({x:start.x,y:start.y,life:1.7});
       const target=world.getNearestEnemies(this,1,9)[0];
-      if(target)world.spawnProjectile({owner:'player',x:start.x,y:start.y,angle:Math.atan2(target.y-start.y,target.x-start.x),speed:13,damage:this.stats.primaryDamage*.75,color:this.mech.palette.accent,life:.8,radius:.14,pierce:0,ricochet:1,type:'eclipse-seeker',source:start});
+      if(target){const count=doctrine.eclipseMastery?2:1;for(let i=0;i<count;i+=1)world.spawnProjectile({owner:'player',x:start.x,y:start.y,angle:Math.atan2(target.y-start.y,target.x-start.x)+(i-(count-1)/2)*.18,speed:13,damage:this.stats.primaryDamage*.75,color:this.mech.palette.accent,life:.8,radius:.14,pierce:0,ricochet:1,type:'eclipse-seeker',source:start})}
     }
   };
 
@@ -111,7 +111,7 @@ export function applyRogueTransform416({PlayerMech,Game}){
     const doctrine=buildDoctrineProfile416(this.modules||[]);
     if(doctrine.bastionResonance&&result>0&&this.__bastionPulseCooldown416<=0){
       world.damageEnemiesInCircle(this,1.15,10,{type:'bastion-counter',stagger:.14,knockback:1.5});
-      this.__bastionPulseCooldown416=1.6;
+      this.__bastionPulseCooldown416=doctrine.bastionMastery ? .85 : 1.6;
     }
     if(this.dead&&this.stats.effects?.lastStandProtocol&&!this.__lastStandUsed416){
       this.__lastStandUsed416=true;this.dead=false;this.hp=1;this.invulnerable=1.15;this.overdriveTimer=Math.max(this.overdriveTimer,3.2);
@@ -168,14 +168,15 @@ export function applyRogueTransform416({PlayerMech,Game}){
 
   Game.prototype.showShop=function showShop416(){
     this.state='shop';this.input.setEnabled(false);this.ui.setCombatVisible(false);
-    const inventory=shuffle(MODULES.filter((module)=>module.slot!=='Core'&&!this.run.modules.some((owned)=>owned.id===module.id)),seededRng(this.run.seed+this.run.depth*19)).slice(0,3);
+    const damaged=this.run.routeConsequences?.supply==='lost',modulePrice=damaged?45:35,repairPrice=damaged?Infinity:25;this.run.shopPricing43={damaged,module:modulePrice,repair:repairPrice};
+    const inventory=shuffle(MODULES.filter((module)=>module.slot!=='Core'&&!this.run.modules.some((owned)=>owned.id===module.id)),seededRng(this.run.seed+this.run.depth*19)).slice(0,damaged?1:3);
     const render=()=>this.ui.showShop(this.run,inventory,(index)=>{
-      if(this.run.credits<35)return;
-      const [module]=inventory.splice(index,1);if(!module)return;
-      this.run.credits-=35;this.run.modules.push(module);this.player.refreshBuild(this.run.modules,true);this.audio.play('select');render();
+      if(this.run.credits<modulePrice)return;
+      const module=inventory[index];if(!module)return;
+      const install=(replaceId=null)=>{const result=this.installRunModule43?.(module,replaceId);if(!result){this.run.modules.push(module);this.player.refreshBuild(this.run.modules,true)}if(!result||result.installed){this.run.credits-=modulePrice;inventory.splice(index,1);this.audio.play('select');render()}return result};const result=install();if(result?.needsReplacement)this.ui.showModuleReplacement43(this.run,module,(replaceId)=>install(replaceId),render);
     },()=>{
-      if(this.run.credits<25)return;this.run.credits-=25;this.player.hp=Math.min(this.player.maxHp,this.player.hp+this.player.maxHp*.28);this.audio.play('select');render();
-    },()=>this.advanceDepth());
+      if(this.run.credits<repairPrice)return;this.run.credits-=repairPrice;this.player.hp=Math.min(this.player.maxHp,this.player.hp+this.player.maxHp*.28);this.audio.play('select');render();
+    },()=>{delete this.run.shopPricing43;this.advanceDepth()});
     render();
   };
 }

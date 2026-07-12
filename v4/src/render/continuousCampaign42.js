@@ -23,6 +23,25 @@ const drawOctagon=(ctx,x,y,r,fill,stroke,lineWidth)=>{
   ctx.closePath();ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle=stroke;ctx.lineWidth=lineWidth;ctx.stroke();
 };
 
+function drawStagePattern(renderer,stage,time=0){
+  const ctx=renderer.ctx,d=renderer.dpr,s=renderer.scale,cy=stage.centerY,at=(x,y)=>renderer.worldToScreen(x,cy+y),kind=stage.spatial?.floor;
+  ctx.save();ctx.globalAlpha=.22;ctx.strokeStyle=stage.theme.line;ctx.fillStyle=stage.theme.accent;ctx.lineWidth=1.2*d;
+  if(kind==='armor-lanes'||kind==='rail-grid'||kind==='pursuit-vectors')for(const x of[-6,-3,0,3,6]){const a=at(x,-5),b=at(x,5);ctx.lineWidth=(x===0?3:1)*d;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}
+  if(kind==='drift-shadows')for(let i=0;i<9;i+=1){const p=at(-7+(i*3.1)%14,-4+(i*1.9)%8);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(i*.7+time*.04);ctx.fillRect(-18*d,-3*d,36*d,6*d);ctx.restore()}
+  if(kind==='scan-bands')for(let i=0;i<4;i+=1){const y=-4+((time*.8+i*2.4)%8);const a=at(-8,y),b=at(8,y);ctx.globalAlpha=.12+i*.035;ctx.lineWidth=(5+i)*d;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}
+  if(kind==='service-chevrons')for(let y=-4;y<=4;y+=1.35)for(const x of[-5.8,5.8]){const p=at(x,y);ctx.beginPath();ctx.moveTo(p.x-12*d,p.y-8*d);ctx.lineTo(p.x,p.y);ctx.lineTo(p.x-12*d,p.y+8*d);ctx.stroke()}
+  if(kind==='honor-rays'||kind==='command-sigil'){const p=at(0,0);for(let i=0;i<12;i+=1){const a=i/12*Math.PI*2;ctx.beginPath();ctx.moveTo(p.x+Math.cos(a)*28*d,p.y+Math.sin(a)*28*d);ctx.lineTo(p.x+Math.cos(a)*5.2*s,p.y+Math.sin(a)*4.4*s);ctx.stroke()}}
+  if(kind==='conduit-arcs'||kind==='core-orbits'||kind==='sealed-void'){const p=at(0,0);for(let i=1;i<=4;i+=1){ctx.lineWidth=(i===4?3:1)*d;ctx.beginPath();ctx.ellipse(p.x,p.y,i*1.2*s,i*.86*s,0,0,Math.PI*2);ctx.stroke()}}
+  if(kind==='grave-slabs')for(let x=-7;x<=7;x+=2)for(let y=-4;y<=4;y+=2){const p=at(x+(Math.abs(y)%4?1:0),y);ctx.strokeRect(p.x-.72*s,p.y-.58*s,1.44*s,1.16*s)}
+  if(kind==='pursuit-vectors')for(let y=-4;y<=3;y+=2){const p=at(0,y);ctx.beginPath();ctx.moveTo(p.x-22*d,p.y+10*d);ctx.lineTo(p.x,p.y-10*d);ctx.lineTo(p.x+22*d,p.y+10*d);ctx.stroke()}
+  ctx.restore();
+}
+
+function drawFacilities(renderer,world,stage){
+  const facilities=world.facilities42||[];if(!facilities.length)return;const ctx=renderer.ctx,d=renderer.dpr;
+  for(const target of facilities){const p=renderer.worldToScreen(target.x,target.y),ratio=Math.max(0,target.hp/target.maxHp);ctx.save();ctx.globalAlpha=target.dead?.22:1;ctx.translate(p.x,p.y);ctx.shadowBlur=target.dead?0:18*d;ctx.shadowColor=stage.theme.accent;drawOctagon(ctx,0,0,26*d,'rgba(8,15,24,.9)',stage.theme.accent,2*d);ctx.fillStyle=stage.theme.accent;ctx.fillRect(-17*d,-4*d,34*d*ratio,8*d);ctx.strokeStyle='rgba(255,255,255,.5)';ctx.strokeRect(-17*d,-4*d,34*d,8*d);if(target.dead){ctx.strokeStyle='rgba(255,255,255,.32)';ctx.beginPath();ctx.moveTo(-18*d,-18*d);ctx.lineTo(18*d,18*d);ctx.moveTo(18*d,-18*d);ctx.lineTo(-18*d,18*d);ctx.stroke()}ctx.restore()}
+}
+
 function drawLandmark(renderer,stage){
   const ctx=renderer.ctx,s=renderer.scale,d=renderer.dpr,cy=stage.centerY;
   const at=(x,y)=>renderer.worldToScreen(x,cy+y);
@@ -52,13 +71,15 @@ function drawLandmark(renderer,stage){
   ctx.restore();
 }
 
-function drawSector(renderer,stage,currentIndex,exitOpen){
+function drawSector(renderer,stage,currentIndex,exitOpen,world){
   const ctx=renderer.ctx,d=renderer.dpr,b={left:-9,right:9,top:stage.centerY-6,bottom:stage.centerY+6};
   const tl=renderer.worldToScreen(b.left,b.top),br=renderer.worldToScreen(b.right,b.bottom);const x=tl.x,y=tl.y,w=br.x-tl.x,h=br.y-tl.y;
   if(y>renderer.height+120*d||y+h<-120*d)return;
-  ctx.save();rounded(ctx,x,y,w,h,20*d);ctx.shadowBlur=stage.index===currentIndex?26*d:8*d;ctx.shadowColor=stage.theme.accent;const floor=ctx.createLinearGradient(x,y,x+w,y+h);floor.addColorStop(0,stage.theme.top);floor.addColorStop(1,stage.theme.bottom);ctx.fillStyle=floor;ctx.fill();ctx.shadowBlur=0;ctx.save();rounded(ctx,x,y,w,h,20*d);ctx.clip();ctx.globalAlpha=.15;ctx.strokeStyle=stage.theme.line;ctx.lineWidth=.7*d;for(let gx=-8;gx<=8;gx+=1){const a=renderer.worldToScreen(gx,b.top),c=renderer.worldToScreen(gx,b.bottom);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(c.x,c.y);ctx.stroke()}for(let gy=Math.ceil(b.top);gy<=b.bottom;gy+=1){const a=renderer.worldToScreen(b.left,gy),c=renderer.worldToScreen(b.right,gy);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(c.x,c.y);ctx.stroke()}ctx.restore();rounded(ctx,x,y,w,h,20*d);ctx.strokeStyle=stage.index===currentIndex?stage.theme.line:'rgba(146,162,176,.14)';ctx.lineWidth=(stage.index===currentIndex?1.8:.8)*d;ctx.stroke();ctx.restore();
+  ctx.save();rounded(ctx,x,y,w,h,20*d);ctx.shadowBlur=stage.index===currentIndex?26*d:8*d;ctx.shadowColor=stage.theme.accent;const floor=ctx.createLinearGradient(x,y,x+w,y+h);floor.addColorStop(0,stage.theme.top);floor.addColorStop(1,stage.theme.bottom);ctx.fillStyle=floor;ctx.fill();ctx.shadowBlur=0;ctx.save();rounded(ctx,x,y,w,h,20*d);ctx.clip();ctx.globalAlpha=.08;ctx.strokeStyle=stage.theme.line;ctx.lineWidth=.7*d;for(let gx=-8;gx<=8;gx+=1){const a=renderer.worldToScreen(gx,b.top),c=renderer.worldToScreen(gx,b.bottom);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(c.x,c.y);ctx.stroke()}for(let gy=Math.ceil(b.top);gy<=b.bottom;gy+=1){const a=renderer.worldToScreen(b.left,gy),c=renderer.worldToScreen(b.right,gy);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(c.x,c.y);ctx.stroke()}ctx.restore();rounded(ctx,x,y,w,h,20*d);ctx.strokeStyle=stage.index===currentIndex?stage.theme.line:'rgba(146,162,176,.14)';ctx.lineWidth=(stage.index===currentIndex?1.8:.8)*d;ctx.stroke();ctx.restore();
 
+  drawStagePattern(renderer,stage,world.time);
   drawLandmark(renderer,stage);
+  if(stage.index===currentIndex)drawFacilities(renderer,world,stage);
   for(const [sx,sy,r] of(structureMap[stage.layout]||[])){
     const p=renderer.worldToScreen(sx,stage.centerY+sy),radius=r*renderer.scale;ctx.save();ctx.translate(p.x,p.y);ctx.fillStyle='rgba(0,0,0,.34)';ctx.beginPath();ctx.ellipse(radius*.1,radius*.15,radius*.95,radius*.64,0,0,Math.PI*2);ctx.fill();const body=ctx.createRadialGradient(-radius*.3,-radius*.3,2,0,0,radius);body.addColorStop(0,'rgba(170,184,191,.72)');body.addColorStop(.45,'rgba(54,68,80,.92)');body.addColorStop(1,'rgba(10,16,24,.98)');drawOctagon(ctx,0,0,radius,body,stage.theme.line,1*d);ctx.restore();
   }
@@ -88,7 +109,7 @@ export function applyContinuousCampaignRenderer42(Renderer){
     const current=world.run.stageIndex||0;
     for(let i=Math.max(0,current-1);i<=Math.min(ORBITAL_GRAVEYARD_STAGES_42.length-1,current+1);i+=1){
       const stage=(i===current&&world.room?.stage42)||ORBITAL_GRAVEYARD_STAGES_42[i];
-      drawSector(this,stage,current,Boolean(world.run.exitOpen));
+      this.ctx.save();this.ctx.globalAlpha=i===current?1:.035;drawSector(this,stage,current,Boolean(world.run.exitOpen),world);this.ctx.restore();
       if(i<ORBITAL_GRAVEYARD_STAGES_42.length-1){const next=ORBITAL_GRAVEYARD_STAGES_42[i+1];const a=this.worldToScreen(-3.4,stage.centerY-6),b=this.worldToScreen(3.4,next.centerY+6);const ctx=this.ctx;ctx.save();const g=ctx.createLinearGradient(a.x,a.y,b.x,b.y);g.addColorStop(0,'rgba(69,83,96,.7)');g.addColorStop(.5,'rgba(25,32,42,.9)');g.addColorStop(1,'rgba(69,83,96,.7)');const rx=Math.min(a.x,b.x),ry=Math.min(a.y,b.y),rw=Math.abs(b.x-a.x),rh=Math.abs(b.y-a.y);ctx.fillStyle=g;ctx.fillRect(rx,ry,rw,rh);ctx.strokeStyle='rgba(128,148,163,.2)';ctx.strokeRect(rx,ry,rw,rh);ctx.restore()}
     }
   };

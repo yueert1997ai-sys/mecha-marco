@@ -2,11 +2,22 @@ import { clamp, seededRng, shuffle } from '../core/math.js';
 import { MODULES } from '../data/modules.js';
 import { rollModuleChoices } from './rewardResolver.js';
 import { recordRun, saveProfile } from '../meta/profile.js';
-import { BOSS_DIALOGUE_42, CAMPAIGN_EVENTS_42, CAMPAIGN_LENGTH_42, getCampaignStage42 } from '../data/regionOrbitalGraveyard42.js';
+import { BOSS_DIALOGUE_42, CAMPAIGN_EVENTS_42, CAMPAIGN_LENGTH_42, getCampaignStage42, getStageMissionTargets42 } from '../data/regionOrbitalGraveyard42.js';
 import { calculateRestorationEarned42, identityMatch42, commandAuthority42 } from '../meta/restoration42.js';
 
 const lockedBounds=(stage)=>({left:-9,right:9,top:stage.centerY-6,bottom:stage.centerY+6});
 const travelBounds=(stage)=>({left:-9,right:9,top:stage.centerY-8.8,bottom:stage.centerY+6});
+const pushFromCircle=(actor,obstacle,centerY)=>{
+  if(actor.dead)return;
+  const ox=obstacle[0],oy=centerY+obstacle[1],radius=obstacle[2]+actor.radius+.12;
+  const dx=actor.x-ox,dy=actor.y-oy,dist=Math.hypot(dx,dy);
+  if(dist>=radius)return;
+  const nx=dist>.001?dx/dist:(actor.id||0)%2?1:-1,ny=dist>.001?dy/dist:0;
+  actor.x=ox+nx*radius;actor.y=oy+ny*radius;
+  const inward=actor.vx*nx+actor.vy*ny;
+  if(inward<0){actor.vx-=inward*nx;actor.vy-=inward*ny}
+  if(actor.machine){const side=(actor.id||0)%2?1:-1;actor.vx+=-ny*side*.8;actor.vy+=nx*side*.8}
+};
 
 const applyEventChoice=(game,event,choice)=>{
   game.run.events.push(`${event.id}:${choice.id}`);
@@ -21,8 +32,9 @@ const applyEventChoice=(game,event,choice)=>{
   if(choice.surrender==='dismantle')game.run.surrenderRejected+=1;
   if(choice.rareModule){
     const rare=shuffle(MODULES.filter((module)=>module.rarity==='rare'&&!game.run.modules.some((owned)=>owned.id===module.id)),seededRng(game.run.seed+game.run.stageIndex*97))[0];
-    if(rare){game.run.modules.push(rare);game.player.refreshBuild(game.run.modules,true);game.ui.notify(`${rare.name} 已接入`,1.7)}
+    if(rare){const result=game.installRunModule43?.(rare);if(!result||result.installed)game.ui.notify(`${rare.name} 已接入`,1.7);return{module:rare,result}}
   }
+  return null;
 };
 
 export function applyContinuousCampaign42({Game}){
@@ -74,6 +86,7 @@ export function applyContinuousCampaign42({Game}){
     this.ui.setCombatVisible(true);
     this.clearRoomObjects();
     this.room={...stage,stage42:stage,reward:stage.reward,elite:stage.waves.some((wave)=>wave.some((id)=>id.startsWith('elite'))),boss:Boolean(stage.boss),waveIndex:-1,clear:false,resolved42:false,exitOpen:false};
+    this.facilities42=getStageMissionTargets42(stage);
     this.bounds=lockedBounds(stage);
     if(first)this.player.resetForRoom({x:0,y:stage.centerY+4.55});
     else{
@@ -108,6 +121,34 @@ export function applyContinuousCampaign42({Game}){
     if(source==='ordnance'||source==='missile'||source==='sentry-shot')this.run.ordnanceKills+=1;
   };
 
+  Game.prototype.resolveStageGeometry42=function resolveStageGeometry42(){
+    const stage=this.room?.stage42;if(!stage)return;
+    const obstacles=stage.spatial?.obstacles||[];
+    for(const obstacle of obstacles){pushFromCircle(this.player,obstacle,stage.centerY);for(const enemy of this.enemies)pushFromCircle(enemy,obstacle,stage.centerY)}
+  };
+
+  Game.prototype.hitFacility42=function hitFacility42(target,damage,source){
+    if(!target||target.dead)return false;
+    target.hp=Math.max(0,target.hp-damage);this.spawnVfx({type:'enemyHit',x:target.x,y:target.y,color:this.room.stage42.theme.accent,life:.2,scale:.7});
+    if(target.hp<=0){target.dead=true;this.spawnVfx({type:'explosion',x:target.x,y:target.y,color:this.room.stage42.theme.accent,life:.72,scale:1.35});this.audio.play('enemyHit');const left=this.facilities42.filter((item)=>!item.dead).length;this.ui.notify(left?`${target.label} 已摧毁 · 剩余 ${left}`:`${target.label} 全部离线`,1.4)}
+    return true;
+  };
+
+  const updateProjectiles=Game.prototype.updateProjectiles;
+  Game.prototype.updateProjectiles=function updateCampaignFacilities42(dt){
+    updateProjectiles.call(this,dt);
+    if(!this.run?.campaign42||!this.facilities42?.length)return;
+    for(const shot of this.projectiles){if(shot.owner!=='player'||shot.life<=0)continue;const target=this.facilities42.find((item)=>!item.dead&&Math.hypot(item.x-shot.x,item.y-shot.y)<item.radius+(shot.radius||.12));if(target&&this.hitFacility42(target,shot.damage,shot)){shot.life=0}}
+    this.projectiles=this.projectiles.filter((shot)=>shot.life>0);
+  };
+
+  const updateSlashes=Game.prototype.updateSlashes;
+  Game.prototype.updateSlashes=function updateCampaignFacilitySlashes42(dt){
+    updateSlashes.call(this,dt);
+    if(!this.run?.campaign42||!this.facilities42?.length)return;
+    for(const slash of this.slashes){if(slash.owner!=='player')continue;for(const target of this.facilities42){if(target.dead||slash.hitIds.has(target.id)||Math.hypot(target.x-slash.x,target.y-slash.y)>slash.range+target.radius)continue;slash.hitIds.add(target.id);this.hitFacility42(target,slash.damage,slash)}}
+  };
+
   Game.prototype.openStageExit42=function openStageExit42(){
     if(!this.run?.campaign42||!this.room?.stage42)return;
     this.state='combat';this.input.clear();this.input.setEnabled(true);this.ui.hidePanel();this.ui.setCombatVisible(true);
@@ -121,19 +162,23 @@ export function applyContinuousCampaign42({Game}){
     if(reward==='credits'){this.run.credits+=42;this.ui.notify('回收战术核心 ●42');return this.openStageExit42()}
     if(reward==='permanent'){this.run.permanentEarned+=3;this.ui.notify('回收舰队数据 ◆3');return this.openStageExit42()}
     if(reward==='repair'){this.player.hp=Math.min(this.player.maxHp,this.player.hp+this.player.maxHp*.3);this.ui.notify('装甲维修完成');return this.openStageExit42()}
-    const choices=rollModuleChoices(this.run,reward,this.run.seed+stage.index*211).slice(0,2);
+    const choices=rollModuleChoices(this.run,reward,this.run.seed+stage.index*211).slice(0,3);
     this.state='reward';this.input.setEnabled(false);this.ui.setCombatVisible(false);
     this.ui.showFieldReward42(choices,reward,(index)=>{
       const module=choices[index]||choices[0];
-      if(module){this.run.modules.push(module);this.player.refreshBuild(this.run.modules,true);this.audio.play('select');this.ui.notify(`${module.name} 已安装`,1.5)}
-      this.openStageExit42();
+      if(!module)return this.openStageExit42();
+      const install=(replaceId=null)=>{const result=this.installRunModule43?.(module,replaceId);if(!result){this.run.modules.push(module);this.player.refreshBuild(this.run.modules,true)}if(!result||result.installed){this.audio.play('select');this.ui.notify(`${module.name} 已安装`,1.5);this.openStageExit42()}return result};
+      const result=install();
+      if(result?.needsReplacement)this.ui.showModuleReplacement43(this.run,module,(replaceId)=>install(replaceId),()=>this.openStageExit42());
     });
   };
 
   Game.prototype.showCampaignEvent42=function showCampaignEvent42(event){
     this.state='event';this.input.setEnabled(false);this.ui.setCombatVisible(false);
     this.ui.showCampaignEvent42(event,(index)=>{
-      const choice=event.choices[index]||event.choices[0];applyEventChoice(this,event,choice);this.audio.play('select');this.openStageExit42();
+      const choice=event.choices[index]||event.choices[0],outcome=applyEventChoice(this,event,choice);const finish=()=>{this.audio.play('select');this.openStageExit42()};
+      if(outcome?.result?.needsReplacement)return this.ui.showModuleReplacement43(this.run,outcome.module,(replaceId)=>{const replaced=this.installRunModule43(outcome.module,replaceId);if(replaced.installed)this.ui.notify(`${outcome.module.name} 已接入`,1.7);finish()},finish);
+      finish();
     });
   };
 
@@ -154,7 +199,8 @@ export function applyContinuousCampaign42({Game}){
         if(stage.index===8)this.run.routeFlags.tomb=branch.id;
         if(branch.highRisk)this.run.highRiskChoices+=1;
         if(stage.index===8&&branch.id==='maintenance')this.player.hp=Math.min(this.player.maxHp,this.player.hp+this.player.maxHp*.18);
-        if(stage.index===8&&branch.id==='archive'){this.run.archiveFragments.push('ma00-archive-route');this.run.recognitionCount+=1}
+        if(stage.index===8&&branch.id==='archive'){this.run.archiveFragments.push('ma00-archive-route');this.run.recognitionCount+=1;if(!this.run.archiveNodes.includes('archive-route'))this.run.archiveNodes.push('archive-route')}
+        const consequence=stage.index===2?(branch.id==='arsenal'?'后续两段增加精英炮击 · 重火力回收提高':'获得档案回收 · 身份阵列奖励转为舰队数据'):(branch.id==='archive'?'核心外环与前庭增加精英 · 恢复 MA-00 档案':'立即维修 18% · 核心前庭追加维修');this.ui.showTacticalReceipt43?.(branch.label,consequence,branch.highRisk?'danger':'success');
         this.audio.play('select');this.openStageExit42();
       });
       return;
@@ -188,6 +234,9 @@ export function applyContinuousCampaign42({Game}){
     }
     updateCombat.call(this,dt);
     if(this.state!=='combat'||this.run.exitOpen||this.room?.resolved42)return;
+    this.resolveStageGeometry42();
+    const missionLeft=this.facilities42?.some((item)=>!item.dead);
+    if(missionLeft){this.room.clear=false;this.roomClearTimer=0}
     const stage=this.room?.stage42;if(!stage?.hazard)return;
     this._campaignHazardTimer42-=dt;
     if(this._campaignHazardTimer42>0)return;
@@ -209,7 +258,8 @@ export function applyContinuousCampaign42({Game}){
     const finalize=()=>{
       this._finishing42=false;this.state='result';this.input.setEnabled(false);this.clearHostileObjects();
       const restorationEarned=calculateRestorationEarned42(this.run,victory);
-      const report={victory,depth:(this.run.stageIndex||0)+1,stageReached:(this.run.stageIndex||0)+1,roomsCleared:this.run.roomsCleared,kills:this.run.kills,primaryKills:this.run.primaryKills,secondaryKills:this.run.secondaryKills,ordnanceKills:this.run.ordnanceKills,permanentEarned:this.run.permanentEarned+(victory?5:0),deathCause:this.run.deathCause,reachedBoss:this.run.reachedBoss,bossKilled:victory?'warden_alpha':null,lowHpClear:this.run.lowHpClear,mechId:this.selectedMech,modules:this.run.modules.map((module)=>module.id),events:this.run.events,highRiskChoices:this.run.highRiskChoices,recognitionCount:this.run.recognitionCount,archiveFragments:this.run.archiveFragments,surrenderAccepted:this.run.surrenderAccepted,surrenderRejected:this.run.surrenderRejected,restorationEarned,identityMatch:identityMatch42(this.profile,restorationEarned),commandAuthority:commandAuthority42(this.profile,victory)};
+      const stageReached=(this.run.stageIndex||0)+1,masteryEarned=Math.max(1,stageReached)+(victory?6:0);
+      const report={victory,depth:stageReached,stageReached,masteryEarned,roomsCleared:this.run.roomsCleared,kills:this.run.kills,primaryKills:this.run.primaryKills,secondaryKills:this.run.secondaryKills,ordnanceKills:this.run.ordnanceKills,permanentEarned:this.run.permanentEarned+(victory?5:0),deathCause:this.run.deathCause,reachedBoss:this.run.reachedBoss,bossKilled:victory?'warden_alpha':null,lowHpClear:this.run.lowHpClear,mechId:this.selectedMech,modules:this.run.modules.map((module)=>module.id),events:this.run.events,highRiskChoices:this.run.highRiskChoices,recognitionCount:this.run.recognitionCount,archiveFragments:this.run.archiveFragments,archiveNodes:this.run.archiveNodes||[],optionalObjectives:this.run.optionalObjectives||[],intel:this.run.intel||0,directives:this.run.directives||[],kitId:this.run.kitId,routeConsequences:this.run.routeConsequences||{},bossPrep:this.run.bossPrep||{},surrenderAccepted:this.run.surrenderAccepted,surrenderRejected:this.run.surrenderRejected,restorationEarned,identityMatch:identityMatch42(this.profile,restorationEarned),commandAuthority:commandAuthority42(this.profile,victory)};
       this.profile=recordRun(this.profile,report);saveProfile(this.profile);this.ui.showResult(report,()=>this.showBase());
     };
     if(victory){this._finishing42=true;this.state='ending';this.input.setEnabled(false);this.ui.setCombatVisible(false);this.clearHostileObjects();const line=BOSS_DIALOGUE_42.death;this.ui.showComms42?.(line.speaker,line.text,3.4,'enemy');setTimeout(finalize,1450)}else finalize();

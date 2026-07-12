@@ -9,9 +9,9 @@ const repoRoot=path.resolve(v4Root,'..');
 const readV4=(file)=>readFile(path.join(v4Root,file),'utf8');
 const readRepo=(file)=>readFile(path.join(repoRoot,file),'utf8');
 
-const VERSION='4.2.0-continuous-graveyard';
+const VERSION='4.3.1-consequence-progression';
 
-test('runtime and package version markers agree on 4.2',async()=>{
+test('runtime and package version markers agree on 4.3',async()=>{
   const version=(await readV4('VERSION')).trim();
   const pkg=JSON.parse(await readV4('package.json'));
   const html=await readV4('index.html');
@@ -20,13 +20,13 @@ test('runtime and package version markers agree on 4.2',async()=>{
 
   assert.equal(version,VERSION);
   assert.equal(pkg.version,VERSION);
-  assert.match(html,/天穹断刃 4\.2\.0/);
+  assert.match(html,/天穹断刃 4\.3\.1/);
   assert.match(main,new RegExp(VERSION.replaceAll('.','\\.')));
   assert.match(main,/dataset\.combatView = 'topdown'/);
   assert.match(main,/dataset\.mechSilhouette = 'upper-body'/);
   assert.match(main,/dataset\.campaignMode = 'continuous-12-stage'/);
   assert.match(main,/dataset\.narrativeArc = 'ma00-restoration'/);
-  assert.match(sw,/continuous-graveyard-r\d+/);
+  assert.match(sw,/consequence-progression-r\d+/);
 });
 
 test('current documentation describes top-down upper-body continuous campaign',async()=>{
@@ -36,7 +36,7 @@ test('current documentation describes top-down upper-body continuous campaign',a
   const qa=await readV4('docs/QA_REPORT_4.0.md');
 
   for(const text of[readme,design,architecture,qa]){
-    assert.match(text,/4\.2\.0-continuous-graveyard/);
+    assert.match(text,/4\.3\.1-consequence-progression/);
     assert.match(text,/纯俯视|Top-down/);
     assert.match(text,/上半身/);
     assert.match(text,/12 段|十二段/);
@@ -58,6 +58,6 @@ test('historical architecture is retained but clearly demoted from current sourc
   assert.match(architecture,/历史架构基线/);
   assert.match(architecture,/历史问题诊断（仍有效）/);
   assert.match(architecture,/从 Hades 学习的系统闭环（仍有效）/);
-  assert.match(architecture,/4\.2 当前替代方案/);
+  assert.match(architecture,/4\.3 当前替代方案/);
   assert.match(architecture,/当前事实来源优先级/);
 });

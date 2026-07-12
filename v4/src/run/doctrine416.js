@@ -22,8 +22,13 @@ export function buildDoctrineProfile416(modules=[]){
     counts,
     dominant,
     dominantDoctrine:DOCTRINES_416[dominant],
-    auroraResonance:counts.aurora>=3,
-    bastionResonance:counts.bastion>=3,
-    eclipseResonance:counts.eclipse>=3,
+    tier:Math.min(2,Math.floor((counts[dominant]||0)/2)),
+    nextThreshold:(counts[dominant]||0)<2?2:(counts[dominant]||0)<4?4:null,
+    auroraResonance:counts.aurora>=2,
+    bastionResonance:counts.bastion>=2,
+    eclipseResonance:counts.eclipse>=2,
+    auroraMastery:counts.aurora>=4,
+    bastionMastery:counts.bastion>=4,
+    eclipseMastery:counts.eclipse>=4,
   };
 }

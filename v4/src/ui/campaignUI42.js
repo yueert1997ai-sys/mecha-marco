@@ -79,9 +79,9 @@ export function applyCampaignUI42(AppUI){
     base.call(this,profile,mechs,dialogue,selectedMech,...rest);
     const brand=this.panel.querySelector('.brand-block');
     const eyebrow=brand?.querySelector('.eyebrow');
-    if(eyebrow)eyebrow.textContent='MECHA MARCO · V4.2 CONTINUOUS CAMPAIGN';
+    if(eyebrow)eyebrow.textContent='MECHA MARCO · V4.3.1 CONSEQUENCE FRONTLINE';
     const subtitle=brand?.querySelector('p');
-    if(subtitle)subtitle.textContent='轨道墓场十二段连续战线 / 单机突破联合防卫军封锁带';
+    if(subtitle)subtitle.textContent='轨道墓场十二段战术行动 / 路线后果将进入核心决战';
     const meta=this.panel.querySelector('.base-meta');
     meta?.insertAdjacentHTML('afterend',`<section class="campaign-brief42"><div><span>当前作战目标</span><strong>轨道墓场 · 12 段连续推进</strong><p>只有关键改装点、补给与路线分岔会暂停战斗。普通航段清场后直接穿过闸门进入下一关。</p></div><div><span>人格修复</span><strong>阶段 ${restorationStage42(profile.restorationScore||0)} / 4</strong><p>旧档案匹配 ${Math.min(99,8+(profile.restorationScore||0))}% · 指挥权限 ${profile.commandAuthority||0}</p></div></section>`);
     this.panel.querySelectorAll('[data-mech]').forEach((card)=>{
@@ -108,7 +108,8 @@ export function applyCampaignUI42(AppUI){
     }
     progress.querySelector('.campaign-sector42').textContent=`${String(index+1).padStart(2,'0')} / ${CAMPAIGN_LENGTH_42} · ${stage?.name||'轨道墓场'}`;
     const objective=progress.querySelector('#campaign-objective42');
-    if(objective)objective.textContent=game.run.exitOpen?'闸门开放 · 向北持续推进':stage?.objective||'清除封锁';
+    const facilityLeft=(game.facilities42||[]).filter((item)=>!item.dead).length;
+    if(objective)objective.textContent=game.run.exitOpen?'闸门开放 · 向北持续推进':facilityLeft?`${stage?.spatial?.mission?.label||'战术设施'} · 剩余 ${facilityLeft}`:stage?.objective||'清除封锁';
     this.roomLabel.textContent=`${stage?.code||`STAGE ${index+1}`} · ${stage?.name||game.room?.name||'推进中'}`;
   };
 
