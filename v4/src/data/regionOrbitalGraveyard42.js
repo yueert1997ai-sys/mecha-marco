@@ -28,6 +28,29 @@ export const ORBITAL_GRAVEYARD_STAGES_42 = [
   stage(11,{id:'graveyard-core',name:'轨道墓场核心',layout:'boss',landmark:'grave-core',objective:'击败守墓者·阿尔法',reward:'permanent',boss:true,theme:{top:'#d8d9d4',bottom:'#111216',line:'#eee8dc',accent:'#b23f58'},waves:[['boss']],intro:{speaker:'守墓者·阿尔法',text:'未登记机体。停止推进，接受身份核验。'},enemyComms:'识别错误……MA-00 已经死亡。'}),
 ];
 
+export const STAGE_SPATIAL_42={
+  'blockade-lane':{space:'fortified-channel',floor:'armor-lanes',obstacles:[[-4.8,-1.6,1],[-4.8,1.6,1],[4.8,-1.6,1],[4.8,1.6,1]]},
+  'debris-rain':{space:'broken-islands',floor:'drift-shadows',obstacles:[[-4,0,1.28],[0,-2.55,.92],[3.8,.65,1.12]]},
+  'broken-dock':{space:'dock-corridors',floor:'rail-grid',obstacles:[[-4,-2,1.05],[4,-2,1.05],[-4,2,1.05],[4,2,1.05]]},
+  'identity-array':{space:'scanner-lane',floor:'scan-bands',obstacles:[[-3.6,-1.5,.8],[-3.6,1.5,.8],[3.6,-1.5,.8],[3.6,1.5,.8]],mission:{type:'destroy',label:'识别节点',targets:[[-5,-1.1,70],[0,-1.1,70],[5,-1.1,70]]}},
+  'repair-scaffold':{space:'defense-apron',floor:'service-chevrons',obstacles:[[-6,-2,.72],[6,-2,.72]]},
+  'hero-memorial':{space:'memorial-ring',floor:'honor-rays',obstacles:[[-4.25,0,.66],[0,-3.05,.66],[4.25,0,.66],[0,3.05,.66]]},
+  'seal-power-belt':{space:'power-ring',floor:'conduit-arcs',obstacles:[[-4.25,0,.7],[4.25,0,.7]],mission:{type:'destroy',label:'封印供能塔',targets:[[-3.6,-1.9,90],[0,2.55,90],[3.6,-1.9,90]]}},
+  'inspector-hunt':{space:'pursuit-lane',floor:'pursuit-vectors',obstacles:[[-3.6,-1.5,.8],[3.6,1.5,.8]]},
+  'tomb-fork':{space:'tomb-maze',floor:'grave-slabs',obstacles:[[-4,0,1.28],[0,-2.55,.92],[3.8,.65,1.12]]},
+  'core-outer-ring':{space:'moving-gate',floor:'core-orbits',obstacles:[[-4.8,1.6,1],[4.8,1.6,1]],mission:{type:'destroy',label:'移动闸门执行器',targets:[[-4,-2.8,110],[4,-2.8,110]]}},
+  'guardian-forecourt':{space:'execution-court',floor:'command-sigil',obstacles:[[-5.2,-2.7,.7],[5.2,-2.7,.7],[-5.2,2.7,.7],[5.2,2.7,.7]]},
+  'graveyard-core':{space:'boss-sanctum',floor:'sealed-void',obstacles:[[-5.2,0,.55],[5.2,0,.55]]},
+};
+
+for(const item of ORBITAL_GRAVEYARD_STAGES_42)item.spatial=STAGE_SPATIAL_42[item.id];
+
+export function getStageMissionTargets42(stage){
+  return (stage?.spatial?.mission?.targets||[]).map(([x,y,hp],index)=>({
+    id:`${stage.id}-facility-${index}`,x,y:stage.centerY+y,radius:.62,maxHp:hp,hp,label:stage.spatial.mission.label,dead:false,
+  }));
+}
+
 export const BOSS_DIALOGUE_42={
   2:{speaker:'守墓者·阿尔法',text:'这个动作……不可能。封印对象仍在墓场之内。'},
   3:{speaker:'守墓者·阿尔法',text:'断刃舰队不该重新服从你。他们不该把你带回来。'},
@@ -55,7 +78,7 @@ export const CAMPAIGN_EVENTS_42={
 
 export function getCampaignStage42(index,run={}){
   const source=ORBITAL_GRAVEYARD_STAGES_42[index]||ORBITAL_GRAVEYARD_STAGES_42.at(-1);
-  const stage={...source,waves:source.waves.map((wave)=>[...wave]),theme:{...source.theme}};
+  const stage={...source,waves:source.waves.map((wave)=>[...wave]),theme:{...source.theme},spatial:{...source.spatial,obstacles:(source.spatial?.obstacles||[]).map((item)=>[...item]),mission:source.spatial?.mission?{...source.spatial.mission,targets:source.spatial.mission.targets.map((item)=>[...item])}:null}};
   if(index===3&&run.routeFlags?.dock==='arsenal'){
     stage.reward='ordnance';
     stage.waves[1]=['artillery','shield','striker','drone'];

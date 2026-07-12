@@ -1,7 +1,7 @@
 const PROFILE_KEY = 'mecha-marco-profile-v4';
 
 export const DEFAULT_PROFILE = {
-  version: 5,
+  version: 6,
   runs: 0,
   victories: 0,
   permanent: 0,
@@ -29,12 +29,14 @@ export const DEFAULT_PROFILE = {
     aimSensitivity: 1,
     moveSensitivity: 1,
     aimDeadZone: .065,
+    controlOpacity: .78,
+    autoFire: true,
   },
 };
 
 export function sanitizeProfile(raw) {
   const p = { ...DEFAULT_PROFILE, ...(raw || {}) };
-  p.version = Math.max(5, Number(p.version) || 5);
+  p.version = Math.max(6, Number(p.version) || 6);
   p.settings = { ...DEFAULT_PROFILE.settings, ...(raw?.settings || {}) };
   p.mechPaints = { ...DEFAULT_PROFILE.mechPaints, ...(raw?.mechPaints || {}) };
   p.unlockedMechs = Array.from(new Set(Array.isArray(p.unlockedMechs) ? p.unlockedMechs : DEFAULT_PROFILE.unlockedMechs));

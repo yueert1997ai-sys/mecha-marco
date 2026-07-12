@@ -25,6 +25,7 @@ import { applyBranding416 } from './ui/branding416.js';
 import { applyPaintDock416 } from './ui/paintDock416.js';
 import { applyCampaignUI42 } from './ui/campaignUI42.js';
 import { applyCampaignUIPolish42 } from './ui/campaignUIPolish42.js';
+import { auditMobileViewport42, installMobileViewport42 } from './ui/mobileViewport42.js';
 import { SynthAudio } from './audio/synthAudio.js';
 import { Game } from './game.js';
 import { Enemy } from './actors/enemy.js';
@@ -32,6 +33,7 @@ import { PlayerMech } from './actors/player.js';
 import { applyCombatPolish } from './combat/polishCombat.js';
 
 installTransformModules416();
+const mobileViewport42 = installMobileViewport42();
 applyRendererPolish(Renderer);
 applyMechVisual41(Renderer);
 applyMobileFeel42({ InputRouter, PlayerMech, Renderer });
@@ -99,8 +101,17 @@ const renderFrame = () => {
 const loop = new GameLoop({ update:(dt)=>game.update(dt), render:renderFrame });
 const smokeMode = new URLSearchParams(location.search).has('smoke');
 if (smokeMode) {
+  mobileViewport42.apply();
   renderFrame();
   document.documentElement.dataset.smokeReady = 'true';
+  const recordAudit=()=>{
+    const audit=auditMobileViewport42();
+    document.documentElement.dataset.pageFit=audit.pageFit?'pass':'fail';
+    document.documentElement.dataset.criticalInside=audit.criticalInside?'pass':'fail';
+    document.documentElement.dataset.canvasSync=audit.canvasSync?'pass':'fail';
+  };
+  recordAudit();
+  setTimeout(recordAudit,700);
 } else {
   loop.start();
 }
@@ -111,6 +122,10 @@ addEventListener('mecha-loadout-changed',(event)=>{
 });
 addEventListener('pointerdown', () => audio.unlock(), { once:true });
 addEventListener('keydown', () => audio.unlock(), { once:true });
+addEventListener('mecha-viewport-change', () => {
+  renderer.resize();
+  mech3d?.resize?.();
+});
 
 if (!smokeMode && 'serviceWorker' in navigator && location.protocol.startsWith('http')) {
   navigator.serviceWorker.register('./sw.js').catch(() => {});
@@ -118,9 +133,11 @@ if (!smokeMode && 'serviceWorker' in navigator && location.protocol.startsWith('
 
 globalThis.__MECHA_MARCO__ = {
   game,
-  visualVersion:'4.2.0-continuous-graveyard',
+  visualVersion:'4.2.1-mobile-frontline-polish',
   mech3dStatus:()=>mech3dStatus,
   mech3dRenderer:()=>mech3d,
+  refreshViewport:()=>mobileViewport42.apply(),
+  auditViewport:auditMobileViewport42,
   snapshot: () => ({
     state:game.state,
     depth:game.run?.depth ?? null,

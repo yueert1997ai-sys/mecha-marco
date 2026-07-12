@@ -2,11 +2,22 @@ import { clamp, seededRng, shuffle } from '../core/math.js';
 import { MODULES } from '../data/modules.js';
 import { rollModuleChoices } from './rewardResolver.js';
 import { recordRun, saveProfile } from '../meta/profile.js';
-import { BOSS_DIALOGUE_42, CAMPAIGN_EVENTS_42, CAMPAIGN_LENGTH_42, getCampaignStage42 } from '../data/regionOrbitalGraveyard42.js';
+import { BOSS_DIALOGUE_42, CAMPAIGN_EVENTS_42, CAMPAIGN_LENGTH_42, getCampaignStage42, getStageMissionTargets42 } from '../data/regionOrbitalGraveyard42.js';
 import { calculateRestorationEarned42, identityMatch42, commandAuthority42 } from '../meta/restoration42.js';
 
 const lockedBounds=(stage)=>({left:-9,right:9,top:stage.centerY-6,bottom:stage.centerY+6});
 const travelBounds=(stage)=>({left:-9,right:9,top:stage.centerY-8.8,bottom:stage.centerY+6});
+const pushFromCircle=(actor,obstacle,centerY)=>{
+  if(actor.dead)return;
+  const ox=obstacle[0],oy=centerY+obstacle[1],radius=obstacle[2]+actor.radius+.12;
+  const dx=actor.x-ox,dy=actor.y-oy,dist=Math.hypot(dx,dy);
+  if(dist>=radius)return;
+  const nx=dist>.001?dx/dist:(actor.id||0)%2?1:-1,ny=dist>.001?dy/dist:0;
+  actor.x=ox+nx*radius;actor.y=oy+ny*radius;
+  const inward=actor.vx*nx+actor.vy*ny;
+  if(inward<0){actor.vx-=inward*nx;actor.vy-=inward*ny}
+  if(actor.machine){const side=(actor.id||0)%2?1:-1;actor.vx+=-ny*side*.8;actor.vy+=nx*side*.8}
+};
 
 const applyEventChoice=(game,event,choice)=>{
   game.run.events.push(`${event.id}:${choice.id}`);
@@ -74,6 +85,7 @@ export function applyContinuousCampaign42({Game}){
     this.ui.setCombatVisible(true);
     this.clearRoomObjects();
     this.room={...stage,stage42:stage,reward:stage.reward,elite:stage.waves.some((wave)=>wave.some((id)=>id.startsWith('elite'))),boss:Boolean(stage.boss),waveIndex:-1,clear:false,resolved42:false,exitOpen:false};
+    this.facilities42=getStageMissionTargets42(stage);
     this.bounds=lockedBounds(stage);
     if(first)this.player.resetForRoom({x:0,y:stage.centerY+4.55});
     else{
@@ -106,6 +118,34 @@ export function applyContinuousCampaign42({Game}){
     if(!this.run?.campaign42)return;
     if(source==='primary'||source==='beam'||source==='rail-lance')this.run.primaryKills+=1;
     if(source==='ordnance'||source==='missile'||source==='sentry-shot')this.run.ordnanceKills+=1;
+  };
+
+  Game.prototype.resolveStageGeometry42=function resolveStageGeometry42(){
+    const stage=this.room?.stage42;if(!stage)return;
+    const obstacles=stage.spatial?.obstacles||[];
+    for(const obstacle of obstacles){pushFromCircle(this.player,obstacle,stage.centerY);for(const enemy of this.enemies)pushFromCircle(enemy,obstacle,stage.centerY)}
+  };
+
+  Game.prototype.hitFacility42=function hitFacility42(target,damage,source){
+    if(!target||target.dead)return false;
+    target.hp=Math.max(0,target.hp-damage);this.spawnVfx({type:'enemyHit',x:target.x,y:target.y,color:this.room.stage42.theme.accent,life:.2,scale:.7});
+    if(target.hp<=0){target.dead=true;this.spawnVfx({type:'explosion',x:target.x,y:target.y,color:this.room.stage42.theme.accent,life:.72,scale:1.35});this.audio.play('enemyHit');const left=this.facilities42.filter((item)=>!item.dead).length;this.ui.notify(left?`${target.label} 已摧毁 · 剩余 ${left}`:`${target.label} 全部离线`,1.4)}
+    return true;
+  };
+
+  const updateProjectiles=Game.prototype.updateProjectiles;
+  Game.prototype.updateProjectiles=function updateCampaignFacilities42(dt){
+    updateProjectiles.call(this,dt);
+    if(!this.run?.campaign42||!this.facilities42?.length)return;
+    for(const shot of this.projectiles){if(shot.owner!=='player'||shot.life<=0)continue;const target=this.facilities42.find((item)=>!item.dead&&Math.hypot(item.x-shot.x,item.y-shot.y)<item.radius+(shot.radius||.12));if(target&&this.hitFacility42(target,shot.damage,shot)){shot.life=0}}
+    this.projectiles=this.projectiles.filter((shot)=>shot.life>0);
+  };
+
+  const updateSlashes=Game.prototype.updateSlashes;
+  Game.prototype.updateSlashes=function updateCampaignFacilitySlashes42(dt){
+    updateSlashes.call(this,dt);
+    if(!this.run?.campaign42||!this.facilities42?.length)return;
+    for(const slash of this.slashes){if(slash.owner!=='player')continue;for(const target of this.facilities42){if(target.dead||slash.hitIds.has(target.id)||Math.hypot(target.x-slash.x,target.y-slash.y)>slash.range+target.radius)continue;slash.hitIds.add(target.id);this.hitFacility42(target,slash.damage,slash)}}
   };
 
   Game.prototype.openStageExit42=function openStageExit42(){
@@ -188,6 +228,9 @@ export function applyContinuousCampaign42({Game}){
     }
     updateCombat.call(this,dt);
     if(this.state!=='combat'||this.run.exitOpen||this.room?.resolved42)return;
+    this.resolveStageGeometry42();
+    const missionLeft=this.facilities42?.some((item)=>!item.dead);
+    if(missionLeft){this.room.clear=false;this.roomClearTimer=0}
     const stage=this.room?.stage42;if(!stage?.hazard)return;
     this._campaignHazardTimer42-=dt;
     if(this._campaignHazardTimer42>0)return;

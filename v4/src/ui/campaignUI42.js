@@ -108,7 +108,8 @@ export function applyCampaignUI42(AppUI){
     }
     progress.querySelector('.campaign-sector42').textContent=`${String(index+1).padStart(2,'0')} / ${CAMPAIGN_LENGTH_42} · ${stage?.name||'轨道墓场'}`;
     const objective=progress.querySelector('#campaign-objective42');
-    if(objective)objective.textContent=game.run.exitOpen?'闸门开放 · 向北持续推进':stage?.objective||'清除封锁';
+    const facilityLeft=(game.facilities42||[]).filter((item)=>!item.dead).length;
+    if(objective)objective.textContent=game.run.exitOpen?'闸门开放 · 向北持续推进':facilityLeft?`${stage?.spatial?.mission?.label||'战术设施'} · 剩余 ${facilityLeft}`:stage?.objective||'清除封锁';
     this.roomLabel.textContent=`${stage?.code||`STAGE ${index+1}`} · ${stage?.name||game.room?.name||'推进中'}`;
   };
 

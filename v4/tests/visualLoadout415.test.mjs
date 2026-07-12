@@ -68,10 +68,10 @@ test('low-saturation loadout assets remain wired in continuous campaign',async()
   assert.match(depth,/\.settings-screen416/);
   assert.match(campaign,/\.campaign-progress42/);
   assert.match(campaign,/\.campaign-comms42/);
-  assert.match(sw,/continuous-graveyard-r2/);
+  assert.match(sw,/mobile-frontline-r1/);
   assert.match(sw,/paintVariants416\.js/);
   assert.match(sw,/rogueTransform416\.js/);
   assert.match(sw,/regionOrbitalGraveyard42\.js/);
   assert.match(sw,/continuousCampaignPolish42\.js/);
-  assert.equal(version,'4.2.0-continuous-graveyard');
+  assert.equal(version,'4.2.1-mobile-frontline-polish');
 });

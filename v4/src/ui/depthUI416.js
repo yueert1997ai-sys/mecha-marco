@@ -5,7 +5,7 @@ import { REWARD_TYPES } from '../data/encounters.js';
 import { getModuleVisualHint } from '../meta/loadoutProfile.js';
 import { length, normalize } from '../core/math.js';
 
-const DEFAULT_TUNING_416={aimSensitivity:1,moveSensitivity:1,aimDeadZone:.065,vibration:true};
+const DEFAULT_TUNING_416={aimSensitivity:1,moveSensitivity:1,aimDeadZone:.065,vibration:true,controlOpacity:.78,autoFire:true};
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 const rarityLabel=(module)=>module.rarity==='transform'?'核心改造':module.rarity==='duo'?'组合协议':module.rarity==='rare'?'稀有协议':'标准协议';
 const renderRange=(id,label,value,min,max,step,suffix='')=>`<label class="setting-row416" for="${id}"><span><strong>${label}</strong><small>${suffix}</small></span><input id="${id}" type="range" min="${min}" max="${max}" step="${step}" value="${value}"><b data-value-for="${id}">${Number(value).toFixed(2)}</b></label>`;
@@ -17,6 +17,8 @@ function normalizeSettings(settings={}){
     moveSensitivity:clamp(Number(settings.moveSensitivity??DEFAULT_TUNING_416.moveSensitivity),.75,1.35),
     aimDeadZone:clamp(Number(settings.aimDeadZone??DEFAULT_TUNING_416.aimDeadZone),.02,.16),
     vibration:settings.vibration!==false,
+    controlOpacity:clamp(Number(settings.controlOpacity??DEFAULT_TUNING_416.controlOpacity),.45,1),
+    autoFire:settings.autoFire!==false,
   };
 }
 
@@ -66,6 +68,7 @@ export function applyDepthUI416({AppUI,Game,InputRouter,PlayerMech}){
 
   InputRouter.prototype.setTuning416=function setTuning416(settings){
     this.tuning416=normalizeSettings(settings);
+    document.documentElement.style.setProperty('--control-opacity',String(this.tuning416.controlOpacity));
   };
   InputRouter.prototype.bindStick=function bindTunedStick416(element,kind){
     const knob=element.querySelector('.stick-knob');
@@ -91,13 +94,19 @@ export function applyDepthUI416({AppUI,Game,InputRouter,PlayerMech}){
         ?curve(state.value,.1,1.08,tuning.moveSensitivity||1)
         :curve(state.value,tuning.aimDeadZone??.065,1.02,tuning.aimSensitivity||1);
       if(kind==='move')this.move=output;
-      else{if(length(output)>.02)this.aim=output;this.setHeld('primary',length(output)>.18,true)}
+      else{
+        if(length(output)>.02)this.aim=output;
+        const auto=tuning.autoFire!==false;
+        const firing=auto?length(output)>.18:Boolean(state.fireArmed&&length(output)>.04);
+        if(state.source)this.setSourceHeld('primary',state.source,firing,true);
+      }
     };
-    element.addEventListener('pointerdown',(event)=>{if(!this.enabled||state.pointerId!==null)return;state.pointerId=event.pointerId;element.setPointerCapture(event.pointerId);update(event);event.preventDefault()},{passive:false});
+    element.addEventListener('pointerdown',(event)=>{if(!this.enabled||state.pointerId!==null)return;state.pointerId=event.pointerId;state.source=`stick:${kind}:${event.pointerId}`;state.fireArmed=Boolean(event.target.closest?.('.stick-knob'));try{element.setPointerCapture(event.pointerId)}catch{}update(event);event.preventDefault()},{passive:false});
     element.addEventListener('pointermove',(event)=>{if(event.pointerId!==state.pointerId)return;update(event);event.preventDefault()},{passive:false});
-    const end=(event)=>{if(event.pointerId!==state.pointerId)return;state.pointerId=null;state.value={x:0,y:0};knob.style.transform='translate(0,0)';if(kind==='move')this.move={x:0,y:0};else this.setHeld('primary',false);event.preventDefault()};
+    const end=(event)=>{if(event.pointerId!==state.pointerId)return;if(kind==='aim'&&state.source)this.setSourceHeld('primary',state.source,false);state.pointerId=null;state.source=null;state.fireArmed=false;state.value={x:0,y:0};knob.style.transform='translate(0,0)';if(kind==='move')this.move={x:0,y:0};event.preventDefault()};
     element.addEventListener('pointerup',end,{passive:false});
     element.addEventListener('pointercancel',end,{passive:false});
+    element.addEventListener('lostpointercapture',(event)=>{if(event.pointerId===state.pointerId)end(event)},{passive:false});
     this.touch[kind]=state;
   };
   const snapshot=InputRouter.prototype.snapshot;
@@ -119,12 +128,14 @@ export function applyDepthUI416({AppUI,Game,InputRouter,PlayerMech}){
 
   AppUI.prototype.showSettings416=function showSettings416(settings,onChange,onBack){
     const current=normalizeSettings(settings);
-    this.showPanel(`<section class="settings-screen416"><div class="settings-head416"><div><span class="eyebrow">CONTROL CALIBRATION</span><h2>操作设置</h2><p>数值会立即写入触控摇杆，不需要重新开始出击。</p></div><button id="settings-back416">返回</button></div><div class="settings-grid416">${renderRange('aim-sensitivity416','瞄准灵敏度',current.aimSensitivity,.6,1.8,.05,'控制机体跟随右摇杆转向的速度')}${renderRange('move-sensitivity416','移动响应',current.moveSensitivity,.75,1.35,.05,'控制左摇杆达到满速所需的推杆距离')}${renderRange('aim-deadzone416','瞄准死区',current.aimDeadZone,.02,.16,.005,'数值越低，轻微推杆越容易触发瞄准')}<label class="setting-toggle416"><span><strong>震动反馈</strong><small>受到攻击、推进和超限时触发</small></span><input id="vibration416" type="checkbox" ${current.vibration?'checked':''}><i></i></label></div><div class="settings-preset416"><button data-preset416="precision">精准</button><button data-preset416="balanced" class="selected">均衡</button><button data-preset416="fast">快速</button></div></section>`,'settings-panel416');
+    this.showPanel(`<section class="settings-screen416"><div class="settings-head416"><div><span class="eyebrow">CONTROL CALIBRATION</span><h2>操作设置</h2><p>统一布局保持不变，参数实时生效并自动保存。</p></div><button id="settings-back416">返回</button></div><div class="settings-grid416">${renderRange('aim-sensitivity416','瞄准灵敏度',current.aimSensitivity,.6,1.8,.05,'右侧主炮拖曳转向速度')}${renderRange('move-sensitivity416','移动响应',current.moveSensitivity,.75,1.35,.05,'左摇杆达到满速所需距离')}${renderRange('aim-deadzone416','瞄准死区',current.aimDeadZone,.02,.16,.005,'过滤轻微手指抖动')}${renderRange('control-opacity416','按钮透明度',current.controlOpacity,.45,1,.05,'不改变触控热区')}<label class="setting-toggle416"><span><strong>推杆自动射击</strong><small>关闭后，从主炮核心起按并拖曳才射击</small></span><input id="autofire416" type="checkbox" ${current.autoFire?'checked':''}><i></i></label><label class="setting-toggle416"><span><strong>震动反馈</strong><small>受击、推进和超限触发</small></span><input id="vibration416" type="checkbox" ${current.vibration?'checked':''}><i></i></label></div></section>`,'settings-panel416');
 
     const collect=()=>normalizeSettings({...current,
       aimSensitivity:Number(this.panel.querySelector('#aim-sensitivity416')?.value||1),
       moveSensitivity:Number(this.panel.querySelector('#move-sensitivity416')?.value||1),
       aimDeadZone:Number(this.panel.querySelector('#aim-deadzone416')?.value||.065),
+      controlOpacity:Number(this.panel.querySelector('#control-opacity416')?.value||.78),
+      autoFire:Boolean(this.panel.querySelector('#autofire416')?.checked),
       vibration:Boolean(this.panel.querySelector('#vibration416')?.checked),
     });
     const refreshValues=()=>{
@@ -136,15 +147,6 @@ export function applyDepthUI416({AppUI,Game,InputRouter,PlayerMech}){
     const emit=()=>{refreshValues();onChange(collect())};
     this.panel.querySelectorAll('input').forEach((input)=>input.addEventListener('input',emit));
     this.panel.querySelector('#settings-back416')?.addEventListener('click',onBack);
-    const presets={precision:{aimSensitivity:.82,moveSensitivity:.92,aimDeadZone:.085},balanced:{aimSensitivity:1,moveSensitivity:1,aimDeadZone:.065},fast:{aimSensitivity:1.35,moveSensitivity:1.16,aimDeadZone:.04}};
-    this.panel.querySelectorAll('[data-preset416]').forEach((button)=>button.addEventListener('click',()=>{
-      const preset=presets[button.dataset.preset416];
-      this.panel.querySelector('#aim-sensitivity416').value=String(preset.aimSensitivity);
-      this.panel.querySelector('#move-sensitivity416').value=String(preset.moveSensitivity);
-      this.panel.querySelector('#aim-deadzone416').value=String(preset.aimDeadZone);
-      this.panel.querySelectorAll('[data-preset416]').forEach((item)=>item.classList.toggle('selected',item===button));
-      emit();
-    }));
     refreshValues();
   };
 
