@@ -1,5 +1,11 @@
 :root {
   --viewport-h: 100dvh;
+  --viewport-fallback: 100svh;
+  --app-height: 100dvh;
+  --app-width: 100vw;
+  --visual-offset-left: 0px;
+  --visual-offset-top: 0px;
+  --control-opacity: .78;
   --home-indicator-buffer: max(8px, env(safe-area-inset-bottom, 0px));
 }
 
@@ -11,8 +17,29 @@ html,
 body,
 #app {
   width: 100%;
-  min-height: 100svh;
-  height: var(--viewport-h);
+  min-height: 0;
+  height: var(--app-height, var(--viewport-h));
+}
+
+html,
+body {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
+body { margin: 0; }
+
+#app {
+  top: var(--visual-offset-top);
+  left: var(--visual-offset-left);
+  right: auto;
+  bottom: auto;
+  width: var(--app-width);
+  max-width: 100vw;
+  overflow: clip;
 }
 
 .overlay {
@@ -27,7 +54,7 @@ body,
 
 .panel {
   width: min(1280px, calc(100vw - var(--safe-left) - var(--safe-right) - 24px));
-  max-height: calc(var(--viewport-h) - var(--safe-top) - var(--safe-bottom) - 18px);
+  max-height: calc(var(--app-height, var(--viewport-h)) - var(--safe-top) - var(--safe-bottom) - 18px);
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
@@ -109,7 +136,9 @@ body,
   padding-bottom: var(--home-indicator-buffer);
 }
 
-@media (orientation: landscape) and (pointer: coarse) {
+@media (pointer: coarse) { .touch-controls { --coarse-input: 1; } }
+
+@media (orientation: landscape) {
   .overlay {
     padding-left: max(10px, var(--safe-left));
     padding-right: max(10px, var(--safe-right));
@@ -132,28 +161,54 @@ body,
     padding-bottom: max(6px, var(--safe-bottom));
   }
 
+  .stick,
+  .action-btn { opacity: var(--control-opacity); }
+
+  .stick:active,
+  .action-btn.active { opacity: 1; }
+
+  .stick { width: 136px; height: 136px; bottom: calc(14px + var(--safe-bottom)); }
+  .move-stick { left: calc(22px + var(--safe-left)); }
+  .aim-stick { right: calc(16px + var(--safe-right)); width: 142px; height: 142px; }
+  .aim-stick .stick-ring { inset: 8px; border-width: 2px; background:radial-gradient(circle,rgba(104,210,237,.12),rgba(7,18,31,.38) 64%,rgba(3,8,17,.7)); }
+  .aim-stick .stick-knob { width:64px;height:64px;margin:-32px;display:grid;place-content:center;text-align:center; }
+  .aim-stick .stick-knob strong { font-size:20px;line-height:1;color:#07131e; }
+  .aim-stick .stick-knob small { font-size:8px;line-height:1;color:#18344a;font-weight:900; }
+
+  .action-btn { width:70px;height:70px;isolation:isolate;overflow:hidden; }
+  .action-btn>i { position:absolute;inset:3px;border-radius:50%;z-index:-1;background:conic-gradient(rgba(3,8,18,.82) calc(var(--cooldown-ratio,0) * 1turn),transparent 0);transition:background .08s linear; }
+  .action-btn>b { position:absolute;inset:0;display:grid;place-items:center;padding-top:1px;font-size:12px;color:#fff;text-shadow:0 2px 5px #000;z-index:3;pointer-events:none; }
+  .action-btn.cooling>strong,.action-btn.cooling>span { opacity:.32; }
+  .action-btn.ready { box-shadow:0 8px 22px rgba(0,0,0,.4),0 0 0 2px rgba(134,232,255,.18),0 0 22px rgba(91,222,255,.18); }
+
   .hud-top-right {
     margin-right: 52px;
   }
 
   .saber-btn {
-    right: calc(clamp(150px, 17vw, 190px) + var(--safe-right));
+    right: calc(166px + var(--safe-right));
+    bottom: calc(34px + var(--safe-bottom));
   }
 
   .dash-btn {
-    right: calc(clamp(150px, 17vw, 190px) + var(--safe-right));
+    right: calc(158px + var(--safe-right));
+    bottom: calc(118px + var(--safe-bottom));
   }
 
   .missile-btn {
-    right: calc(clamp(210px, 23vw, 260px) + var(--safe-right));
+    right: calc(244px + var(--safe-right));
+    bottom: calc(112px + var(--safe-bottom));
+    width:62px;height:62px;
   }
 
   .overdrive-btn {
-    right: calc(clamp(270px, 29vw, 320px) + var(--safe-right));
+    right: calc(252px + var(--safe-right));
+    bottom: calc(32px + var(--safe-bottom));
+    width:60px;height:60px;
   }
 }
 
-@media (orientation: landscape) and (pointer: coarse) and (max-height: 560px) {
+@media (orientation: landscape) and (max-height: 560px) {
   .overlay {
     padding-top: max(4px, var(--safe-top));
     padding-bottom: max(5px, var(--safe-bottom));
@@ -161,7 +216,7 @@ body,
 
   .panel {
     width: calc(100vw - var(--safe-left) - var(--safe-right) - 16px);
-    height: calc(var(--viewport-h) - var(--safe-top) - var(--safe-bottom) - 10px);
+    height: calc(var(--app-height, var(--viewport-h)) - var(--safe-top) - var(--safe-bottom) - 10px);
     max-height: none;
     padding: 9px 13px 10px;
     border-radius: 17px;
@@ -265,9 +320,57 @@ body,
   }
 
   .control-note { display: none; }
+
+  .panel.base-panel { overflow:hidden; }
+
+  .base-screen {
+    grid-template-columns:minmax(220px,.72fr) minmax(0,1.8fr);
+    grid-template-rows:auto auto auto auto 1fr auto;
+    column-gap:10px;
+    align-content:stretch;
+  }
+
+  .base-screen>.brand-block { grid-column:1;grid-row:1; }
+  .base-screen>.dialogue-card { grid-column:1;grid-row:2; }
+  .base-screen>.base-meta { grid-column:1;grid-row:3;align-self:start;align-items:flex-start; }
+  .base-screen>.campaign-brief42 { grid-column:1;grid-row:4 / span 3;grid-template-columns:1fr;margin:0;align-self:stretch; }
+  .base-screen>.campaign-brief42>div { padding:7px 9px; }
+  .base-screen>.campaign-brief42 p { display:none; }
+  .base-screen>h2 { grid-column:2;grid-row:1;align-self:end; }
+  .base-screen>.mech-grid { grid-column:2;grid-row:2; }
+  .base-screen>.paint-selector416 { grid-column:2;grid-row:3; }
+  .base-screen>#start-run { grid-column:2;grid-row:4; }
+  .base-screen>#open-settings416 { grid-column:2;grid-row:5;align-self:start; }
+  .base-screen>.control-note { grid-column:2;grid-row:6; }
+  .base-screen .mech-archive42 { display:none; }
+  .base-screen .paint-selector416 { margin:0;padding:6px 8px; }
+  .base-screen .paint-selector416>div:first-child small { display:none; }
+  .base-screen .paint-swatch416 { min-height:36px;padding:5px 7px; }
+  .base-screen .paint-swatch416 i { width:20px;height:20px; }
+  .base-screen .settings-launch416 { min-height:34px;padding:7px 10px; }
+
+  .panel.result-panel { overflow:hidden; }
+  .result-panel .result-screen {
+    max-width:none;
+    height:100%;
+    grid-template-columns:minmax(180px,.7fr) minmax(0,1.7fr);
+    grid-template-rows:auto auto auto auto auto;
+    gap:7px 12px;
+    text-align:left;
+    align-content:center;
+  }
+  .result-panel .result-screen>.eyebrow { grid-column:1;grid-row:1; }
+  .result-panel .result-screen>h2 { grid-column:1;grid-row:2;font-size:clamp(30px,8vh,42px); }
+  .result-panel .result-grid { grid-column:2;grid-row:1 / span 2;grid-template-columns:repeat(4,1fr);gap:6px; }
+  .result-panel .result-grid span { padding:8px;font-size:10px;text-align:center; }
+  .result-panel .result-grid strong { font-size:20px;margin-top:3px; }
+  .result-panel .anomaly-report42 { grid-column:1 / -1;grid-row:3;grid-template-columns:repeat(4,1fr);margin:0;padding:8px; }
+  .result-panel .anomaly-report42>span { grid-column:1 / -1; }
+  .result-panel .result-screen>p { grid-column:1 / -1;grid-row:4;margin:0;font-size:11px;text-align:center; }
+  .result-panel #return-base { grid-column:1 / -1;grid-row:5;min-height:38px; }
 }
 
-@media (orientation: landscape) and (pointer: coarse) and (max-height: 430px) {
+@media (orientation: landscape) and (max-height: 430px) {
   .panel {
     padding-top: 7px;
     padding-bottom: 7px;
@@ -286,4 +389,7 @@ body,
   .mech-card strong { font-size: 11.5px; }
   .mech-card small { font-size: 8.5px; }
   .mech-stats span { font-size: 7.5px; }
+  .base-screen { grid-template-columns:minmax(200px,.68fr) minmax(0,1.9fr); }
+  .base-screen>.campaign-brief42>div { padding:5px 7px; }
+  .base-screen>.campaign-brief42 strong { font-size:11px; }
 }

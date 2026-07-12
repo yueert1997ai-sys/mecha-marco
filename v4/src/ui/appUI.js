@@ -21,6 +21,7 @@ export class AppUI {
     this.bossName = $('boss-name');
     this.toast = $('toast');
     this.toastTimer = 0;
+    this.cooldownFrame = 0;
   }
 
   setCombatVisible(value) {
@@ -114,6 +115,22 @@ export class AppUI {
     const boss=game.enemies.find(e=>e.boss&&!e.dead);
     this.bossBar.classList.toggle('hidden',!boss);
     if(boss){this.bossFill.style.width=`${boss.hp/boss.maxHp*100}%`;this.bossName.textContent=`${boss.name} · PHASE ${boss.phase}`;}
+    this.cooldownFrame=(this.cooldownFrame+1)%6;
+    if(this.cooldownFrame===0){
+      const ability=p.ability;
+      for(const button of this.touchControls.querySelectorAll('[data-action]')){
+        const action=button.dataset.action;
+        if(action==='pause')continue;
+        const remaining=action==='overdrive'?0:ability.cooldown(action);
+        const ratio=action==='overdrive'?Math.max(0,1-p.overdrive/p.stats.overdriveNeed):ability.cooldownRatio(action);
+        const ready=action==='overdrive'?p.overdrive>=p.stats.overdriveNeed:remaining<=0;
+        button.style.setProperty('--cooldown-ratio',String(Math.max(0,Math.min(1,ratio))));
+        button.classList.toggle('cooling',!ready);
+        button.classList.toggle('ready',ready);
+        const label=button.querySelector('b');
+        if(label)label.textContent=remaining>.05?remaining.toFixed(1):(action==='overdrive'&&!ready?`${Math.floor(p.overdrive/p.stats.overdriveNeed*100)}%`:'');
+      }
+    }
     if(this.toastTimer>0){this.toastTimer-=1/60;if(this.toastTimer<=0)this.toast.classList.remove('show');}
   }
 

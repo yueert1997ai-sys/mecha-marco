@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ORBITAL_GRAVEYARD_STAGES_42, CAMPAIGN_LENGTH_42, getCampaignStage42 } from '../src/data/regionOrbitalGraveyard42.js';
+import { ORBITAL_GRAVEYARD_STAGES_42, CAMPAIGN_LENGTH_42, getCampaignStage42, getStageMissionTargets42 } from '../src/data/regionOrbitalGraveyard42.js';
 import { calculateRestorationEarned42, restorationStage42, identityMatch42 } from '../src/meta/restoration42.js';
 
 test('orbital graveyard is a twelve-stage continuous campaign',()=>{
@@ -9,6 +9,15 @@ test('orbital graveyard is a twelve-stage continuous campaign',()=>{
   assert.equal(ORBITAL_GRAVEYARD_STAGES_42.at(-1).boss,true);
   assert.ok(ORBITAL_GRAVEYARD_STAGES_42.every((stage,index)=>stage.centerY===-index*14));
   assert.ok(ORBITAL_GRAVEYARD_STAGES_42.filter((stage)=>stage.branches).length>=2);
+});
+
+test('all sectors define distinct spatial identities and facility objectives alter play',()=>{
+  assert.equal(new Set(ORBITAL_GRAVEYARD_STAGES_42.map((stage)=>stage.spatial.space)).size,12);
+  assert.equal(new Set(ORBITAL_GRAVEYARD_STAGES_42.map((stage)=>stage.spatial.floor)).size,12);
+  assert.ok(ORBITAL_GRAVEYARD_STAGES_42.every((stage)=>Array.isArray(stage.spatial.obstacles)));
+  assert.equal(getStageMissionTargets42(ORBITAL_GRAVEYARD_STAGES_42[3]).length,3);
+  assert.equal(getStageMissionTargets42(ORBITAL_GRAVEYARD_STAGES_42[6]).length,3);
+  assert.equal(getStageMissionTargets42(ORBITAL_GRAVEYARD_STAGES_42[9]).length,2);
 });
 
 test('critical route choices alter later stage content',()=>{

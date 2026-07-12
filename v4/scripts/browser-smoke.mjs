@@ -1,46 +1,44 @@
-import { spawn, spawnSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
+import { existsSync, createReadStream } from 'node:fs';
+import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const required = process.env.REQUIRE_BROWSER_SMOKE === '1';
-const port = 18743;
-const url = `http://127.0.0.1:${port}/?smoke=1`;
-const server = spawn('python3', ['-m','http.server',String(port),'--bind','127.0.0.1'], { cwd:root, stdio:'ignore' });
-const sleep = (ms) => new Promise((resolve)=>setTimeout(resolve,ms));
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const required=process.env.REQUIRE_BROWSER_SMOKE==='1';
+const port=18743;
+const url=`http://127.0.0.1:${port}/?smoke=1`;
+const candidates=[process.env.CHROME_PATH,process.env.CHROMIUM_PATH,
+  'C:/Program Files/Google/Chrome/Application/chrome.exe','C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
+  'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe','C:/Program Files/Microsoft/Edge/Application/msedge.exe',
+  '/usr/bin/google-chrome','/usr/bin/chromium','/usr/bin/chromium-browser',
+].filter(Boolean);
+const chrome=candidates.find(existsSync);
+const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.svg':'image/svg+xml','.webmanifest':'application/manifest+json'};
+const server=http.createServer((request,response)=>{
+  const pathname=decodeURIComponent(new URL(request.url,'http://localhost').pathname);
+  const relative=pathname==='/'?'index.html':pathname.replace(/^\/+/, '');
+  const file=path.resolve(root,relative);
+  if(!file.startsWith(root)||!existsSync(file)){response.writeHead(404);response.end('Not found');return}
+  response.writeHead(200,{'content-type':mime[path.extname(file)]||'application/octet-stream','cache-control':'no-store'});
+  createReadStream(file).pipe(response);
+});
 
-const commonArgs = [
-  '--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage',
-  '--disable-background-networking','--disable-component-update','--no-first-run',
-  '--virtual-time-budget=1400','--dump-dom',
-];
+const runChrome=(name,width,height)=>new Promise((resolve,reject)=>{
+  const args=['--headless=new','--no-sandbox','--enable-unsafe-swiftshader','--disable-dev-shm-usage','--disable-background-networking','--disable-component-update','--no-first-run','--touch-events=enabled','--force-device-scale-factor=1',`--window-size=${width+16},${height+95}`,'--virtual-time-budget=2500','--dump-dom',url];
+  const child=spawn(chrome,args,{stdio:['ignore','pipe','pipe']});let stdout='',stderr='';
+  child.stdout.on('data',(chunk)=>stdout+=chunk);child.stderr.on('data',(chunk)=>stderr+=chunk);
+  const timer=setTimeout(()=>{child.kill();reject(new Error(`${name} timed out`))},18000);
+  child.on('error',reject);child.on('close',(code)=>{clearTimeout(timer);const checks={ready:stdout.includes('data-smoke-ready="true"'),fit:stdout.includes('data-page-fit="pass"'),critical:stdout.includes('data-critical-inside="pass"'),canvas:stdout.includes('data-canvas-sync="pass"'),base:stdout.includes('开始出击'),campaign:stdout.includes('data-campaign-mode="continuous-12-stage"'),loadError:stdout.includes('游戏脚本加载失败')};const ok=code===0&&checks.ready&&checks.fit&&checks.critical&&checks.canvas&&checks.base&&checks.campaign&&!checks.loadError;if(!ok)return reject(new Error(`${name} failed (code=${code}, stdout=${stdout.length}, checks=${JSON.stringify(checks)})\n${stdout.match(/<html[^>]*>/)?.[0]||''}\n${stderr.slice(-1200)}`));console.log(`${name}: ${width}x${height} viewport, controls and canvas passed`);resolve()});
+});
 
-const runSmoke = (name, extraArgs = []) => {
-  const result = spawnSync('/usr/bin/chromium', [...commonArgs, ...extraArgs, url], { encoding:'utf8', timeout:14000 });
-  const dom = result.stdout || '';
-  const ok = result.status === 0
-    && dom.includes('data-smoke-ready="true"')
-    && dom.includes('开始出击')
-    && dom.includes('断刃·先锋型')
-    && dom.includes('iphone17.css')
-    && !dom.includes('游戏脚本加载失败');
-  if (!ok) {
-    const message = `${name} unavailable or failed (status=${result.status}, signal=${result.signal}, stdout=${dom.length} bytes)`;
-    if (required) throw new Error(message + `\n${result.stderr || ''}`);
-    console.warn(`${message}; skipped in constrained local container.`);
-    return false;
-  }
-  console.log(`${name}: base UI rendered successfully`);
-  return true;
-};
-
-try {
-  await sleep(700);
-  runSmoke('Browser smoke');
-  runSmoke('Large iPhone landscape smoke', [
-    '--window-size=956,440',
-    '--user-agent=Mozilla/5.0 (iPhone; CPU iPhone OS 19_0 like Mac OS X) AppleWebKit/605.1.15 Version/19.0 Mobile/15E148 Safari/604.1',
-  ]);
-} finally {
-  server.kill('SIGTERM');
+if(!chrome){
+  const message='Chrome/Chromium not found; set CHROME_PATH.';
+  if(required)throw new Error(message);
+  console.warn(`${message} Browser smoke skipped.`);
+}else{
+  await new Promise((resolve)=>server.listen(port,'127.0.0.1',resolve));
+  try{
+    for(const [width,height] of [[956,440],[844,390],[932,430],[896,414],[852,393]])await runChrome('Mobile landscape smoke',width,height);
+  }finally{await new Promise((resolve)=>server.close(resolve))}
 }

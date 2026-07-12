@@ -1,6 +1,7 @@
 export class AbilitySystem {
   constructor() {
     this.cooldowns = new Map();
+    this.cooldownMax = new Map();
     this.buffer = new Map();
   }
 
@@ -17,7 +18,16 @@ export class AbilitySystem {
   }
 
   setCooldown(id, value) {
-    this.cooldowns.set(id, Math.max(0, value));
+    const safe = Math.max(0, value);
+    this.cooldowns.set(id, safe);
+    this.cooldownMax.set(id, safe);
+  }
+
+  cooldown(id) { return this.cooldowns.get(id) || 0; }
+
+  cooldownRatio(id) {
+    const max = this.cooldownMax.get(id) || 0;
+    return max > 0 ? Math.min(1, this.cooldown(id) / max) : 0;
   }
 
   request(id, duration = .15) {
@@ -32,6 +42,7 @@ export class AbilitySystem {
 
   clear() {
     this.cooldowns.clear();
+    this.cooldownMax.clear();
     this.buffer.clear();
   }
 }

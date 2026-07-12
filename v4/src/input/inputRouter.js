@@ -9,6 +9,8 @@ export class InputRouter {
     this.keys = new Set();
     this.held = Object.fromEntries(ACTIONS.map((a) => [a,false]));
     this.pressed = Object.fromEntries(ACTIONS.map((a) => [a,false]));
+    this.actionSources = Object.fromEntries(ACTIONS.map((a) => [a,new Set()]));
+    this.actionPointers = new Map();
     this.move = { x:0, y:0 };
     this.aim = { x:0, y:-1 };
     this.mouse = { x:0, y:0, active:false };
@@ -26,6 +28,7 @@ export class InputRouter {
     }, { passive:false });
     addEventListener('keyup', (event) => this.keys.delete(event.code));
     addEventListener('blur', () => this.clear());
+    addEventListener('mecha-viewport-change', () => this.clear());
 
     this.canvas.addEventListener('pointermove', (event) => {
       if (this.touchMode || !this.enabled) return;
@@ -101,20 +104,39 @@ export class InputRouter {
   }
 
   bindActionButton(button, action) {
+    let activePointer = null;
     const end = (event) => {
-      this.setHeld(action, false);
+      if (activePointer !== event.pointerId) return;
+      this.setSourceHeld(action, `button:${action}:${event.pointerId}`, false);
+      this.actionPointers.delete(event.pointerId);
+      activePointer = null;
       button.classList.remove('active');
       event.preventDefault();
     };
     button.addEventListener('pointerdown', (event) => {
-      if (!this.enabled) return;
-      button.setPointerCapture(event.pointerId);
-      this.setHeld(action, true, true);
+      if (!this.enabled || activePointer !== null) return;
+      activePointer = event.pointerId;
+      this.actionPointers.set(event.pointerId, action);
+      try { button.setPointerCapture(event.pointerId); } catch {}
+      this.setSourceHeld(action, `button:${action}:${event.pointerId}`, true, true);
       button.classList.add('active');
       event.preventDefault();
     }, { passive:false });
     button.addEventListener('pointerup', end, { passive:false });
     button.addEventListener('pointercancel', end, { passive:false });
+    button.addEventListener('lostpointercapture', (event) => {
+      if (activePointer === event.pointerId) end(event);
+    }, { passive:false });
+  }
+
+  setSourceHeld(action, source, value, alsoPress = false) {
+    const sources = this.actionSources[action];
+    if (!sources) return;
+    const wasHeld = sources.size > 0;
+    if (value) sources.add(source); else sources.delete(source);
+    const isHeld = sources.size > 0;
+    if (isHeld && !wasHeld && alsoPress) this.pressed[action] = true;
+    this.held[action] = isHeld;
   }
 
   setHeld(action, value, alsoPress = false) {
@@ -160,9 +182,11 @@ export class InputRouter {
     this.keys.clear();
     this.move = {x:0,y:0};
     for (const action of ACTIONS) {
+      this.actionSources[action].clear();
       this.held[action] = false;
       this.pressed[action] = false;
     }
+    this.actionPointers.clear();
     for (const state of Object.values(this.touch)) {
       if (!state) continue;
       state.pointerId = null;
