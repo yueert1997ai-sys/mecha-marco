@@ -1,6 +1,6 @@
 # Mecha Marco 4.3 Handoff
 
-版本：`4.3.0-frontline-depth`
+版本：`4.3.1-consequence-progression`
 
 开发分支：`codex/mobile-controls-viewport-level-polish`
 
@@ -16,6 +16,8 @@ Draft PR：[#42](https://github.com/yueert1997ai-sys/mecha-marco/pull/42)
 - 路线后果跨段生效，并改变敌群、危险、维修、奖励、情报和 Boss 支援。
 - 三台机体各有三套横向战术套件；六条风险指令最多选三条；十二份档案和机体熟练度承担长期目标，不增加永久裸属性。
 - 构筑使用 6 个标准容量与 2 个核心容量；满载必须替换；协议在 2 件共鸣、4 件专精时改变动作。
+- 侧向套件需要 8 / 24 机体熟练度认证后再消耗舰队数据，已解锁旧存档不会被回收。
+- 战术回执负责即时说明任务结果与后续变化；补给失败、监察官逃脱和前庭斩首失败都有真实局内代价。
 - 存档 schema 为 7，v6 及更早存档通过字段合并迁移。
 
 ## 关键文件
@@ -40,7 +42,9 @@ cd v4
 npm run verify
 ```
 
-自动 smoke 覆盖 956×440、844×390、932×430、896×414、852×393。Browser Harness 已完成十二段加速流程，并实拍基地、军备、OG-01、OG-05、OG-08、OG-10 与 OG-12。
+自动 smoke 覆盖 956×440、844×390、932×430、896×414、852×393。当前 Node 测试 57/57。Browser Harness 已完成十二段加速流程；4.3.1 还在 844×390、DPR 3 下验证了 0/8/24 熟练认证、三节点纪念序列、补给失联应急商店、18 秒斩首成功/失败、Boss 增援允许/阻断、+18 熟练回执与结算因果首屏，页面、关键操作和 Canvas 同步断言均通过且无控制台异常。
+
+4.3.1 证据：`qa-artifacts/4.3.1-base-844x390-dpr3.png`、`4.3.1-armory-goals-844x390-dpr3.png`、`4.3.1-defense-consequence-844x390-dpr3.png`、`4.3.1-damaged-shop-844x390-dpr3.png`、`4.3.1-result-causality-844x390-dpr3.png`。
 
 ## 未验证风险
 
