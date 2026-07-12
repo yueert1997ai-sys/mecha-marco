@@ -58,6 +58,6 @@ test('historical architecture is retained but clearly demoted from current sourc
   assert.match(architecture,/历史架构基线/);
   assert.match(architecture,/历史问题诊断（仍有效）/);
   assert.match(architecture,/从 Hades 学习的系统闭环（仍有效）/);
-  assert.match(architecture,/4\.2 当前替代方案/);
+  assert.match(architecture,/4\.3 当前替代方案/);
   assert.match(architecture,/当前事实来源优先级/);
 });

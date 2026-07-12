@@ -30,6 +30,7 @@ jobs:
           test -s v4/visual415-refine.css
           test -s v4/depth416.css
           test -s v4/campaign42.css
+          test -s v4/frontline-depth43.css
           test -s v4/manifest.webmanifest
           test -s v4/sw.js
           test -s v4/src/main.js
@@ -39,8 +40,11 @@ jobs:
           test -s v4/src/data/paintVariants416.js
           test -s v4/src/data/transformModules416.js
           test -s v4/src/data/regionOrbitalGraveyard42.js
+          test -s v4/src/data/frontlineDepth43.js
+          test -s v4/src/meta/frontlineProgress43.js
           test -s v4/src/run/doctrine416.js
           test -s v4/src/run/continuousCampaign42.js
+          test -s v4/src/run/frontlineDepth43.js
           test -s v4/src/render/mechDesigns41.js
           test -s v4/src/render/mechMeshPrimitives41.js
           test -s v4/src/render/mechVisual41.js
@@ -50,12 +54,14 @@ jobs:
           test -s v4/src/render/paintVariants416.js
           test -s v4/src/render/arenaDetail415.js
           test -s v4/src/render/continuousCampaign42.js
+          test -s v4/src/render/frontlineDepth43.js
           test -s v4/src/ui/mechPreview41.js
           test -s v4/src/ui/uiPolish415.js
           test -s v4/src/ui/depthUI416.js
           test -s v4/src/ui/branding416.js
           test -s v4/src/ui/paintDock416.js
           test -s v4/src/ui/campaignUI42.js
+          test -s v4/src/ui/frontlineDepth43.js
           test -s v4/src/ui/mobileViewport42.js
           test -s v4/src/combat/loadoutRuntime415.js
           test -s v4/src/combat/rogueTransform416.js
@@ -81,6 +87,7 @@ jobs:
           grep -q './visual415-refine.css' v4/index.html
           grep -q './depth416.css' v4/index.html
           grep -q './campaign42.css' v4/index.html
+          grep -q './frontline-depth43.css' v4/index.html
           grep -q 'id="mech-3d-canvas"' v4/index.html
           grep -q 'three@0.149.0' v4/index.html
 
@@ -132,7 +139,7 @@ jobs:
           grep -q 'id="game-canvas"' /tmp/v4-dom.html
           grep -q 'id="mech-3d-canvas"' /tmp/v4-dom.html
           grep -q 'id="panel"' /tmp/v4-dom.html
-          grep -q 'V4.2 CONTINUOUS CAMPAIGN' /tmp/v4-dom.html
+          grep -q 'V4.3 FRONTLINE DEPTH' /tmp/v4-dom.html
           grep -q 'mech-preview41' /tmp/v4-dom.html
 
       - name: Build summary
