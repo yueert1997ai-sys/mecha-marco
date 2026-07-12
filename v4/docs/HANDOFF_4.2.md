@@ -6,6 +6,8 @@
 
 Draft PR：[#42](https://github.com/yueert1997ai-sys/mecha-marco/pull/42)
 
+PR 状态：Draft / Open / Mergeable，`main` 仍是当前分支祖先，无冲突。2026-07-12 检查 `Verify Mecha 4.0`、`Verify Web Build` 与 `Pages Live Smoke` 均通过。
+
 ## 当前事实
 
 - 正式战斗保持纯俯视 Top-down 与上半身机体轮廓；第一章保持 12 段连续战线和战场内闸门推进。
