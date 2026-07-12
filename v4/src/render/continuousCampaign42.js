@@ -75,7 +75,7 @@ function drawSector(renderer,stage,currentIndex,exitOpen,world){
   const ctx=renderer.ctx,d=renderer.dpr,b={left:-9,right:9,top:stage.centerY-6,bottom:stage.centerY+6};
   const tl=renderer.worldToScreen(b.left,b.top),br=renderer.worldToScreen(b.right,b.bottom);const x=tl.x,y=tl.y,w=br.x-tl.x,h=br.y-tl.y;
   if(y>renderer.height+120*d||y+h<-120*d)return;
-  ctx.save();rounded(ctx,x,y,w,h,20*d);ctx.shadowBlur=stage.index===currentIndex?26*d:8*d;ctx.shadowColor=stage.theme.accent;const floor=ctx.createLinearGradient(x,y,x+w,y+h);floor.addColorStop(0,stage.theme.top);floor.addColorStop(1,stage.theme.bottom);ctx.fillStyle=floor;ctx.fill();ctx.shadowBlur=0;ctx.save();rounded(ctx,x,y,w,h,20*d);ctx.clip();ctx.globalAlpha=.15;ctx.strokeStyle=stage.theme.line;ctx.lineWidth=.7*d;for(let gx=-8;gx<=8;gx+=1){const a=renderer.worldToScreen(gx,b.top),c=renderer.worldToScreen(gx,b.bottom);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(c.x,c.y);ctx.stroke()}for(let gy=Math.ceil(b.top);gy<=b.bottom;gy+=1){const a=renderer.worldToScreen(b.left,gy),c=renderer.worldToScreen(b.right,gy);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(c.x,c.y);ctx.stroke()}ctx.restore();rounded(ctx,x,y,w,h,20*d);ctx.strokeStyle=stage.index===currentIndex?stage.theme.line:'rgba(146,162,176,.14)';ctx.lineWidth=(stage.index===currentIndex?1.8:.8)*d;ctx.stroke();ctx.restore();
+  ctx.save();rounded(ctx,x,y,w,h,20*d);ctx.shadowBlur=stage.index===currentIndex?26*d:8*d;ctx.shadowColor=stage.theme.accent;const floor=ctx.createLinearGradient(x,y,x+w,y+h);floor.addColorStop(0,stage.theme.top);floor.addColorStop(1,stage.theme.bottom);ctx.fillStyle=floor;ctx.fill();ctx.shadowBlur=0;ctx.save();rounded(ctx,x,y,w,h,20*d);ctx.clip();ctx.globalAlpha=.08;ctx.strokeStyle=stage.theme.line;ctx.lineWidth=.7*d;for(let gx=-8;gx<=8;gx+=1){const a=renderer.worldToScreen(gx,b.top),c=renderer.worldToScreen(gx,b.bottom);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(c.x,c.y);ctx.stroke()}for(let gy=Math.ceil(b.top);gy<=b.bottom;gy+=1){const a=renderer.worldToScreen(b.left,gy),c=renderer.worldToScreen(b.right,gy);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(c.x,c.y);ctx.stroke()}ctx.restore();rounded(ctx,x,y,w,h,20*d);ctx.strokeStyle=stage.index===currentIndex?stage.theme.line:'rgba(146,162,176,.14)';ctx.lineWidth=(stage.index===currentIndex?1.8:.8)*d;ctx.stroke();ctx.restore();
 
   drawStagePattern(renderer,stage,world.time);
   drawLandmark(renderer,stage);
@@ -109,7 +109,7 @@ export function applyContinuousCampaignRenderer42(Renderer){
     const current=world.run.stageIndex||0;
     for(let i=Math.max(0,current-1);i<=Math.min(ORBITAL_GRAVEYARD_STAGES_42.length-1,current+1);i+=1){
       const stage=(i===current&&world.room?.stage42)||ORBITAL_GRAVEYARD_STAGES_42[i];
-      drawSector(this,stage,current,Boolean(world.run.exitOpen),world);
+      this.ctx.save();this.ctx.globalAlpha=i===current?1:.035;drawSector(this,stage,current,Boolean(world.run.exitOpen),world);this.ctx.restore();
       if(i<ORBITAL_GRAVEYARD_STAGES_42.length-1){const next=ORBITAL_GRAVEYARD_STAGES_42[i+1];const a=this.worldToScreen(-3.4,stage.centerY-6),b=this.worldToScreen(3.4,next.centerY+6);const ctx=this.ctx;ctx.save();const g=ctx.createLinearGradient(a.x,a.y,b.x,b.y);g.addColorStop(0,'rgba(69,83,96,.7)');g.addColorStop(.5,'rgba(25,32,42,.9)');g.addColorStop(1,'rgba(69,83,96,.7)');const rx=Math.min(a.x,b.x),ry=Math.min(a.y,b.y),rw=Math.abs(b.x-a.x),rh=Math.abs(b.y-a.y);ctx.fillStyle=g;ctx.fillRect(rx,ry,rw,rh);ctx.strokeStyle='rgba(128,148,163,.2)';ctx.strokeRect(rx,ry,rw,rh);ctx.restore()}
     }
   };

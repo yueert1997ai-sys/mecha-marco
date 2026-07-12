@@ -9,9 +9,9 @@ const repoRoot=path.resolve(v4Root,'..');
 const readV4=(file)=>readFile(path.join(v4Root,file),'utf8');
 const readRepo=(file)=>readFile(path.join(repoRoot,file),'utf8');
 
-const VERSION='4.2.1-mobile-frontline-polish';
+const VERSION='4.3.0-frontline-depth';
 
-test('runtime and package version markers agree on 4.2',async()=>{
+test('runtime and package version markers agree on 4.3',async()=>{
   const version=(await readV4('VERSION')).trim();
   const pkg=JSON.parse(await readV4('package.json'));
   const html=await readV4('index.html');
@@ -20,13 +20,13 @@ test('runtime and package version markers agree on 4.2',async()=>{
 
   assert.equal(version,VERSION);
   assert.equal(pkg.version,VERSION);
-  assert.match(html,/天穹断刃 4\.2\.1/);
+  assert.match(html,/天穹断刃 4\.3/);
   assert.match(main,new RegExp(VERSION.replaceAll('.','\\.')));
   assert.match(main,/dataset\.combatView = 'topdown'/);
   assert.match(main,/dataset\.mechSilhouette = 'upper-body'/);
   assert.match(main,/dataset\.campaignMode = 'continuous-12-stage'/);
   assert.match(main,/dataset\.narrativeArc = 'ma00-restoration'/);
-  assert.match(sw,/mobile-frontline-r\d+/);
+  assert.match(sw,/frontline-depth-r\d+/);
 });
 
 test('current documentation describes top-down upper-body continuous campaign',async()=>{
@@ -36,7 +36,7 @@ test('current documentation describes top-down upper-body continuous campaign',a
   const qa=await readV4('docs/QA_REPORT_4.0.md');
 
   for(const text of[readme,design,architecture,qa]){
-    assert.match(text,/4\.2\.1-mobile-frontline-polish/);
+    assert.match(text,/4\.3\.0-frontline-depth/);
     assert.match(text,/纯俯视|Top-down/);
     assert.match(text,/上半身/);
     assert.match(text,/12 段|十二段/);

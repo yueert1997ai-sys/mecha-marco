@@ -70,8 +70,8 @@ test('top-down upper-body view remains stable while 4.2 adds continuous campaign
   assert.match(main,/applyContinuousCampaign42/);
   assert.match(main,/dataset\.combatView = 'topdown'/);
   assert.match(main,/dataset\.mechSilhouette = 'upper-body'/);
-  assert.match(main,/4\.2\.1-mobile-frontline-polish/);
+  assert.match(main,/4\.3\.0-frontline-depth/);
   assert.match(sw,/continuousCampaign42\.js/);
   assert.match(sw,/campaign42\.css/);
-  assert.equal(version.trim(),'4.2.1-mobile-frontline-polish');
+  assert.equal(version.trim(),'4.3.0-frontline-depth');
 });

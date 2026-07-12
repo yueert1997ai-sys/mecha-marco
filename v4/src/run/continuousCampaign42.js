@@ -32,8 +32,9 @@ const applyEventChoice=(game,event,choice)=>{
   if(choice.surrender==='dismantle')game.run.surrenderRejected+=1;
   if(choice.rareModule){
     const rare=shuffle(MODULES.filter((module)=>module.rarity==='rare'&&!game.run.modules.some((owned)=>owned.id===module.id)),seededRng(game.run.seed+game.run.stageIndex*97))[0];
-    if(rare){game.run.modules.push(rare);game.player.refreshBuild(game.run.modules,true);game.ui.notify(`${rare.name} 已接入`,1.7)}
+    if(rare){const result=game.installRunModule43?.(rare);if(!result||result.installed)game.ui.notify(`${rare.name} 已接入`,1.7);return{module:rare,result}}
   }
+  return null;
 };
 
 export function applyContinuousCampaign42({Game}){
@@ -161,19 +162,23 @@ export function applyContinuousCampaign42({Game}){
     if(reward==='credits'){this.run.credits+=42;this.ui.notify('回收战术核心 ●42');return this.openStageExit42()}
     if(reward==='permanent'){this.run.permanentEarned+=3;this.ui.notify('回收舰队数据 ◆3');return this.openStageExit42()}
     if(reward==='repair'){this.player.hp=Math.min(this.player.maxHp,this.player.hp+this.player.maxHp*.3);this.ui.notify('装甲维修完成');return this.openStageExit42()}
-    const choices=rollModuleChoices(this.run,reward,this.run.seed+stage.index*211).slice(0,2);
+    const choices=rollModuleChoices(this.run,reward,this.run.seed+stage.index*211).slice(0,3);
     this.state='reward';this.input.setEnabled(false);this.ui.setCombatVisible(false);
     this.ui.showFieldReward42(choices,reward,(index)=>{
       const module=choices[index]||choices[0];
-      if(module){this.run.modules.push(module);this.player.refreshBuild(this.run.modules,true);this.audio.play('select');this.ui.notify(`${module.name} 已安装`,1.5)}
-      this.openStageExit42();
+      if(!module)return this.openStageExit42();
+      const install=(replaceId=null)=>{const result=this.installRunModule43?.(module,replaceId);if(!result){this.run.modules.push(module);this.player.refreshBuild(this.run.modules,true)}if(!result||result.installed){this.audio.play('select');this.ui.notify(`${module.name} 已安装`,1.5);this.openStageExit42()}return result};
+      const result=install();
+      if(result?.needsReplacement)this.ui.showModuleReplacement43(this.run,module,(replaceId)=>install(replaceId),()=>this.openStageExit42());
     });
   };
 
   Game.prototype.showCampaignEvent42=function showCampaignEvent42(event){
     this.state='event';this.input.setEnabled(false);this.ui.setCombatVisible(false);
     this.ui.showCampaignEvent42(event,(index)=>{
-      const choice=event.choices[index]||event.choices[0];applyEventChoice(this,event,choice);this.audio.play('select');this.openStageExit42();
+      const choice=event.choices[index]||event.choices[0],outcome=applyEventChoice(this,event,choice);const finish=()=>{this.audio.play('select');this.openStageExit42()};
+      if(outcome?.result?.needsReplacement)return this.ui.showModuleReplacement43(this.run,outcome.module,(replaceId)=>{const replaced=this.installRunModule43(outcome.module,replaceId);if(replaced.installed)this.ui.notify(`${outcome.module.name} 已接入`,1.7);finish()},finish);
+      finish();
     });
   };
 
@@ -194,7 +199,7 @@ export function applyContinuousCampaign42({Game}){
         if(stage.index===8)this.run.routeFlags.tomb=branch.id;
         if(branch.highRisk)this.run.highRiskChoices+=1;
         if(stage.index===8&&branch.id==='maintenance')this.player.hp=Math.min(this.player.maxHp,this.player.hp+this.player.maxHp*.18);
-        if(stage.index===8&&branch.id==='archive'){this.run.archiveFragments.push('ma00-archive-route');this.run.recognitionCount+=1}
+        if(stage.index===8&&branch.id==='archive'){this.run.archiveFragments.push('ma00-archive-route');this.run.recognitionCount+=1;if(!this.run.archiveNodes.includes('archive-route'))this.run.archiveNodes.push('archive-route')}
         this.audio.play('select');this.openStageExit42();
       });
       return;
@@ -252,7 +257,7 @@ export function applyContinuousCampaign42({Game}){
     const finalize=()=>{
       this._finishing42=false;this.state='result';this.input.setEnabled(false);this.clearHostileObjects();
       const restorationEarned=calculateRestorationEarned42(this.run,victory);
-      const report={victory,depth:(this.run.stageIndex||0)+1,stageReached:(this.run.stageIndex||0)+1,roomsCleared:this.run.roomsCleared,kills:this.run.kills,primaryKills:this.run.primaryKills,secondaryKills:this.run.secondaryKills,ordnanceKills:this.run.ordnanceKills,permanentEarned:this.run.permanentEarned+(victory?5:0),deathCause:this.run.deathCause,reachedBoss:this.run.reachedBoss,bossKilled:victory?'warden_alpha':null,lowHpClear:this.run.lowHpClear,mechId:this.selectedMech,modules:this.run.modules.map((module)=>module.id),events:this.run.events,highRiskChoices:this.run.highRiskChoices,recognitionCount:this.run.recognitionCount,archiveFragments:this.run.archiveFragments,surrenderAccepted:this.run.surrenderAccepted,surrenderRejected:this.run.surrenderRejected,restorationEarned,identityMatch:identityMatch42(this.profile,restorationEarned),commandAuthority:commandAuthority42(this.profile,victory)};
+      const report={victory,depth:(this.run.stageIndex||0)+1,stageReached:(this.run.stageIndex||0)+1,roomsCleared:this.run.roomsCleared,kills:this.run.kills,primaryKills:this.run.primaryKills,secondaryKills:this.run.secondaryKills,ordnanceKills:this.run.ordnanceKills,permanentEarned:this.run.permanentEarned+(victory?5:0),deathCause:this.run.deathCause,reachedBoss:this.run.reachedBoss,bossKilled:victory?'warden_alpha':null,lowHpClear:this.run.lowHpClear,mechId:this.selectedMech,modules:this.run.modules.map((module)=>module.id),events:this.run.events,highRiskChoices:this.run.highRiskChoices,recognitionCount:this.run.recognitionCount,archiveFragments:this.run.archiveFragments,archiveNodes:this.run.archiveNodes||[],optionalObjectives:this.run.optionalObjectives||[],intel:this.run.intel||0,directives:this.run.directives||[],kitId:this.run.kitId,routeConsequences:this.run.routeConsequences||{},surrenderAccepted:this.run.surrenderAccepted,surrenderRejected:this.run.surrenderRejected,restorationEarned,identityMatch:identityMatch42(this.profile,restorationEarned),commandAuthority:commandAuthority42(this.profile,victory)};
       this.profile=recordRun(this.profile,report);saveProfile(this.profile);this.ui.showResult(report,()=>this.showBase());
     };
     if(victory){this._finishing42=true;this.state='ending';this.input.setEnabled(false);this.ui.setCombatVisible(false);this.clearHostileObjects();const line=BOSS_DIALOGUE_42.death;this.ui.showComms42?.(line.speaker,line.text,3.4,'enemy');setTimeout(finalize,1450)}else finalize();

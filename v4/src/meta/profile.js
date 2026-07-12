@@ -1,7 +1,7 @@
 const PROFILE_KEY = 'mecha-marco-profile-v4';
 
 export const DEFAULT_PROFILE = {
-  version: 6,
+  version: 7,
   runs: 0,
   victories: 0,
   permanent: 0,
@@ -21,6 +21,13 @@ export const DEFAULT_PROFILE = {
   surrenderRejected: 0,
   recognitionCount: 0,
   archiveFragments: [],
+  unlockedKits: ['vanguard-standard','bulwark-standard','starwing-standard'],
+  selectedKits: { vanguard:'vanguard-standard', bulwark:'bulwark-standard', starwing:'starwing-standard' },
+  unlockedDirectives: [],
+  selectedDirectives: [],
+  archiveNodes: [],
+  mechMastery: { vanguard:0, bulwark:0, starwing:0 },
+  bestDirectiveCount: 0,
   settings: {
     renderScale: 1,
     vibration: true,
@@ -36,7 +43,7 @@ export const DEFAULT_PROFILE = {
 
 export function sanitizeProfile(raw) {
   const p = { ...DEFAULT_PROFILE, ...(raw || {}) };
-  p.version = Math.max(6, Number(p.version) || 6);
+  p.version = Math.max(7, Number(p.version) || 7);
   p.settings = { ...DEFAULT_PROFILE.settings, ...(raw?.settings || {}) };
   p.mechPaints = { ...DEFAULT_PROFILE.mechPaints, ...(raw?.mechPaints || {}) };
   p.unlockedMechs = Array.from(new Set(Array.isArray(p.unlockedMechs) ? p.unlockedMechs : DEFAULT_PROFILE.unlockedMechs));
@@ -47,6 +54,14 @@ export function sanitizeProfile(raw) {
   p.mechUsage = { ...DEFAULT_PROFILE.mechUsage, ...(raw?.mechUsage || {}) };
   p.weaponUsage = { ...DEFAULT_PROFILE.weaponUsage, ...(raw?.weaponUsage || {}) };
   p.archiveFragments = Array.from(new Set(Array.isArray(raw?.archiveFragments) ? raw.archiveFragments : []));
+  p.unlockedKits = Array.from(new Set(Array.isArray(raw?.unlockedKits) ? raw.unlockedKits : DEFAULT_PROFILE.unlockedKits));
+  for(const id of DEFAULT_PROFILE.unlockedKits)if(!p.unlockedKits.includes(id))p.unlockedKits.push(id);
+  p.selectedKits = { ...DEFAULT_PROFILE.selectedKits, ...(raw?.selectedKits||{}) };
+  p.unlockedDirectives = Array.from(new Set(Array.isArray(raw?.unlockedDirectives) ? raw.unlockedDirectives : []));
+  p.selectedDirectives = Array.from(new Set(Array.isArray(raw?.selectedDirectives) ? raw.selectedDirectives : [])).filter((id)=>p.unlockedDirectives.includes(id)).slice(0,3);
+  p.archiveNodes = Array.from(new Set(Array.isArray(raw?.archiveNodes) ? raw.archiveNodes : []));
+  p.mechMastery = { ...DEFAULT_PROFILE.mechMastery, ...(raw?.mechMastery||{}) };
+  p.bestDirectiveCount = Math.max(0,Number(p.bestDirectiveCount)||0);
   p.restorationScore = Math.max(0, Number(p.restorationScore) || 0);
   p.commandAuthority = Math.max(0, Number(p.commandAuthority) || 0);
   p.highRiskChoices = Math.max(0, Number(p.highRiskChoices) || 0);
@@ -88,6 +103,14 @@ export function recordRun(profile, report) {
   next.surrenderRejected += report.surrenderRejected || 0;
   next.recognitionCount += report.recognitionCount || 0;
   next.archiveFragments = Array.from(new Set([...next.archiveFragments,...(report.archiveFragments || [])]));
+  next.archiveNodes = Array.from(new Set([...next.archiveNodes,...(report.archiveNodes||[])]));
+  if(report.mechId)next.mechMastery[report.mechId]=(next.mechMastery[report.mechId]||0)+Math.max(1,report.stageReached||report.depth||1)+(report.victory?6:0);
+  next.bestDirectiveCount=Math.max(next.bestDirectiveCount,(report.directives||[]).length);
+  if(report.victory){
+    const directiveOrder=['rapid-reinforcement','no-field-repair','shield-network','hazard-overload','elite-command','core-frenzy'];
+    const unlock=directiveOrder.find((id)=>!next.unlockedDirectives.includes(id));
+    if(unlock)next.unlockedDirectives.push(unlock);
+  }
   next.history.push({ ...report, at: Date.now() });
   next.history = next.history.slice(-20);
   for (const key of Object.keys(next.dialogueCooldowns)) {
