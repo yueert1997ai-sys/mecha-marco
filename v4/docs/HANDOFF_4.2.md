@@ -2,6 +2,8 @@
 
 版本：`4.2.1-mobile-frontline-polish`
 开发分支：`codex/mobile-controls-viewport-level-polish`
+Draft PR：[#42](https://github.com/yueert1997ai-sys/mecha-marco/pull/42)
+CI：Verify Web Build、Verify Mecha 4.0、Pages Live Smoke 全部通过。
 
 ## 当前事实
 
