@@ -28,7 +28,8 @@ function drawMassLandmark(renderer,stage,time){
 function drawMission(renderer,world,stage){
   const mission=world.run?.mission43,optional=stage.spatial?.optional;if(!mission)return;const ctx=renderer.ctx,d=renderer.dpr,s=renderer.scale;ctx.save();
   const marker=(x,y,color,label,progress=0)=>{const p=renderer.worldToScreen(x,y);ctx.strokeStyle=color;ctx.fillStyle='rgba(5,11,18,.78)';ctx.lineWidth=2*d;ctx.beginPath();ctx.arc(p.x,p.y,28*d,0,Math.PI*2);ctx.fill();ctx.stroke();if(progress>0){ctx.beginPath();ctx.arc(p.x,p.y,34*d,-Math.PI*.5,-Math.PI*.5+Math.PI*2*progress);ctx.stroke()}ctx.fillStyle=color;ctx.font=`700 ${9*d}px system-ui`;ctx.textAlign='center';ctx.fillText(label,p.x,p.y+4*d)};
-  if(mission.type==='capture')marker(mission.x||0,stage.centerY+(mission.y||-3.3),stage.theme.line,mission.label,mission.progress/mission.max);
+  if(mission.type==='capture'&&mission.points?.length)mission.points.forEach((item,index)=>marker(item.x,item.y,index<mission.pointIndex?'#b9a174':index===mission.pointIndex?stage.theme.line:'#596873',index<mission.pointIndex?'已同步':`序列 ${index+1}`,index===mission.pointIndex?mission.progress/mission.max:0));
+  else if(mission.type==='capture')marker(mission.x||0,stage.centerY+(mission.y||-3.3),stage.theme.line,mission.label,mission.progress/mission.max);
   if(mission.type==='defense')marker(mission.x,mission.y,mission.failed?'#b54f63':'#b9a174','补给舰',mission.hp/mission.maxHp);
   if(optional?.type==='salvage'&&!world.run.optionalObjectives.includes('wreck-salvage'))marker(optional.x,stage.centerY+optional.y,'#b9a174','黑匣子',(world.run.salvageProgress43||0)/optional.duration);
   if(optional?.type==='sabotage'&&!world.run.optionalObjectives.includes('outer-sabotage'))marker(0,stage.centerY+3.5,'#78aebb','战术端口',(world.run.sabotageProgress43||0)/1.8);

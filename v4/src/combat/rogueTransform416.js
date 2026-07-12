@@ -168,14 +168,15 @@ export function applyRogueTransform416({PlayerMech,Game}){
 
   Game.prototype.showShop=function showShop416(){
     this.state='shop';this.input.setEnabled(false);this.ui.setCombatVisible(false);
-    const inventory=shuffle(MODULES.filter((module)=>module.slot!=='Core'&&!this.run.modules.some((owned)=>owned.id===module.id)),seededRng(this.run.seed+this.run.depth*19)).slice(0,3);
+    const damaged=this.run.routeConsequences?.supply==='lost',modulePrice=damaged?45:35,repairPrice=damaged?Infinity:25;this.run.shopPricing43={damaged,module:modulePrice,repair:repairPrice};
+    const inventory=shuffle(MODULES.filter((module)=>module.slot!=='Core'&&!this.run.modules.some((owned)=>owned.id===module.id)),seededRng(this.run.seed+this.run.depth*19)).slice(0,damaged?1:3);
     const render=()=>this.ui.showShop(this.run,inventory,(index)=>{
-      if(this.run.credits<35)return;
+      if(this.run.credits<modulePrice)return;
       const module=inventory[index];if(!module)return;
-      const install=(replaceId=null)=>{const result=this.installRunModule43?.(module,replaceId);if(!result){this.run.modules.push(module);this.player.refreshBuild(this.run.modules,true)}if(!result||result.installed){this.run.credits-=35;inventory.splice(index,1);this.audio.play('select');render()}return result};const result=install();if(result?.needsReplacement)this.ui.showModuleReplacement43(this.run,module,(replaceId)=>install(replaceId),render);
+      const install=(replaceId=null)=>{const result=this.installRunModule43?.(module,replaceId);if(!result){this.run.modules.push(module);this.player.refreshBuild(this.run.modules,true)}if(!result||result.installed){this.run.credits-=modulePrice;inventory.splice(index,1);this.audio.play('select');render()}return result};const result=install();if(result?.needsReplacement)this.ui.showModuleReplacement43(this.run,module,(replaceId)=>install(replaceId),render);
     },()=>{
-      if(this.run.credits<25)return;this.run.credits-=25;this.player.hp=Math.min(this.player.maxHp,this.player.hp+this.player.maxHp*.28);this.audio.play('select');render();
-    },()=>this.advanceDepth());
+      if(this.run.credits<repairPrice)return;this.run.credits-=repairPrice;this.player.hp=Math.min(this.player.maxHp,this.player.hp+this.player.maxHp*.28);this.audio.play('select');render();
+    },()=>{delete this.run.shopPricing43;this.advanceDepth()});
     render();
   };
 }

@@ -1,4 +1,4 @@
-const CACHE='mecha-marco-v4-20260712-frontline-depth-r1';
+const CACHE='mecha-marco-v4-20260712-consequence-progression-r2';
 const CORE=[
   './','./index.html','./icon.svg','./styles.css','./iphone17.css','./frontline-depth43.css','./mech3d41.css','./visual415.css','./visual415-refine.css','./depth416.css','./campaign42.css','./manifest.webmanifest','./src/main.js',
   './src/meta/loadoutProfile.js','./src/meta/restoration42.js','./src/meta/profile.js','./src/meta/frontlineProgress43.js','./src/data/frontlineDepth43.js','./src/data/paintVariants416.js','./src/data/transformModules416.js','./src/data/regionOrbitalGraveyard42.js','./src/run/doctrine416.js','./src/run/continuousCampaign42.js','./src/run/continuousCampaignPolish42.js','./src/run/frontlineDepth43.js',

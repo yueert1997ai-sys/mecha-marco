@@ -61,6 +61,7 @@ export function sanitizeProfile(raw) {
   p.selectedDirectives = Array.from(new Set(Array.isArray(raw?.selectedDirectives) ? raw.selectedDirectives : [])).filter((id)=>p.unlockedDirectives.includes(id)).slice(0,3);
   p.archiveNodes = Array.from(new Set(Array.isArray(raw?.archiveNodes) ? raw.archiveNodes : []));
   p.mechMastery = { ...DEFAULT_PROFILE.mechMastery, ...(raw?.mechMastery||{}) };
+  for(const id of Object.keys(p.mechMastery))p.mechMastery[id]=Math.max(0,Number(p.mechMastery[id])||0);
   p.bestDirectiveCount = Math.max(0,Number(p.bestDirectiveCount)||0);
   p.restorationScore = Math.max(0, Number(p.restorationScore) || 0);
   p.commandAuthority = Math.max(0, Number(p.commandAuthority) || 0);
@@ -104,7 +105,7 @@ export function recordRun(profile, report) {
   next.recognitionCount += report.recognitionCount || 0;
   next.archiveFragments = Array.from(new Set([...next.archiveFragments,...(report.archiveFragments || [])]));
   next.archiveNodes = Array.from(new Set([...next.archiveNodes,...(report.archiveNodes||[])]));
-  if(report.mechId)next.mechMastery[report.mechId]=(next.mechMastery[report.mechId]||0)+Math.max(1,report.stageReached||report.depth||1)+(report.victory?6:0);
+  if(report.mechId)next.mechMastery[report.mechId]=(next.mechMastery[report.mechId]||0)+(report.masteryEarned??(Math.max(1,report.stageReached||report.depth||1)+(report.victory?6:0)));
   next.bestDirectiveCount=Math.max(next.bestDirectiveCount,(report.directives||[]).length);
   if(report.victory){
     const directiveOrder=['rapid-reinforcement','no-field-repair','shield-network','hazard-overload','elite-command','core-frenzy'];

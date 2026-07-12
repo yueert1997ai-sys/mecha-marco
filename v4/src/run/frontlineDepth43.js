@@ -17,7 +17,8 @@ function widthAt(stage,worldY){
 
 function createMission(game,stage){
   const def=stage.spatial?.mission||{type:stage.boss?'boss':'eliminate',label:stage.objective};
-  return{...def,state:'active',progress:0,max:def.duration||1,hp:def.hp||0,maxHp:def.hp||0,startedAt:game.time,complete:false,failed:false,targetId:null,commandIds:[],escaped:false};
+  const points=(def.points||[]).map(([x,y])=>({x,y:stage.centerY+y}));
+  return{...def,points,pointIndex:0,state:'active',progress:0,max:points.length?(def.perPoint||1.15):(def.duration||1),hp:def.hp||0,maxHp:def.hp||0,startedAt:game.time,complete:false,failed:false,targetId:null,commandIds:[],escaped:false,outcomeAnnounced:false};
 }
 
 function addArchive(game,id){if(id&&!game.run.archiveNodes.includes(id))game.run.archiveNodes.push(id)}
@@ -25,6 +26,7 @@ function finishOptional(game,id,text){
   if(game.run.optionalObjectives.includes(id))return;
   game.run.optionalObjectives.push(id);game.run.intel=Math.min(5,game.run.intel+1);addArchive(game,id);game.ui.notify(`${text} · 情报 ⬡+1`,1.8);
 }
+function finishArchive(game,id,text){if(game.run.archiveNodes.includes(id))return;addArchive(game,id);game.ui.notify(`${text} · 档案已记录`,1.7)}
 
 export function applyFrontlineDepth43({Game,Enemy}){
   if(Game.__frontlineDepth43)return;Game.__frontlineDepth43=true;
@@ -118,7 +120,8 @@ export function applyFrontlineDepth43({Game,Enemy}){
     if(this.run.directives.includes('hazard-overload'))this._campaignHazardTimer42=Math.max(0,this._campaignHazardTimer42-dt*.65);
     const bossEnemy=this.enemies.find((enemy)=>enemy.boss&&!enemy.dead);if(bossEnemy?.phase===3&&this.run.directives.includes('core-frenzy'))bossEnemy.attackCooldown=Math.max(0,bossEnemy.attackCooldown-dt*.4);
     if(bossEnemy){
-      this.run.bossPhaseTime43=(this.run.bossPhase43===bossEnemy.phase?(this.run.bossPhaseTime43||0)+dt:0);this.run.bossPhase43=bossEnemy.phase;
+      const phaseChanged=this.run.bossPhase43!==undefined&&this.run.bossPhase43!==bossEnemy.phase;this.run.bossPhaseTime43=(this.run.bossPhase43===bossEnemy.phase?(this.run.bossPhaseTime43||0)+dt:0);this.run.bossPhase43=bossEnemy.phase;
+      if(phaseChanged&&bossEnemy.phase>=2&&!this.run.bossPrep.commandBroken){this.run.bossSupportPhases43||=[];if(!this.run.bossSupportPhases43.includes(bossEnemy.phase)){const support=new Enemy(bossEnemy.phase===2?'eliteBlade':'eliteCannon',bossEnemy.phase%2?4.8:-4.8,stage.centerY+1.8,1);support.name='核心指挥链增援';support.squadRole43='protector';this.enemies.push(support);this.run.bossSupportPhases43.push(bossEnemy.phase);this.ui.showTacticalReceipt43?.('指挥链仍在线',`PHASE ${bossEnemy.phase} 敌方精英增援抵达`,'danger')}}
       this.run.bossHazardTimer43=(this.run.bossHazardTimer43||1.8)-dt;
       if(this.run.bossHazardTimer43<=0){
         if(bossEnemy.phase===1&&!this.run.bossPrep.scanDisabled){for(const offset of[-2.4,0,2.4])this.spawnHazard({x:clamp(this.player.x+offset,-6.5,6.5),y:this.player.y-.8,radius:.62,delay:.82,damage:18,owner:bossEnemy})}
@@ -133,16 +136,17 @@ export function applyFrontlineDepth43({Game,Enemy}){
     const living=alive(this.enemies),wavesDone=this.room.waveIndex+1>=this.room.waves.length&&living.length===0&&this.waveDelay<=0;
     if(mission.type==='destroy')mission.complete=alive(this.facilities42).length===0&&wavesDone;
     else if(mission.type==='capture'){
-      const point={x:mission.x||0,y:stage.centerY+(mission.y||-3.3)};mission.progress=distance(this.player,point)<1.55?Math.min(mission.max,mission.progress+dt):Math.max(0,mission.progress-dt*.45);mission.complete=mission.progress>=mission.max&&wavesDone;if(mission.complete&&stage.index===5&&!this.run.optionalObjectives.includes('memorial-sequence'))finishOptional(this,'memorial-sequence','纪念舰列识别完成');
+      if(mission.points.length){const point=mission.points[mission.pointIndex];if(point){mission.progress=distance(this.player,point)<1.55?Math.min(mission.max,mission.progress+dt):Math.max(0,mission.progress-dt*.45);if(mission.progress>=mission.max){mission.pointIndex+=1;mission.progress=0;this.ui.showTacticalReceipt43?.(`纪念序列 ${mission.pointIndex} / ${mission.points.length}`,mission.pointIndex===mission.points.length?'旧舰队权限链已恢复':'下一座纪念碑同步开放','success');if(mission.pointIndex===mission.points.length)finishArchive(this,'memorial-sequence','纪念舰列识别完成')}}mission.complete=mission.pointIndex>=mission.points.length&&wavesDone}
+      else{const point={x:mission.x||0,y:stage.centerY+(mission.y||-3.3)};mission.progress=distance(this.player,point)<1.55?Math.min(mission.max,mission.progress+dt):Math.max(0,mission.progress-dt*.45);mission.complete=mission.progress>=mission.max&&wavesDone}
     }else if(mission.type==='defense'){
       const nearby=living.filter((enemy)=>distance(enemy,{x:mission.x,y:mission.y})<2.35).length;if(nearby)mission.hp=Math.max(0,mission.hp-nearby*7.5*dt);
-      mission.progress=Math.min(mission.max,mission.progress+dt);if(mission.hp<=0){mission.failed=true;mission.complete=wavesDone;this.run.routeConsequences.supply='lost'}
-      else if(mission.progress>=mission.max&&wavesDone){mission.complete=true;this.run.routeConsequences.supply='secured';if(mission.hp/mission.maxHp>.72){finishOptional(this,'supply-perfect','补给舰完整接驳');this.player.hp=Math.min(this.player.maxHp,this.player.hp+this.player.maxHp*.18)}}
+      mission.progress=Math.min(mission.max,mission.progress+dt);if(mission.hp<=0){mission.failed=true;mission.complete=wavesDone;this.run.routeConsequences.supply='lost';if(!mission.outcomeAnnounced){mission.outcomeAnnounced=true;this.ui.showTacticalReceipt43?.('补给舰失联','应急商店仅剩一条挂架 · 维修取消','danger');this.ui.showComms42?.('整备长·伊芙','接驳舰失压。能抢回多少算多少，维修舱保不住了。',3.2,'enemy')}}
+      else if(mission.progress>=mission.max&&wavesDone){mission.complete=true;const perfect=mission.hp/mission.maxHp>.72;this.run.routeConsequences.supply=perfect?'perfect':'secured';if(!mission.outcomeAnnounced){mission.outcomeAnnounced=true;this.ui.showTacticalReceipt43?.(perfect?'补给舰完整接驳':'补给舰受损接驳',perfect?'获得完整商店与 18% 战地维修':'商店维持 · 无额外维修','success')}if(perfect){finishOptional(this,'supply-perfect','补给舰完整接驳');this.player.hp=Math.min(this.player.maxHp,this.player.hp+this.player.maxHp*.18)}}
     }else if(mission.type==='pursuit'){
       const target=this.enemies.find((enemy)=>enemy.id===mission.targetId);mission.progress=Math.min(mission.escapeTime||24,mission.progress+dt);
-      if(target&&!target.dead){target.vy-=dt*(.55+mission.progress*.012);if(target.y<stage.centerY-5.25){target.dead=true;mission.escaped=true;this.run.routeConsequences.inspector='escaped';this.run.nextElite=true}}
-      if(!target||target.dead){mission.complete=wavesDone;if(!mission.escaped){this.run.routeConsequences.inspector='captured';finishOptional(this,'inspector-captured','监察官已瘫痪')}if(mission.complete)stage.post=mission.escaped?null:'surrender'}
-    }else if(mission.type==='command'){mission.complete=mission.commandIds.every((id)=>!this.enemies.some((enemy)=>enemy.id===id&&!enemy.dead))&&wavesDone;if(mission.complete&&stage.index===10&&!this.run.bossPrep.commandBroken){this.run.bossPrep.commandBroken=true;finishOptional(this,'forecourt-command','前庭指挥链已切断')}}
+      if(target&&!target.dead){target.vy-=dt*(.55+mission.progress*.012);if(target.y<stage.centerY-5.25){target.dead=true;mission.escaped=true;this.run.routeConsequences.inspector='escaped';this.run.nextElite=true;if(!mission.outcomeAnnounced){mission.outcomeAnnounced=true;this.ui.showTacticalReceipt43?.('监察官逃脱','下一段追加精英 · 核心护卫恢复','danger')}}}
+      if(!target||target.dead){mission.complete=wavesDone;if(!mission.escaped){this.run.routeConsequences.inspector='captured';finishOptional(this,'inspector-captured','监察官已瘫痪');if(!mission.outcomeAnnounced){mission.outcomeAnnounced=true;this.ui.showTacticalReceipt43?.('监察官已捕获','核心护卫情报已截获','success')}}if(mission.complete)stage.post=mission.escaped?null:'surrender'}
+    }else if(mission.type==='command'){const commandersDead=mission.commandIds.every((id)=>!this.enemies.some((enemy)=>enemy.id===id&&!enemy.dead));mission.complete=commandersDead&&wavesDone;if(commandersDead&&stage.index===10&&!mission.outcomeAnnounced){mission.outcomeAnnounced=true;const quick=this.time-mission.startedAt<=(stage.spatial.optional?.duration||18);this.run.routeConsequences.command=quick?'broken':'online';this.run.bossPrep.commandBroken=quick;if(quick)finishOptional(this,'forecourt-command','前庭指挥链已切断');this.ui.showTacticalReceipt43?.(quick?'指挥链斩首成功':'指挥链完成转移',quick?'Boss 阶段不再呼叫精英增援':'Boss 阶段将恢复精英增援',quick?'success':'danger')}}
     else mission.complete=wavesDone;
 
     const optional=stage.spatial?.optional;

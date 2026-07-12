@@ -34,12 +34,12 @@ export const STAGE_SPATIAL_42={
   'broken-dock':{space:'dock-corridors',floor:'rail-grid',shape:'fork',widthProfile:[[5,7.4],[1,4.7],[-2,7.2],[-5,7.8]],obstacles:[[-4,-2,1.05],[4,-2,1.05],[-4,2,1.05],[4,2,1.05]],mission:{type:'capture',label:'船坞主闸',x:0,y:-3.3,duration:2.8}},
   'identity-array':{space:'scanner-lane',floor:'scan-bands',shape:'scanner',widthProfile:[[5,5.5],[2,7.5],[-2,7.5],[-5,5.5]],obstacles:[[-3.6,-1.5,.8],[-3.6,1.5,.8],[3.6,-1.5,.8],[3.6,1.5,.8]],mission:{type:'destroy',label:'识别节点',targets:[[-5,-1.1,70],[0,-1.1,70],[5,-1.1,70]]},optional:{type:'spoof',label:'保留中央节点并欺骗阵列',intelCost:1}},
   'repair-scaffold':{space:'defense-apron',floor:'service-chevrons',shape:'apron',widthProfile:[[5,6.1],[2,7.8],[-2,7.8],[-5,6.1]],obstacles:[[-6,-2,.72],[6,-2,.72]],mission:{type:'defense',label:'补给舰接驳',x:0,y:-1.3,duration:18,hp:180}},
-  'hero-memorial':{space:'memorial-ring',floor:'honor-rays',shape:'memorial',widthProfile:[[5,4.8],[2,7.6],[-2,7.6],[-5,4.8]],obstacles:[[-4.25,0,.66],[0,-3.05,.66],[4.25,0,.66],[0,3.05,.66]],mission:{type:'capture',label:'纪念序列',x:0,y:0,duration:3.4},optional:{type:'sequence',label:'不击毁纪念碑完成识别'}},
+  'hero-memorial':{space:'memorial-ring',floor:'honor-rays',shape:'memorial',widthProfile:[[5,4.8],[2,7.6],[-2,7.6],[-5,4.8]],obstacles:[[-4.25,0,.66],[0,-3.05,.66],[4.25,0,.66],[0,3.05,.66]],mission:{type:'capture',label:'纪念序列',points:[[-4.25,0],[0,-3.05],[4.25,0]],perPoint:1.15}},
   'seal-power-belt':{space:'power-ring',floor:'conduit-arcs',shape:'ring',widthProfile:[[5,6],[2,7.7],[-2,7.7],[-5,6]],obstacles:[[-4.25,0,.7],[4.25,0,.7]],mission:{type:'destroy',label:'封印供能塔',targets:[[-3.6,-1.9,90],[0,2.55,90],[3.6,-1.9,90]]},optional:{type:'overload',label:'在 22 秒内过载全部供能塔'}},
   'inspector-hunt':{space:'pursuit-lane',floor:'pursuit-vectors',shape:'chase',widthProfile:[[5,5.2],[2,4.4],[-1,6.5],[-5,4.2]],obstacles:[[-3.6,-1.5,.8],[3.6,1.5,.8]],mission:{type:'pursuit',label:'监察官',escapeTime:24,hpScale:1.25}},
   'tomb-fork':{space:'tomb-maze',floor:'grave-slabs',shape:'maze',widthProfile:[[5,7.5],[2,5.2],[-1,7.5],[-5,5.4]],obstacles:[[-4,0,1.28],[0,-2.55,.92],[3.8,.65,1.12]],mission:{type:'command',label:'伏击指挥机',count:2}},
   'core-outer-ring':{space:'moving-gate',floor:'core-orbits',shape:'iris',widthProfile:[[5,5.4],[2,7.5],[-2,5],[-5,7.4]],obstacles:[[-4.8,1.6,1],[4.8,1.6,1]],mission:{type:'destroy',label:'移动闸门执行器',targets:[[-4,-2.8,110],[4,-2.8,110]]},optional:{type:'sabotage',label:'消耗情报关闭重炮',intelCost:1}},
-  'guardian-forecourt':{space:'execution-court',floor:'command-sigil',shape:'court',widthProfile:[[5,6.4],[2,7.8],[-2,7.8],[-5,6.4]],obstacles:[[-5.2,-2.7,.7],[5.2,-2.7,.7],[-5.2,2.7,.7],[5.2,2.7,.7]],mission:{type:'command',label:'直属指挥链',count:2}},
+  'guardian-forecourt':{space:'execution-court',floor:'command-sigil',shape:'court',widthProfile:[[5,6.4],[2,7.8],[-2,7.8],[-5,6.4]],obstacles:[[-5.2,-2.7,.7],[5.2,-2.7,.7],[-5.2,2.7,.7],[5.2,2.7,.7]],mission:{type:'command',label:'直属指挥链',count:2},optional:{type:'decapitate',label:'18 秒内斩首全部指挥机',duration:18}},
   'graveyard-core':{space:'boss-sanctum',floor:'sealed-void',shape:'sanctum',widthProfile:[[5,5.8],[2,7.2],[-2,7.2],[-5,5.8]],obstacles:[[-5.2,0,.55],[5.2,0,.55]],mission:{type:'boss',label:'守墓者·阿尔法'}},
 };
 
@@ -78,7 +78,7 @@ export const CAMPAIGN_EVENTS_42={
 
 export function getCampaignStage42(index,run={}){
   const source=ORBITAL_GRAVEYARD_STAGES_42[index]||ORBITAL_GRAVEYARD_STAGES_42.at(-1);
-  const stage={...source,waves:source.waves.map((wave)=>[...wave]),theme:{...source.theme},spatial:{...source.spatial,obstacles:(source.spatial?.obstacles||[]).map((item)=>[...item]),widthProfile:(source.spatial?.widthProfile||[]).map((item)=>[...item]),mission:source.spatial?.mission?{...source.spatial.mission,targets:(source.spatial.mission.targets||[]).map((item)=>[...item])}:null}};
+  const stage={...source,waves:source.waves.map((wave)=>[...wave]),theme:{...source.theme},spatial:{...source.spatial,obstacles:(source.spatial?.obstacles||[]).map((item)=>[...item]),widthProfile:(source.spatial?.widthProfile||[]).map((item)=>[...item]),mission:source.spatial?.mission?{...source.spatial.mission,targets:(source.spatial.mission.targets||[]).map((item)=>[...item]),points:(source.spatial.mission.points||[]).map((item)=>[...item])}:null}};
   if(index===3&&run.routeFlags?.dock==='arsenal'){
     stage.reward='ordnance';
     stage.waves[1]=['artillery','shield','striker','drone'];

@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { ORBITAL_GRAVEYARD_STAGES_42, getCampaignStage42 } from '../src/data/regionOrbitalGraveyard42.js';
 import { DIRECTIVES_43, FRAME_KITS_43 } from '../src/data/frontlineDepth43.js';
-import { buyKit43, selectKit43, toggleDirective43 } from '../src/meta/frontlineProgress43.js';
-import { sanitizeProfile } from '../src/meta/profile.js';
+import { buyKit43, kitUnlockState43, nextUnlock43, selectKit43, toggleDirective43 } from '../src/meta/frontlineProgress43.js';
+import { recordRun, sanitizeProfile } from '../src/meta/profile.js';
 import { buildDoctrineProfile416 } from '../src/run/doctrine416.js';
 import { installModule43, MODULE_CAPACITY_43, rollModuleChoices } from '../src/run/rewardResolver.js';
 import { MODULES, MODULE_BY_ID } from '../src/data/modules.js';
@@ -17,12 +17,29 @@ test('v6 saves migrate to horizontal progression without losing fleet data',()=>
   assert.deepEqual(profile.archiveFragments,['legacy']);assert.deepEqual(profile.selectedDirectives,[]);
 });
 
-test('fleet data unlocks side-grade kits and directives cap at three',()=>{
-  let profile=sanitizeProfile({permanent:20,unlockedDirectives:DIRECTIVES_43.slice(0,4).map((item)=>item.id)});
+test('fleet data and frame mastery certify side-grade kits while directives cap at three',()=>{
+  let profile=sanitizeProfile({permanent:20,mechMastery:{vanguard:8},unlockedDirectives:DIRECTIVES_43.slice(0,4).map((item)=>item.id)});
   const kit=FRAME_KITS_43.vanguard[1],bought=buyKit43(profile,kit.id);assert.equal(bought.ok,true);assert.equal(bought.profile.permanent,12);
   profile=selectKit43(bought.profile,'vanguard',kit.id);assert.equal(profile.selectedKits.vanguard,kit.id);
   for(const directive of DIRECTIVES_43.slice(0,4))profile=toggleDirective43(profile,directive.id);
   assert.equal(profile.selectedDirectives.length,3);
+});
+
+test('kit certification blocks currency-only unlocks but preserves earned licenses',()=>{
+  const kit=FRAME_KITS_43.vanguard[1],rookie=sanitizeProfile({permanent:99,mechMastery:{vanguard:0}}),blocked=buyKit43(rookie,kit.id);
+  assert.equal(blocked.ok,false);assert.equal(blocked.reason,'mastery');assert.equal(kitUnlockState43(rookie,'vanguard',kit).masteryRemaining,8);
+  const veteran=sanitizeProfile({...rookie,unlockedKits:[...rookie.unlockedKits,kit.id]});assert.equal(selectKit43(veteran,'vanguard',kit.id).selectedKits.vanguard,kit.id);
+});
+
+test('explicit mastery receipt is the single source of truth for profile progression',()=>{
+  const profile=sanitizeProfile({mechMastery:{vanguard:3}});
+  const recorded=recordRun(profile,{mechId:'vanguard',stageReached:12,victory:true,masteryEarned:18});
+  assert.equal(recorded.mechMastery.vanguard,21);
+});
+
+test('next certification goal follows the currently selected frame',()=>{
+  const profile=sanitizeProfile({selectedMech:'starwing',mechMastery:{starwing:4}}),next=nextUnlock43(profile);
+  assert.equal(next.mechId,'starwing');assert.equal(next.masteryRemaining,4);
 });
 
 test('every frame kit starts with a distinct action-changing module',()=>{
@@ -38,6 +55,7 @@ test('all twelve stages have real arena profiles and varied mission verbs',()=>{
   const missionTypes=new Set(ORBITAL_GRAVEYARD_STAGES_42.map((stage)=>stage.spatial.mission?.type||'eliminate'));
   assert.equal(shapes.size,12);assert.ok(missionTypes.size>=7);
   assert.ok(missionTypes.has('defense'));assert.ok(missionTypes.has('pursuit'));assert.ok(missionTypes.has('capture'));assert.ok(missionTypes.has('command'));
+  assert.equal(ORBITAL_GRAVEYARD_STAGES_42[5].spatial.mission.points.length,3);assert.equal(ORBITAL_GRAVEYARD_STAGES_42[10].spatial.optional.type,'decapitate');
 });
 
 test('route consequences persist beyond the immediately following stage',()=>{
@@ -74,7 +92,7 @@ test('earned duo protocols surface at core transformation nodes',()=>{
 });
 
 test('runtime wires mission state, boss preparation and horizontal-growth UI',async()=>{
-  const [runtime,ui,renderer]=await Promise.all([readFile(new URL('../src/run/frontlineDepth43.js',import.meta.url),'utf8'),readFile(new URL('../src/ui/frontlineDepth43.js',import.meta.url),'utf8'),readFile(new URL('../src/render/frontlineDepth43.js',import.meta.url),'utf8')]);
-  for(const token of['mission.type===\'defense\'','mission.type===\'pursuit\'','bossPrep.scanDisabled','bossPrep.artilleryDisabled','routeConsequences'])assert.match(runtime,new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
-  assert.match(ui,/舰队整备/);assert.match(ui,/showModuleReplacement43/);assert.match(renderer,/drawBoundary/);assert.match(renderer,/drawMassLandmark/);
+  const [runtime,ui,renderer,combat]=await Promise.all([readFile(new URL('../src/run/frontlineDepth43.js',import.meta.url),'utf8'),readFile(new URL('../src/ui/frontlineDepth43.js',import.meta.url),'utf8'),readFile(new URL('../src/render/frontlineDepth43.js',import.meta.url),'utf8'),readFile(new URL('../src/combat/rogueTransform416.js',import.meta.url),'utf8')]);
+  for(const token of['mission.type===\'defense\'','mission.type===\'pursuit\'','bossPrep.scanDisabled','bossPrep.artilleryDisabled','bossPrep.commandBroken','routeConsequences'])assert.match(runtime,new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
+  assert.match(ui,/舰队整备/);assert.match(ui,/showModuleReplacement43/);assert.match(ui,/showTacticalReceipt43/);assert.match(ui,/战线因果回执/);assert.match(renderer,/drawBoundary/);assert.match(renderer,/drawMassLandmark/);assert.match(combat,/damaged\?1:3/);assert.match(combat,/modulePrice=damaged\?45:35/);
 });
