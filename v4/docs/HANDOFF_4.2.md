@@ -6,7 +6,7 @@
 
 Draft PR：https://github.com/yueert1997ai-sys/mecha-marco/pull/43
 
-PR 状态：分支已推送，Draft PR #43 已创建，等待 GitHub Actions 与实体 iPhone 回归；禁止直接合并。PR #42 已合并，仅作为 4.3.1 历史基线，不继续使用其旧分支。
+PR 状态：分支已推送，Draft PR #43 已创建，GitHub Actions 3/3 全绿，仅待实体 iPhone 回归；禁止直接合并。PR #42 已合并，仅作为 4.3.1 历史基线，不继续使用其旧分支。
 
 发布前提交链：`ba3305b6b9cb036c1fade64447d4482878e97a95` → `c8ca337fd3cba4844f31ae3794b0b5b52bf91d11` → `64833e6a4c6fbbfd3c99bf2b99b96ecafadcb6a8` → `e0f4005eddba0da4744153a6051ec01a3305ea7d` → `c9d13204d7cb13e3d0c223a42c5d0ccfe74d8967` → `85a6a4d940bcc68fd6a114cf43de06b9720c2705`。首个提交对象的真实父节点为 main `3c4a14994c4db35d0a53d5a128b12fe4e1c26e68`。
 
