@@ -163,7 +163,7 @@ if (!smokeMode && 'serviceWorker' in navigator && location.protocol.startsWith('
 
 globalThis.__MECHA_MARCO__ = {
   game,
-  visualVersion:'4.3.1-consequence-progression',
+  visualVersion:'4.3.2-stability-pass',
   mech3dStatus:()=>mech3dStatus,
   mech3dRenderer:()=>mech3d,
   refreshViewport:()=>mobileViewport42.apply(),

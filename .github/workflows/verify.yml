@@ -124,7 +124,7 @@ jobs:
           done
           grep -q './v4/' /tmp/root.html
           curl -fsS http://127.0.0.1:4173/v3/ | grep -q 'v3.2'
-          curl -fsS http://127.0.0.1:4173/v4/ | grep -q '天穹断刃 4.3.1'
+          curl -fsS http://127.0.0.1:4173/v4/ | grep -q '天穹断刃 4.3.2'
           curl -fsS 'https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.module.js' -o /tmp/three.module.js
           test -s /tmp/three.module.js
           chrome="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
@@ -139,7 +139,7 @@ jobs:
           grep -q 'id="game-canvas"' /tmp/v4-dom.html
           grep -q 'id="mech-3d-canvas"' /tmp/v4-dom.html
           grep -q 'id="panel"' /tmp/v4-dom.html
-          grep -q 'V4.3.1 CONSEQUENCE FRONTLINE' /tmp/v4-dom.html
+          grep -q 'V4.3.2 STABILITY PASS' /tmp/v4-dom.html
           grep -q 'mech-preview41' /tmp/v4-dom.html
 
       - name: Build summary

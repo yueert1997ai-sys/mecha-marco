@@ -1,5 +1,5 @@
 const CACHE_PREFIX='mecha-marco-v4-';
-const CACHE='mecha-marco-v4-20260712-consequence-progression-r2';
+const CACHE='mecha-marco-v4-20260713-stability-pass-r1';
 const CORE=[
   './','./index.html','./icon.svg','./styles.css','./iphone17.css','./frontline-depth43.css','./mech3d41.css','./visual415.css','./visual415-refine.css','./depth416.css','./campaign42.css','./manifest.webmanifest','./src/main.js',
   './src/core/eventBus.js','./src/core/gameLoop.js','./src/core/math.js','./src/core/stateMachine.js',

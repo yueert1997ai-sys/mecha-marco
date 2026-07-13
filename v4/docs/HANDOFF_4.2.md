@@ -1,12 +1,12 @@
 # Mecha Marco 4.3 Handoff
 
-版本：`4.3.1-consequence-progression`
+版本：`4.3.2-stability-pass`
 
-开发分支：`codex/mobile-controls-viewport-level-polish`
+开发分支：`fix/v4-3-2-stabilization-audit`
 
-Draft PR：[#42](https://github.com/yueert1997ai-sys/mecha-marco/pull/42)
+Draft PR：待创建
 
-PR 状态：Draft / Open / Mergeable，`main` 仍是当前分支祖先，无冲突。2026-07-12 检查 `Verify Mecha 4.0`、`Verify Web Build` 与 `Pages Live Smoke` 均通过。
+PR 状态：禁止直接合并；以本轮最终 GitHub Draft PR 与 CI 为准。PR #42 已合并，仅作为 4.3.1 历史基线，不继续使用其旧分支。
 
 ## 当前事实
 
@@ -44,7 +44,9 @@ cd v4
 npm run verify
 ```
 
-自动 smoke 覆盖 956×440、844×390、932×430、896×414、852×393。当前 Node 测试 57/57。Browser Harness 已完成十二段加速流程；4.3.1 还在 844×390、DPR 3 下验证了 0/8/24 熟练认证、三节点纪念序列、补给失联应急商店、18 秒斩首成功/失败、Boss 增援允许/阻断、+18 熟练回执与结算因果首屏，页面、关键操作和 Canvas 同步断言均通过且无控制台异常。
+自动 smoke 覆盖 956×440、844×390、932×430、896×414、852×393，并在每个尺寸进入实战验证任务目标；844×390 额外覆盖设置、军备、奖励、商店、事件、暂停、结算、分支与 Boss 信息叠层。Node 行为测试增加输入中断、设施伤害矩阵、OG-08 逃脱、设施门控、斩首增援、结算幂等、Service Worker 依赖闭包和弹窗滚动回归。
+
+最终 `npm run verify` 结果：语法 83 项通过，Node 77/77，通过 19 个 Chromium / SwiftShader 浏览器场景。4.3.2 截图：`qa-artifacts/4.3.2-base-844x390.png`、`4.3.2-settings-844x390.png`、`4.3.2-combat-844x390.png`、`4.3.2-shop-844x390.png`、`4.3.2-result-844x390.png`、`4.3.2-boss-844x390.png`。
 
 4.3.1 证据：`qa-artifacts/4.3.1-base-844x390-dpr3.png`、`4.3.1-armory-goals-844x390-dpr3.png`、`4.3.1-defense-consequence-844x390-dpr3.png`、`4.3.1-damaged-shop-844x390-dpr3.png`、`4.3.1-result-causality-844x390-dpr3.png`。
 
