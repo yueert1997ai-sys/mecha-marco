@@ -267,6 +267,7 @@ Browser Harness 在 844×390、DPR 3 的隔离 Chromium 配置中主动注销 Se
 已验证修复：
 
 - 动作按钮 `pointerdown → clear → 新 pointerdown` 可以重新按下；`pointercancel`、`lostpointercapture`、四指并发和混合来源释放均有行为测试
+- 移动与瞄准摇杆在 `lostpointercapture` 后会释放旧指针并接受新指针；旋屏触发 clear 时会主动释放两支摇杆 capture，瞄准释放后主炮 held 归零
 - OG-08 监察官在可达边界或 24 秒倒计时归零时正确逃脱，清完剩余波次后战线继续
 - 主炮、军刀、导弹直击与爆炸、范围爆炸、哨戒和僚机均可伤害设施；清敌但设施未完成时不开放闸门
 - OG-11 18 秒内外两条斩首路径真实控制 Boss 增援；结束动画期间重复结算不会重复发奖
@@ -275,9 +276,11 @@ Browser Harness 在 844×390、DPR 3 的隔离 Chromium 配置中主动注销 Se
 - 浏览器内加速战役按真实运行时依次建立 OG-01～OG-12，自动处理奖励、两次分支、商店、投降事件、11 次闸门转换和胜利报告；最终 `visitedStages=12` 且 victory 为 true
 - Service Worker 依赖闭包与缓存命名空间进入 Node 回归
 
-最终 `npm run verify`：83 个 ES 模块 / 脚本通过语法检查，79/79 Node 测试通过，20 个 Chromium / SwiftShader 浏览器场景通过。存档专项覆盖 schema 5 / 6 / 7 的资源、涂装、设置、许可、当前套件、指令与三机体熟练度；核心容量专项覆盖 2 槽原子替换无复制、无丢失。
+最终 `npm run verify`：84 个 ES 模块 / 脚本通过语法检查，83/83 Node 测试通过，20 个 Chromium / SwiftShader 浏览器场景通过。存档专项覆盖 schema 5 / 6 / 7 的资源、涂装、设置、许可、当前套件、指令与三机体熟练度；核心容量专项覆盖 2 槽原子替换无复制、无丢失。
 
 4.3.2 截图证据：
+
+以下六张资产均重新导出为真实 PNG，自动测试校验 PNG 签名、IHDR 及 844×390 尺寸：
 
 - `qa-artifacts/4.3.2-base-844x390.png`
 - `qa-artifacts/4.3.2-settings-844x390.png`
