@@ -49,4 +49,5 @@ test('browser smoke covers five combat widths and all blocking overlay families'
   for(const screen of['settings','armory','reward','shop','event','pause','result','branch','boss'])assert.match(smoke,new RegExp(`'${screen}'`));
   assert.match(smoke,/data-objective-visible/);
   assert.match(smoke,/data-combat-layers/);
+  assert.match(smoke,/data-campaign-flow/);
 });

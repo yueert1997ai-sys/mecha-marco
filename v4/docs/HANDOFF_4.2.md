@@ -48,7 +48,7 @@ npm run verify
 
 自动 smoke 覆盖 956×440、844×390、932×430、896×414、852×393，并在每个尺寸进入实战验证任务目标；844×390 额外覆盖设置、军备、奖励、商店、事件、暂停、结算、分支与 Boss 信息叠层。Node 行为测试增加输入中断、设施伤害矩阵、OG-08 逃脱、设施门控、斩首增援、结算幂等、Service Worker 依赖闭包和弹窗滚动回归。
 
-最终 `npm run verify` 结果：语法 83 项通过，Node 79/79，通过 19 个 Chromium / SwiftShader 浏览器场景。存档迁移覆盖 schema 5 / 6 / 7 的资源、涂装、设置、许可、套件、指令和熟练度。4.3.2 截图：`qa-artifacts/4.3.2-base-844x390.png`、`4.3.2-settings-844x390.png`、`4.3.2-combat-844x390.png`、`4.3.2-shop-844x390.png`、`4.3.2-result-844x390.png`、`4.3.2-boss-844x390.png`。
+最终 `npm run verify` 结果：语法 83 项通过，Node 79/79，通过 20 个 Chromium / SwiftShader 浏览器场景；其中加速完整流程依次建立 OG-01～OG-12，处理奖励、分支、商店、事件、闸门转换并到达胜利结算。存档迁移覆盖 schema 5 / 6 / 7 的资源、涂装、设置、许可、套件、指令和熟练度。4.3.2 截图：`qa-artifacts/4.3.2-base-844x390.png`、`4.3.2-settings-844x390.png`、`4.3.2-combat-844x390.png`、`4.3.2-shop-844x390.png`、`4.3.2-result-844x390.png`、`4.3.2-boss-844x390.png`。
 
 4.3.1 证据：`qa-artifacts/4.3.1-base-844x390-dpr3.png`、`4.3.1-armory-goals-844x390-dpr3.png`、`4.3.1-defense-consequence-844x390-dpr3.png`、`4.3.1-damaged-shop-844x390-dpr3.png`、`4.3.1-result-causality-844x390-dpr3.png`。
 

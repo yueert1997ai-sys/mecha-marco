@@ -115,6 +115,24 @@ const loop = new GameLoop({ update:(dt)=>game.update(dt), render:renderFrame });
 const smokeParams=new URLSearchParams(location.search),smokeMode=smokeParams.has('smoke');
 if (smokeMode) {
   const screen=smokeParams.get('screen')||'base';
+  if(screen==='campaign'){
+    game.ui.showFieldReward42=(modules,reward,onChoose)=>onChoose(0);
+    game.ui.showCampaignBranch42=(stage,branches,onChoose)=>onChoose(0);
+    game.ui.showShop=(run,inventory,onBuy,onRepair,onLeave)=>onLeave();
+    game.ui.showCampaignEvent42=(event,onChoose)=>onChoose(0);
+    game.ui.showModuleReplacement43=(run,module,onReplace,onCancel)=>onCancel();
+    game.ui.showResult=(report)=>{game.__smokeCampaignReport=report};
+    game.startRun();
+    for(let index=0;index<12&&game.run?.stageIndex===index;index+=1){
+      if(game.run.mission43)game.run.mission43.complete=true;
+      for(const target of game.facilities42||[])target.dead=true;
+      for(const enemy of game.enemies)enemy.dead=true;
+      game.room.waveIndex=game.room.waves.length-1;game.waveDelay=0;
+      game.completeCombatRoom();
+      if(index<11&&game.run.exitOpen){game.player.y=game.room.stage42.centerY-8;game.updateCombat(0)}
+    }
+    setTimeout(()=>{const complete=game.run?.visitedStages?.length===12&&game.state==='result'&&game.__smokeCampaignReport?.victory===true;document.documentElement.dataset.campaignFlow=complete?'pass':'fail'},1700);
+  }
   if(screen==='combat'||screen==='boss')game.startRun();
   if(screen==='boss'){
     game.startCampaignStage42(11,false);game.waveDelay=0;game.spawnNextWave();
