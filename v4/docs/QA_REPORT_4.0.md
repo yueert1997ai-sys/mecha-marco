@@ -274,7 +274,7 @@ Browser Harness 在 844×390、DPR 3 的隔离 Chromium 配置中主动注销 Se
 - 844×390 额外覆盖基地、设置、军备、奖励、商店、事件、暂停、结算、分支和 Boss 通讯 / 回执 / 血条叠层
 - Service Worker 依赖闭包与缓存命名空间进入 Node 回归
 
-最终 `npm run verify`：83 个 ES 模块 / 脚本通过语法检查，77/77 Node 测试通过，19 个 Chromium / SwiftShader 浏览器场景通过。
+最终 `npm run verify`：83 个 ES 模块 / 脚本通过语法检查，79/79 Node 测试通过，19 个 Chromium / SwiftShader 浏览器场景通过。存档专项覆盖 schema 5 / 6 / 7 的资源、涂装、设置、许可、当前套件、指令与三机体熟练度；核心容量专项覆盖 2 槽原子替换无复制、无丢失。
 
 4.3.2 截图证据：
 
