@@ -24,6 +24,7 @@ class FakeTarget {
   constructor(action = null) {
     this.dataset = action ? { action } : {};
     this.classList = new FakeClassList();
+    this.style = {};
     this.listeners = new Map();
     this.capturedPointers = new Set();
   }
@@ -68,7 +69,16 @@ class FakeTarget {
   }
 }
 
-const withInputEnvironment = async (actions, run) => {
+const makeStick = (kind) => {
+  const stick = new FakeTarget();
+  const knob = new FakeTarget();
+  stick.dataset = { stick:kind };
+  stick.knob = knob;
+  stick.querySelector = (selector) => selector === '.stick-knob' ? knob : null;
+  return stick;
+};
+
+const withInputEnvironment = async (actions, run, stickKinds = []) => {
   const globalEvents = new FakeTarget();
   const originalDescriptors = new Map();
   const installGlobal = (name, value) => {
@@ -82,9 +92,11 @@ const withInputEnvironment = async (actions, run) => {
 
   const canvas = new FakeTarget();
   const buttons = Object.fromEntries(actions.map((action) => [action, new FakeTarget(action)]));
+  const sticks = Object.fromEntries(stickKinds.map((kind) => [kind, makeStick(kind)]));
   const touchRoot = {
     querySelectorAll(selector) {
-      if (selector === '[data-stick]' || selector === '.stick-knob') return [];
+      if (selector === '[data-stick]') return Object.values(sticks);
+      if (selector === '.stick-knob') return Object.values(sticks).map((stick) => stick.knob);
       if (selector === '[data-action]') return Object.values(buttons);
       if (selector === '.active') return Object.values(buttons).filter((button) => button.classList.contains('active'));
       return [];
@@ -92,7 +104,7 @@ const withInputEnvironment = async (actions, run) => {
   };
 
   try {
-    await run({ router:new InputRouter(canvas, touchRoot), buttons, globalEvents });
+    await run({ router:new InputRouter(canvas, touchRoot), buttons, sticks, globalEvents });
   } finally {
     for (const [name, descriptor] of originalDescriptors) {
       if (descriptor) Object.defineProperty(globalThis, name, descriptor);
@@ -175,4 +187,72 @@ test('direct held state cannot release another input source', async () => {
     router.setHeld('secondary', false);
     assert.equal(router.held.secondary, false);
   });
+});
+
+test('move stick lostpointercapture releases capture and accepts a new pointer', async () => {
+  await withInputEnvironment([], ({ router, sticks }) => {
+    const move = sticks.move;
+    move.dispatch('pointerdown', { pointerId:41, clientX:100, clientY:50 });
+    assert.equal(move.hasPointerCapture(41), true);
+    assert.equal(router.move.x, 1);
+
+    move.dispatch('lostpointercapture', { pointerId:41 });
+    assert.equal(move.hasPointerCapture(41), false);
+    assert.equal(router.touch.move.pointerId, null);
+    assert.deepEqual(router.move, {x:0,y:0});
+    assert.equal(move.knob.style.transform, 'translate(0,0)');
+
+    move.dispatch('pointerdown', { pointerId:42, clientX:0, clientY:50 });
+    assert.equal(router.touch.move.pointerId, 42);
+    assert.equal(move.hasPointerCapture(42), true);
+    assert.equal(router.move.x, -1);
+  }, ['move']);
+});
+
+test('aim stick lostpointercapture releases primary held state and accepts a new pointer', async () => {
+  await withInputEnvironment([], ({ router, sticks }) => {
+    const aim = sticks.aim;
+    aim.dispatch('pointerdown', { pointerId:51, clientX:100, clientY:50 });
+    assert.equal(aim.hasPointerCapture(51), true);
+    assert.equal(router.held.primary, true);
+
+    aim.dispatch('lostpointercapture', { pointerId:51 });
+    assert.equal(aim.hasPointerCapture(51), false);
+    assert.equal(router.touch.aim.pointerId, null);
+    assert.equal(router.held.primary, false);
+    assert.equal(aim.knob.style.transform, 'translate(0,0)');
+
+    aim.dispatch('pointerdown', { pointerId:52, clientX:0, clientY:50 });
+    assert.equal(router.touch.aim.pointerId, 52);
+    assert.equal(aim.hasPointerCapture(52), true);
+    assert.equal(router.held.primary, true);
+    aim.dispatch('pointerup', { pointerId:52 });
+    assert.equal(router.held.primary, false);
+  }, ['aim']);
+});
+
+test('viewport clear releases both stick captures and permits fresh move and aim pointers', async () => {
+  await withInputEnvironment([], ({ router, sticks, globalEvents }) => {
+    sticks.move.dispatch('pointerdown', { pointerId:61, clientX:100, clientY:50 });
+    sticks.aim.dispatch('pointerdown', { pointerId:62, clientX:100, clientY:50 });
+    assert.equal(sticks.move.hasPointerCapture(61), true);
+    assert.equal(sticks.aim.hasPointerCapture(62), true);
+    assert.equal(router.held.primary, true);
+
+    globalEvents.dispatch('mecha-viewport-change');
+    assert.equal(sticks.move.hasPointerCapture(61), false);
+    assert.equal(sticks.aim.hasPointerCapture(62), false);
+    assert.equal(router.touch.move.pointerId, null);
+    assert.equal(router.touch.aim.pointerId, null);
+    assert.deepEqual(router.move, {x:0,y:0});
+    assert.equal(router.held.primary, false);
+
+    sticks.move.dispatch('pointerdown', { pointerId:63, clientX:0, clientY:50 });
+    sticks.aim.dispatch('pointerdown', { pointerId:64, clientX:0, clientY:50 });
+    assert.equal(router.touch.move.pointerId, 63);
+    assert.equal(router.touch.aim.pointerId, 64);
+    assert.equal(sticks.move.hasPointerCapture(63), true);
+    assert.equal(sticks.aim.hasPointerCapture(64), true);
+    assert.equal(router.held.primary, true);
+  }, ['move','aim']);
 });

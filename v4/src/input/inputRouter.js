@@ -58,7 +58,7 @@ export class InputRouter {
 
   bindStick(element, kind) {
     const knob = element.querySelector('.stick-knob');
-    const state = { pointerId:null, center:{x:0,y:0}, value:{x:0,y:0} };
+    const state = { element, knob, kind, pointerId:null, center:{x:0,y:0}, value:{x:0,y:0} };
     const update = (event) => {
       const rect = element.getBoundingClientRect();
       state.center = { x:rect.left+rect.width/2, y:rect.top+rect.height/2 };
@@ -93,14 +93,22 @@ export class InputRouter {
     }, { passive:false });
     const end = (event) => {
       if (event.pointerId !== state.pointerId) return;
+      const pointerId = state.pointerId;
       state.pointerId = null;
       state.value = {x:0,y:0};
       knob.style.transform = 'translate(0,0)';
       if (kind === 'move') this.move = {x:0,y:0};
       else this.setHeld('primary', false);
+      try {
+        if (element.hasPointerCapture?.(pointerId)) element.releasePointerCapture(pointerId);
+      } catch {}
+      event.preventDefault();
     };
-    element.addEventListener('pointerup', end);
-    element.addEventListener('pointercancel', end);
+    element.addEventListener('pointerup', end, { passive:false });
+    element.addEventListener('pointercancel', end, { passive:false });
+    element.addEventListener('lostpointercapture', (event) => {
+      if (state.pointerId === event.pointerId) end(event);
+    }, { passive:false });
     this.touch[kind] = state;
   }
 
@@ -203,8 +211,15 @@ export class InputRouter {
     this.actionPointers.clear();
     for (const state of Object.values(this.touch)) {
       if (!state) continue;
+      const pointerId = state.pointerId;
       state.pointerId = null;
       state.value = {x:0,y:0};
+      if (pointerId !== null) {
+        try {
+          if (state.element?.hasPointerCapture?.(pointerId)) state.element.releasePointerCapture(pointerId);
+        } catch {}
+      }
+      if (state.knob) state.knob.style.transform = 'translate(0,0)';
     }
     for (const knob of this.touchRoot?.querySelectorAll('.stick-knob') || []) knob.style.transform = 'translate(0,0)';
   }
