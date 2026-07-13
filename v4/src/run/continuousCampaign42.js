@@ -1,9 +1,10 @@
-import { clamp, seededRng, shuffle } from '../core/math.js';
+import { clamp, distance, seededRng, shuffle } from '../core/math.js';
 import { MODULES } from '../data/modules.js';
 import { rollModuleChoices } from './rewardResolver.js';
 import { recordRun, saveProfile } from '../meta/profile.js';
 import { BOSS_DIALOGUE_42, CAMPAIGN_EVENTS_42, CAMPAIGN_LENGTH_42, getCampaignStage42, getStageMissionTargets42 } from '../data/regionOrbitalGraveyard42.js';
 import { calculateRestorationEarned42, identityMatch42, commandAuthority42 } from '../meta/restoration42.js';
+import { projectileHitsActor, saberHitsActor } from '../combat/hitSystem.js';
 
 const lockedBounds=(stage)=>({left:-9,right:9,top:stage.centerY-6,bottom:stage.centerY+6});
 const travelBounds=(stage)=>({left:-9,right:9,top:stage.centerY-8.8,bottom:stage.centerY+6});
@@ -53,7 +54,10 @@ export function applyContinuousCampaign42({Game}){
 
   const startRun=Game.prototype.startRun;
   Game.prototype.startRun=function startContinuousRun42(){
-    const result=startRun.call(this);
+    const ownShowRoute=Object.prototype.hasOwnProperty.call(this,'showRoute'),showRoute=this.showRoute;
+    this.showRoute=()=>{};
+    let result;
+    try{result=startRun.call(this)}finally{if(ownShowRoute)this.showRoute=showRoute;else delete this.showRoute}
     this.run.campaign42=true;
     this.run.stageIndex=0;
     this.run.depth=0;
@@ -129,24 +133,83 @@ export function applyContinuousCampaign42({Game}){
 
   Game.prototype.hitFacility42=function hitFacility42(target,damage,source){
     if(!target||target.dead)return false;
-    target.hp=Math.max(0,target.hp-damage);this.spawnVfx({type:'enemyHit',x:target.x,y:target.y,color:this.room.stage42.theme.accent,life:.2,scale:.7});
-    if(target.hp<=0){target.dead=true;this.spawnVfx({type:'explosion',x:target.x,y:target.y,color:this.room.stage42.theme.accent,life:.72,scale:1.35});this.audio.play('enemyHit');const left=this.facilities42.filter((item)=>!item.dead).length;this.ui.notify(left?`${target.label} 已摧毁 · 剩余 ${left}`:`${target.label} 全部离线`,1.4)}
+    const color=this.room?.stage42?.theme?.accent||'#e07568';
+    target.hp=Math.max(0,target.hp-damage);this.spawnVfx({type:'enemyHit',x:target.x,y:target.y,color,life:.2,scale:.7});
+    if(target.hp<=0){target.dead=true;this.spawnVfx({type:'explosion',x:target.x,y:target.y,color,life:.72,scale:1.35});this.audio.play('enemyHit');const left=this.facilities42.filter((item)=>!item.dead).length;this.ui.notify(left?`${target.label} 已摧毁 · 剩余 ${left}`:`${target.label} 全部离线`,1.4)}
     return true;
+  };
+
+  Game.prototype.getDamageableObjectives42=function getDamageableObjectives42(){
+    if(!this.run?.campaign42)return[];
+    return(this.facilities42||[]).filter((target)=>!target.dead);
+  };
+
+  Game.prototype.damageObjectivesInCircle42=function damageObjectivesInCircle42(source,radius,damage,hit={}){
+    const hitIds=hit.hitIds;
+    let applied=0;
+    for(const target of this.getDamageableObjectives42()){
+      if(hitIds?.has(target.id)||distance(source,target)>radius+(target.radius||.6))continue;
+      hitIds?.add(target.id);
+      if(this.hitFacility42(target,damage,hit))applied+=1;
+    }
+    return applied;
+  };
+
+  const getNearestEnemies=Game.prototype.getNearestEnemies;
+  Game.prototype.getNearestEnemies=function getNearestCampaignTargets42(point,count=1,maxDistance=Infinity,predicate=()=>true){
+    const enemies=getNearestEnemies.call(this,point,count,maxDistance,predicate);
+    if(!this.run?.campaign42||!this.facilities42?.length)return enemies;
+    return[...enemies,...this.getDamageableObjectives42().filter(predicate)]
+      .map((target)=>({target,d:distance(point,target)})).filter(({d})=>d<=maxDistance)
+      .sort((a,b)=>a.d-b.d).slice(0,count).map(({target})=>target);
   };
 
   const updateProjectiles=Game.prototype.updateProjectiles;
   Game.prototype.updateProjectiles=function updateCampaignFacilities42(dt){
     updateProjectiles.call(this,dt);
     if(!this.run?.campaign42||!this.facilities42?.length)return;
-    for(const shot of this.projectiles){if(shot.owner!=='player'||shot.life<=0)continue;const target=this.facilities42.find((item)=>!item.dead&&Math.hypot(item.x-shot.x,item.y-shot.y)<item.radius+(shot.radius||.12));if(target&&this.hitFacility42(target,shot.damage,shot)){shot.life=0}}
+    for(const shot of this.projectiles){
+      if(shot.owner!=='player'||shot.life<=0)continue;
+      shot.hitIds||=new Set();
+      const target=this.getDamageableObjectives42().find((item)=>!shot.hitIds.has(item.id)&&projectileHitsActor(shot,item));
+      if(!target||!this.hitFacility42(target,shot.damage,shot))continue;
+      shot.hitIds.add(target.id);
+      if(shot.pierce>0){shot.pierce-=1;shot.damage*=.82}else shot.life=0;
+    }
     this.projectiles=this.projectiles.filter((shot)=>shot.life>0);
+  };
+
+  const explodeMissile=Game.prototype.explodeMissile;
+  Game.prototype.explodeMissile=function explodeCampaignMissile42(missile,target){
+    const result=explodeMissile.call(this,missile,target);
+    if(this.run?.campaign42)this.damageObjectivesInCircle42(missile,1.25,missile.damage,{type:'missile',source:missile});
+    return result;
+  };
+
+  const updateMissiles=Game.prototype.updateMissiles;
+  Game.prototype.updateMissiles=function updateCampaignMissiles42(dt){
+    updateMissiles.call(this,dt);
+    if(!this.run?.campaign42||!this.facilities42?.length)return;
+    for(const missile of this.missiles){
+      if(missile.owner!=='player'||missile.life<=0)continue;
+      const target=this.getDamageableObjectives42().find((item)=>distance(missile,item)<(item.radius||.6)+.25);
+      if(target){this.explodeMissile(missile,target);missile.life=0}
+    }
+    this.missiles=this.missiles.filter((missile)=>missile.life>0);
   };
 
   const updateSlashes=Game.prototype.updateSlashes;
   Game.prototype.updateSlashes=function updateCampaignFacilitySlashes42(dt){
     updateSlashes.call(this,dt);
     if(!this.run?.campaign42||!this.facilities42?.length)return;
-    for(const slash of this.slashes){if(slash.owner!=='player')continue;for(const target of this.facilities42){if(target.dead||slash.hitIds.has(target.id)||Math.hypot(target.x-slash.x,target.y-slash.y)>slash.range+target.radius)continue;slash.hitIds.add(target.id);this.hitFacility42(target,slash.damage,slash)}}
+    for(const slash of this.slashes){if(slash.owner!=='player')continue;slash.hitIds||=new Set();for(const target of this.getDamageableObjectives42()){if(slash.hitIds.has(target.id)||!saberHitsActor(slash.base,slash.tip,slash.width,target))continue;slash.hitIds.add(target.id);this.hitFacility42(target,slash.damage,slash)}}
+  };
+
+  const damageEnemiesInCircle=Game.prototype.damageEnemiesInCircle;
+  Game.prototype.damageEnemiesInCircle=function damageCombatTargetsInCircle42(source,radius,damage,extra={}){
+    const result=damageEnemiesInCircle.call(this,source,radius,damage,extra);
+    if(this.run?.campaign42)this.damageObjectivesInCircle42(source,radius,damage,{...extra,source});
+    return result;
   };
 
   Game.prototype.openStageExit42=function openStageExit42(){
