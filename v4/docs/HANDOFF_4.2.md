@@ -4,11 +4,11 @@
 
 开发分支：`fix/v4-3-2-stabilization-audit`
 
-Draft PR：未创建。当前执行环境没有可用的已认证 GitHub CLI，浏览器 GitHub 会话未登录；匿名 HTTPS 推送返回 401。不得为绕过该边界读取 Token。
+Draft PR：https://github.com/yueert1997ai-sys/mecha-marco/pull/43
 
-PR 状态：本地分支已形成 3 个提交且工作树干净，仍需在具备 GitHub 身份的环境推送并创建 Draft PR；禁止直接合并。PR #42 已合并，仅作为 4.3.1 历史基线，不继续使用其旧分支。
+PR 状态：分支已推送，Draft PR #43 已创建，等待 GitHub Actions 与实体 iPhone 回归；禁止直接合并。PR #42 已合并，仅作为 4.3.1 历史基线，不继续使用其旧分支。
 
-本地提交：`ba3305b6b9cb036c1fade64447d4482878e97a95` → `c8ca337fd3cba4844f31ae3794b0b5b52bf91d11` → `64833e6a4c6fbbfd3c99bf2b99b96ecafadcb6a8`。首个提交父节点为 main `3c4a14994c4db35d0a53d5a128b12fe4e1c26e68`。
+发布前提交链：`ba3305b6b9cb036c1fade64447d4482878e97a95` → `c8ca337fd3cba4844f31ae3794b0b5b52bf91d11` → `64833e6a4c6fbbfd3c99bf2b99b96ecafadcb6a8` → `e0f4005eddba0da4744153a6051ec01a3305ea7d` → `c9d13204d7cb13e3d0c223a42c5d0ccfe74d8967` → `85a6a4d940bcc68fd6a114cf43de06b9720c2705`。首个提交对象的真实父节点为 main `3c4a14994c4db35d0a53d5a128b12fe4e1c26e68`。
 
 ## 当前事实
 
