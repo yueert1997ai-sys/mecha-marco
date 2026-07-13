@@ -4,9 +4,11 @@
 
 开发分支：`fix/v4-3-2-stabilization-audit`
 
-Draft PR：待创建
+Draft PR：未创建。当前执行环境没有可用的已认证 GitHub CLI，浏览器 GitHub 会话未登录；匿名 HTTPS 推送返回 401。不得为绕过该边界读取 Token。
 
-PR 状态：禁止直接合并；以本轮最终 GitHub Draft PR 与 CI 为准。PR #42 已合并，仅作为 4.3.1 历史基线，不继续使用其旧分支。
+PR 状态：本地分支已形成 3 个提交且工作树干净，仍需在具备 GitHub 身份的环境推送并创建 Draft PR；禁止直接合并。PR #42 已合并，仅作为 4.3.1 历史基线，不继续使用其旧分支。
+
+本地提交：`ba3305b6b9cb036c1fade64447d4482878e97a95` → `c8ca337fd3cba4844f31ae3794b0b5b52bf91d11` → `64833e6a4c6fbbfd3c99bf2b99b96ecafadcb6a8`。首个提交父节点为 main `3c4a14994c4db35d0a53d5a128b12fe4e1c26e68`。
 
 ## 当前事实
 
