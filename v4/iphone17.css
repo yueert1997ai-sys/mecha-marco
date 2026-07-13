@@ -5,7 +5,7 @@
   --app-width: 100vw;
   --visual-offset-left: 0px;
   --visual-offset-top: 0px;
-  --control-opacity: .78;
+  --control-opacity: .8;
   --home-indicator-buffer: max(8px, env(safe-area-inset-bottom, 0px));
 }
 
@@ -392,4 +392,22 @@ body { margin: 0; }
   .base-screen { grid-template-columns:minmax(200px,.68fr) minmax(0,1.9fr); }
   .base-screen>.campaign-brief42>div { padding:5px 7px; }
   .base-screen>.campaign-brief42 strong { font-size:11px; }
+}
+
+@media (orientation: landscape) and (max-width: 900px) {
+  .hud-top-center {
+    display: block;
+    position: absolute;
+    top: calc(6px + var(--safe-top));
+    left: 50%;
+    width: min(340px, 32vw);
+    transform: translateX(-50%);
+  }
+
+  .hud-top-center > strong { padding: 5px 10px; font-size: 10px; }
+  .campaign-progress42 { min-width: 0; margin-top: 3px; }
+  .campaign-sector42 { font-size: 9px; }
+  .campaign-progress42 small { font-size: 8px; }
+  .boss-bar { top: calc(52px + var(--safe-top)); width: min(460px, 54vw); }
+  .hud.boss-active .campaign-progress42 { display: none; }
 }

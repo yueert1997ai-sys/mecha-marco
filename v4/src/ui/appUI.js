@@ -33,6 +33,9 @@ export class AppUI {
     this.overlay.className = `overlay show ${className}`;
     this.panel.className = `panel ${className}`;
     this.panel.innerHTML = html;
+    // Reused overlays must never inherit the previous screen's scroll position.
+    this.panel.scrollTop = 0;
+    this.panel.scrollLeft = 0;
   }
 
   hidePanel() {
@@ -114,6 +117,7 @@ export class AppUI {
     this.moduleStrip.innerHTML=game.run.modules.slice(-6).map(m=>`<span title="${m.name}">${m.name.slice(0,4)}</span>`).join('');
     const boss=game.enemies.find(e=>e.boss&&!e.dead);
     this.bossBar.classList.toggle('hidden',!boss);
+    this.hud.classList.toggle('boss-active',Boolean(boss));
     if(boss){this.bossFill.style.width=`${boss.hp/boss.maxHp*100}%`;this.bossName.textContent=`${boss.name} · PHASE ${boss.phase}`;}
     this.cooldownFrame=(this.cooldownFrame+1)%6;
     if(this.cooldownFrame===0){

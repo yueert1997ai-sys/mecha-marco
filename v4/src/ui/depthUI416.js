@@ -5,7 +5,7 @@ import { REWARD_TYPES } from '../data/encounters.js';
 import { getModuleVisualHint } from '../meta/loadoutProfile.js';
 import { length, normalize } from '../core/math.js';
 
-const DEFAULT_TUNING_416={aimSensitivity:1,moveSensitivity:1,aimDeadZone:.065,vibration:true,controlOpacity:.78,autoFire:true};
+const DEFAULT_TUNING_416={aimSensitivity:1,moveSensitivity:1,aimDeadZone:.065,vibration:true,controlOpacity:.8,autoFire:true};
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 const rarityLabel=(module)=>module.rarity==='transform'?'核心改造':module.rarity==='duo'?'组合协议':module.rarity==='rare'?'稀有协议':'标准协议';
 const renderRange=(id,label,value,min,max,step,suffix='')=>`<label class="setting-row416" for="${id}"><span><strong>${label}</strong><small>${suffix}</small></span><input id="${id}" type="range" min="${min}" max="${max}" step="${step}" value="${value}"><b data-value-for="${id}">${Number(value).toFixed(2)}</b></label>`;
@@ -134,7 +134,7 @@ export function applyDepthUI416({AppUI,Game,InputRouter,PlayerMech}){
       aimSensitivity:Number(this.panel.querySelector('#aim-sensitivity416')?.value||1),
       moveSensitivity:Number(this.panel.querySelector('#move-sensitivity416')?.value||1),
       aimDeadZone:Number(this.panel.querySelector('#aim-deadzone416')?.value||.065),
-      controlOpacity:Number(this.panel.querySelector('#control-opacity416')?.value||.78),
+      controlOpacity:Number(this.panel.querySelector('#control-opacity416')?.value||.8),
       autoFire:Boolean(this.panel.querySelector('#autofire416')?.checked),
       vibration:Boolean(this.panel.querySelector('#vibration416')?.checked),
     });
