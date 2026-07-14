@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../docs/qa-artifacts');
-const names=['4.4A-og04-before-844x390.png','4.4A-og04-after-844x390.png',...['intact','active','heavy-damage','destroyed'].map((state)=>`4.4A-og04-facility-${state}-844x390.png`)];
+const names=['4.4A-og04-before-844x390.png','4.4A-og04-after-844x390.png','4.4A-og04-exit-closed-844x390.png','4.4A-og04-exit-open-844x390.png','4.4A-og04-spatial-obstacles-844x390.png',...['intact','active','heavy-damage','destroyed'].map((state)=>`4.4A-og04-facility-${state}-844x390.png`)];
 const signature=Buffer.from([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a]);
 
 test('4.4A OG-04 evidence is encoded as real 844x390 PNG',()=>{

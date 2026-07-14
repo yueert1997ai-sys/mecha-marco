@@ -1,4 +1,16 @@
+import { VANGUARD_IDENTITY_RULES_44 } from '../combat/vanguardIdentity44.js';
+
 const STYLE_ID='vanguard-identity44-style';
+
+export function vanguardCounterHudState44(state={}){
+  const blade=Math.max(0,Number(state.blade)||0),cost=VANGUARD_IDENTITY_RULES_44.counterCost;
+  const ready=Boolean(state.counterReady&&blade>=cost);
+  if(ready)return{ready,text:'反击射击 READY'};
+  if(state.counterReady)return{ready,text:`反击锁定 · 刃势 ${Math.round(blade)}/${cost}`};
+  if(state.deflectWindow)return{ready,text:'偏转窗口'};
+  if(state.deflectStance)return{ready,text:'偏转姿态'};
+  return{ready,text:'军刀轻触斩击 · 短蓄偏转'};
+}
 
 const css=`
 .vanguard-identity44{position:fixed;z-index:16;right:calc(max(12px,var(--safe-right)) + 44px);top:calc(max(8px,var(--safe-top)) + 48px);width:min(210px,23vw);display:none;gap:5px;padding:8px 10px;border:1px solid rgba(222,169,76,.22);border-radius:11px;background:linear-gradient(180deg,rgba(13,10,25,.76),rgba(5,5,13,.88));box-shadow:0 10px 28px rgba(0,0,0,.28);backdrop-filter:blur(10px);pointer-events:none}
@@ -26,8 +38,9 @@ export function applyVanguardIdentityUI44(AppUI){
     hud.querySelector('header strong').textContent=String(Math.round(state.blade));
     hud.querySelector('.vanguard-blade44 i').style.width=`${Math.max(0,Math.min(100,state.blade))}%`;
     hud.classList.toggle('high',state.blade>=60);
-    hud.classList.toggle('counter',Boolean(state.counterReady));
+    const counterHud=vanguardCounterHudState44(state);
+    hud.classList.toggle('counter',counterHud.ready);
     const status=hud.querySelector('.vanguard-status44');
-    status.textContent=state.counterReady?'反击射击 READY':state.deflectWindow?'偏转窗口':state.deflectStance?'偏转姿态':'军刀轻触斩击 · 短蓄偏转';
+    status.textContent=counterHud.text;
   };
 }

@@ -272,6 +272,12 @@ export function applyVanguardIdentity44({Game,PlayerMech,InputRouter,Enemy}) {
     return startStage.apply(this,args);
   };
 
+  const beforeCombatDamageResolution=Game.prototype.beforeCombatDamageResolution;
+  Game.prototype.beforeCombatDamageResolution=function beforeVanguardDamageResolution44(dt){
+    beforeCombatDamageResolution?.call(this,dt);
+    if(activeForGame(this))deflectThreats(this,ensureState(this),dt);
+  };
+
   const updateCombat=Game.prototype.updateCombat;
   Game.prototype.updateCombat=function updateVanguardIdentity44(dt){
     if(!activeForGame(this)){
@@ -287,7 +293,6 @@ export function applyVanguardIdentity44({Game,PlayerMech,InputRouter,Enemy}) {
       state.fallbackSlash=false;
       this.input.press('secondary');
     }
-    deflectThreats(this,state,dt);
     const result=updateCombat.call(this,dt);
     if(this.player?.dead||this.state!=='combat')clearVanguardIdentityInput44(state);
     return result;
