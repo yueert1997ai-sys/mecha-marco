@@ -59,7 +59,7 @@ export function auditMobileViewport42(){
   const canvasSync=canvases.every((canvas)=>{const r=canvas.getBoundingClientRect(),scaleX=canvas.width/Math.max(1,r.width),scaleY=canvas.height/Math.max(1,r.height);return Math.abs(r.width-viewport.width)<=tolerance&&Math.abs(r.height-viewport.height)<=tolerance&&canvas.width>0&&canvas.height>0&&Math.abs(scaleX-scaleY)<=.05});
   const objective=document.getElementById('campaign-objective42');
   const hud=document.getElementById('hud'),objectiveVisible=!objective||hud?.classList.contains('hidden')||hud?.classList.contains('boss-active')||visible(objective);
-  const layers=['#campaign-progress42.show','#boss-bar:not(.hidden)','.campaign-comms42.show','.tactical-receipt43.show'].map((selector)=>document.querySelector(selector)).filter(visible).map((element)=>element.getBoundingClientRect());
+  const layers=['#campaign-progress42.show','#boss-bar:not(.hidden)','.campaign-comms42.show','.tactical-receipt43.show','.vanguard-identity44.show'].map((selector)=>document.querySelector(selector)).filter(visible).map((element)=>element.getBoundingClientRect());
   const combatLayersSeparated=layers.every((a,index)=>layers.slice(index+1).every((b)=>a.right<=b.left+tolerance||b.right<=a.left+tolerance||a.bottom<=b.top+tolerance||b.bottom<=a.top+tolerance));
   return{
     pageFit:root.scrollHeight<=viewport.height+tolerance&&root.scrollWidth<=viewport.width+tolerance,

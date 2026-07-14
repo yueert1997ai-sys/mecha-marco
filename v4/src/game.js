@@ -199,6 +199,7 @@ export class Game {
     if (input.pressed.pause) return this.pause();
     this.player.update(dt, input, this);
     for (const enemy of this.enemies) enemy.update(dt, this);
+    this.beforeCombatDamageResolution?.(dt);
     this.updateProjectiles(dt);
     this.updateMissiles(dt);
     this.updateSlashes(dt);

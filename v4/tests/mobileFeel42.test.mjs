@@ -70,8 +70,8 @@ test('top-down upper-body view remains stable while 4.2 adds continuous campaign
   assert.match(main,/applyContinuousCampaign42/);
   assert.match(main,/dataset\.combatView = 'topdown'/);
   assert.match(main,/dataset\.mechSilhouette = 'upper-body'/);
-  assert.match(main,/4\.3\.2-stability-pass/);
+  assert.match(main,/4\.4\.0-vanguard-identity/);
   assert.match(sw,/continuousCampaign42\.js/);
   assert.match(sw,/campaign42\.css/);
-  assert.equal(version.trim(),'4.3.2-stability-pass');
+  assert.equal(version.trim(),'4.4.0-vanguard-identity');
 });

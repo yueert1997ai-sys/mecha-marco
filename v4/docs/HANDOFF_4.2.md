@@ -1,12 +1,12 @@
-# Mecha Marco 4.3 Handoff
+# Mecha Marco 4.4.0 Handoff
 
-版本：`4.3.2-stability-pass`
+版本：`4.4.0-vanguard-identity`
 
-开发分支：`fix/v4-3-2-stabilization-audit`
+开发分支：`feat/v4-4a-vanguard-identity-og04`
 
-Draft PR：https://github.com/yueert1997ai-sys/mecha-marco/pull/43
+Draft PR：https://github.com/yueert1997ai-sys/mecha-marco/pull/45
 
-PR 状态：分支已推送，Draft PR #43 已创建，GitHub Actions 3/3 全绿，仅待实体 iPhone 回归；禁止直接合并。PR #42 已合并，仅作为 4.3.1 历史基线，不继续使用其旧分支。
+PR 状态：PM 第二轮功能验收已通过，当前执行 4.4.0 发布标记同步；继续保持 Draft，不直接合并，不进入 4.4B。
 
 发布前提交链：`ba3305b6b9cb036c1fade64447d4482878e97a95` → `c8ca337fd3cba4844f31ae3794b0b5b52bf91d11` → `64833e6a4c6fbbfd3c99bf2b99b96ecafadcb6a8` → `e0f4005eddba0da4744153a6051ec01a3305ea7d` → `c9d13204d7cb13e3d0c223a42c5d0ccfe74d8967` → `85a6a4d940bcc68fd6a114cf43de06b9720c2705`。首个提交对象的真实父节点为 main `3c4a14994c4db35d0a53d5a128b12fe4e1c26e68`。
 
@@ -23,6 +23,7 @@ PR 状态：分支已推送，Draft PR #43 已创建，GitHub Actions 3/3 全绿
 - 侧向套件需要 8 / 24 机体熟练度认证后再消耗舰队数据，已解锁旧存档不会被回收。
 - 战术回执负责即时说明任务结果与后续变化；补给失败、监察官逃脱和前庭斩首失败都有真实局内代价。
 - 存档 schema 为 7，v6 及更早存档通过字段合并迁移。
+- 先锋机在 OG-04 具备刃势、短蓄偏转和反击射击身份循环；OG-04 保留真实障碍、任务标签、连接走廊和开关闸门。
 
 ## 关键文件
 
@@ -58,3 +59,14 @@ npm run verify
 - WebKit 前后台切换后的 WebGL Context 重建。
 - Three.js CDN 在中国大陆弱网下的首次加载和 Canvas fallback 体验。
 - 防守失败目前给出局内惩罚，没有独立失败分支；复杂群体寻路仍是局部职责 + 边界约束。
+
+## 4.4.0 Issue #44 分支交接
+
+- 基线：main `736c6dda090f744002a2d34656b21c254c347562`；PM 第二轮验收后正式发布标记同步为 `4.4.0-vanguard-identity`。
+- 分支：`feat/v4-4a-vanguard-identity-og04`；仅实现先锋机在 OG-04 的身份循环和该关视觉纵切，不包含重装机、星翼机、其他关卡或正式 GLB。
+- 战斗接口：`src/combat/vanguardIdentity44.js` 只新增一层 `Game.prototype.updateCombat` 包装；偏转接入敌人更新之后、投射物/军刀碰撞之前的 `beforeCombatDamageResolution` 钩子。
+- 视觉接口：`src/render/og04IdentityVisual44.js` 暴露程序化组件描述和四状态设施映射，未来可将同名组件映射到 GLB 节点而不改碰撞。
+- UI：`src/ui/vanguardIdentity44.js` 提供刃势细条、偏转状态和反击就绪提示，不增加触控按钮。
+- 证据：`docs/QA_4.4A_ISSUE_44.md` 与 `docs/qa-artifacts/4.4A-og04-*.png`。
+- 第二轮阻塞修复验证：语法 90 项、Node 104/104、既有 20 个 Chromium / SwiftShader 场景加 1 个 OG-04 844×390 专项审计全部通过。
+- 非阻塞风险：OG-04 自定义背景仍会覆盖一次已经执行的通用场地绘制；实体 iPhone 仍需单独验证。
