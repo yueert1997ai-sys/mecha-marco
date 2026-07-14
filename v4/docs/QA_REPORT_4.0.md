@@ -1,8 +1,8 @@
-# 天穹断刃 4.3.2 当前 QA 状态
+# 天穹断刃 4.4.0 当前 QA 状态
 
-版本：`4.3.2-stability-pass`
+版本：`4.4.0-vanguard-identity`
 
-日期：2026-07-13
+日期：2026-07-14
 
 > 文件名保留为 `QA_REPORT_4.0.md`，用于兼容既有链接。本文内容已经更新为 4.3 当前状态，不应再把 4.0 / 4.1 的验证范围视为完整现状。
 
@@ -136,7 +136,7 @@
 
 ## 8. 版本与资源一致性
 
-当前一致版本：`4.3.2-stability-pass`
+当前一致版本：`4.4.0-vanguard-identity`（`v4/package.json` 使用 npm 语义版本 `4.4.0`）
 
 已检查：
 
@@ -150,7 +150,7 @@
 - `docs/HADES_ARCHITECTURE_4.0.md` 的 4.2 状态注记
 - 本 QA 报告
 
-Service Worker 缓存代号不是 npm 语义版本，但必须包含当前 4.3 前线深度代号，并在资源变化时递增修订号。
+Service Worker 缓存代号不是 npm 语义版本，但必须包含当前 `4.4.0-vanguard-identity` 发布代号，并在资源变化时递增修订号。
 
 ## 9. 已修复的历史过期描述
 
@@ -290,3 +290,12 @@ Browser Harness 在 844×390、DPR 3 的隔离 Chromium 配置中主动注销 Se
 - `qa-artifacts/4.3.2-boss-844x390.png`
 
 自动浏览器结果仍属于 Chromium / SwiftShader 逻辑、布局与渲染模拟，不代表实体 iPhone Safari 性能。
+
+## 16. 4.4.0 先锋身份纵切发布验收（2026-07-14）
+
+- 先锋机在 OG-04 的主炮/军刀命中、短蓄偏转、28 刃势获得、35 刃势门槛和高贯穿反击射击已通过行为测试
+- 生产 `Game.updateCombat` 与真实 `Enemy.update` 顺序验证敌人同帧生成攻击会在伤害结算前被偏转，玩家耐久不发生先扣后补
+- OG-04 专用视觉层依据真实 `stage.spatial` 重绘四处碰撞障碍、任务标签、关卡标签、北侧连接走廊和关闭/开放闸门
+- 九张 844×390 PNG 通过签名、IHDR 与尺寸检查；Chromium / SwiftShader 仅作为浏览器模拟证据
+- 发布标记同步为 VERSION `4.4.0-vanguard-identity`、npm `4.4.0`、页面 `4.4.0`、runtime `4.4.0-vanguard-identity` 与独立 Service Worker 缓存键
+- 非阻塞风险：OG-04 自定义背景仍覆盖一次已经执行的通用场地绘制；实体 iPhone 触感、发热、持续性能与 WebGL 恢复仍未验证

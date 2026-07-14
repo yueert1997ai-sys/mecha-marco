@@ -1,4 +1,4 @@
-export const FRONTLINE_VERSION_43='4.3.2-stability-pass';
+export const FRONTLINE_VERSION_43='4.4.0-vanguard-identity';
 
 export const FRAME_KITS_43={
   vanguard:[

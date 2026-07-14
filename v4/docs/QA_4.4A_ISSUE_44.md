@@ -5,7 +5,7 @@
 - 执行源：GitHub Issue #44《4.4A：先锋机身份循环 + OG-04 玩法与视觉纵切》。
 - main 基线：`736c6dda090f744002a2d34656b21c254c347562`。
 - 开发分支：`feat/v4-4a-vanguard-identity-og04`。
-- 正式版本保持 `4.3.2-stability-pass`；未改 VERSION、页面标题或 Service Worker 缓存版本。
+- PM 第二轮功能验收通过后，发布标记同步为 `4.4.0-vanguard-identity`；npm 语义版本为 `4.4.0`。
 - 未开发重装机、星翼机、其他关卡或正式 GLB。
 
 ## 玩家操作循环
@@ -51,7 +51,7 @@
 - 4.4A 仍只有一层 `Game.prototype.updateCombat` 包装；基础循环在敌人更新之后、投射物/军刀碰撞之前提供 `beforeCombatDamageResolution` 扩展点，偏转直接接入这里，没有新增 `updateProjectiles` 或 `updateSlashes` 包装，也没有用受伤后回补耐久替代正确时序。
 - 主炮、军刀和设施有效命中通过窄包装记录刃势，运行态不写入存档，因此 schema 7 不变。
 - 程序化 OG-04 背景覆盖旧场地后，会依据 `stage.spatial` 重新绘制真实碰撞障碍、任务指令、关卡标签、连接走廊和关闭/开启闸门，使视觉与碰撞契约一致。当前仍会先执行通用 drawArena，存在一次被覆盖绘制的固定成本；本轮不扩展到 4.4B。
-- 为保持 Issue 边界，Service Worker 仅补齐新模块 precache 清单，缓存版本未变；正式发布前必须由 PM 决定是否随正式版本统一提升缓存键。
+- Service Worker 已按 PM 第二轮验收提升为独立 `4.4.0-vanguard-identity` 缓存键，precache 清单继续覆盖运行入口完整依赖。
 
 ## 实体 iPhone 未验证
 

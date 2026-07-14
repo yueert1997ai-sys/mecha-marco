@@ -9,9 +9,10 @@ const repoRoot=path.resolve(v4Root,'..');
 const readV4=(file)=>readFile(path.join(v4Root,file),'utf8');
 const readRepo=(file)=>readFile(path.join(repoRoot,file),'utf8');
 
-const VERSION='4.3.2-stability-pass';
+const VERSION='4.4.0-vanguard-identity';
+const PACKAGE_VERSION='4.4.0';
 
-test('runtime and package version markers agree on 4.3',async()=>{
+test('runtime and release markers agree on 4.4.0',async()=>{
   const version=(await readV4('VERSION')).trim();
   const pkg=JSON.parse(await readV4('package.json'));
   const html=await readV4('index.html');
@@ -19,14 +20,14 @@ test('runtime and package version markers agree on 4.3',async()=>{
   const sw=await readV4('sw.js');
 
   assert.equal(version,VERSION);
-  assert.equal(pkg.version,VERSION);
-  assert.match(html,/天穹断刃 4\.3\.2/);
+  assert.equal(pkg.version,PACKAGE_VERSION);
+  assert.match(html,/天穹断刃 4\.4\.0/);
   assert.match(main,new RegExp(VERSION.replaceAll('.','\\.')));
   assert.match(main,/dataset\.combatView = 'topdown'/);
   assert.match(main,/dataset\.mechSilhouette = 'upper-body'/);
   assert.match(main,/dataset\.campaignMode = 'continuous-12-stage'/);
   assert.match(main,/dataset\.narrativeArc = 'ma00-restoration'/);
-  assert.match(sw,/stability-pass-r\d+/);
+  assert.match(sw,/4\.4\.0-vanguard-identity-r\d+/);
 });
 
 test('current documentation describes top-down upper-body continuous campaign',async()=>{
@@ -36,7 +37,7 @@ test('current documentation describes top-down upper-body continuous campaign',a
   const qa=await readV4('docs/QA_REPORT_4.0.md');
 
   for(const text of[readme,design,architecture,qa]){
-    assert.match(text,/4\.3\.2-stability-pass/);
+    assert.match(text,/4\.4\.0-vanguard-identity/);
     assert.match(text,/纯俯视|Top-down/);
     assert.match(text,/上半身/);
     assert.match(text,/12 段|十二段/);
