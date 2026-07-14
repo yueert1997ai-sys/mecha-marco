@@ -58,3 +58,13 @@ npm run verify
 - WebKit 前后台切换后的 WebGL Context 重建。
 - Three.js CDN 在中国大陆弱网下的首次加载和 Canvas fallback 体验。
 - 防守失败目前给出局内惩罚，没有独立失败分支；复杂群体寻路仍是局部职责 + 边界约束。
+
+## 4.4A Issue #44 分支交接
+
+- 基线：main `736c6dda090f744002a2d34656b21c254c347562`，正式版本仍为 `4.3.2-stability-pass`。
+- 分支：`feat/v4-4a-vanguard-identity-og04`；仅实现先锋机在 OG-04 的身份循环和该关视觉纵切，不包含重装机、星翼机、其他关卡或正式 GLB。
+- 战斗接口：`src/combat/vanguardIdentity44.js` 只新增一层 `Game.prototype.updateCombat` 包装；输入清理、主炮/军刀命中、设施命中和阶段切换通过窄接口接入。
+- 视觉接口：`src/render/og04IdentityVisual44.js` 暴露程序化组件描述和四状态设施映射，未来可将同名组件映射到 GLB 节点而不改碰撞。
+- UI：`src/ui/vanguardIdentity44.js` 提供刃势细条、偏转状态和反击就绪提示，不增加触控按钮。
+- 证据：`docs/QA_4.4A_ISSUE_44.md` 与 `docs/qa-artifacts/4.4A-og04-*.png`。
+- 最终验证：语法 90 项、Node 100/100、既有 20 个 Chromium / SwiftShader 场景加 1 个 OG-04 844×390 专项审计全部通过。

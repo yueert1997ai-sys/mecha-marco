@@ -101,3 +101,7 @@ npm run verify
 ## 研究基线
 
 见 [`docs/HADES_ARCHITECTURE_4.0.md`](docs/HADES_ARCHITECTURE_4.0.md)。
+
+## 4.4A 开发分支说明
+
+`feat/v4-4a-vanguard-identity-og04` 依据 Issue #44 做先锋机身份循环与 OG-04 视觉纵切。该分支不改变正式版本标记、页面标题或 Service Worker 缓存版本；4.3.2 仍是正式基线。实现范围、浏览器模拟证据和实体 iPhone 待验证项见 [`docs/QA_4.4A_ISSUE_44.md`](docs/QA_4.4A_ISSUE_44.md)。
