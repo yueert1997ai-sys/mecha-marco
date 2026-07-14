@@ -49,13 +49,21 @@ export function installMobileViewport42() {
 export function auditMobileViewport42(){
   const viewport=viewportBox(),root=document.documentElement,tolerance=2;
   const visible=(element)=>element&&element.getClientRects().length>0&&getComputedStyle(element).visibility!=='hidden';
-  const critical=[...document.querySelectorAll('#start-run,#open-settings416,#settings-back416,#return-base,.shop-actions button,.campaign-overlay42 button')].filter(visible);
+  const critical=[...document.querySelectorAll('#start-run,#open-settings416,#settings-back416,#armory-back43,#return-base,#resume,#retire')].filter(visible);
   const criticalInside=critical.every((element)=>{const r=element.getBoundingClientRect();return r.left>=-tolerance&&r.top>=-tolerance&&r.right<=viewport.width+tolerance&&r.bottom<=viewport.height+tolerance});
+  const panel=document.getElementById('panel'),panelRect=panel?.getBoundingClientRect();
+  const panelContained=!visible(panel)||panelRect.left>=-tolerance&&panelRect.top>=-tolerance&&panelRect.right<=viewport.width+tolerance&&panelRect.bottom<=viewport.height+tolerance;
+  const panelButtons=visible(panel)?[...panel.querySelectorAll('button')].filter((button)=>!button.disabled):[];
+  const panelHasReachableControl=!panelButtons.length||panelButtons.some((button)=>{const r=button.getBoundingClientRect();return r.right>panelRect.left&&r.left<panelRect.right&&r.bottom>panelRect.top&&r.top<panelRect.bottom});
   const canvases=[...document.querySelectorAll('canvas')].filter(visible);
-  const canvasSync=canvases.every((canvas)=>{const r=canvas.getBoundingClientRect();return Math.abs(r.width-viewport.width)<=tolerance&&Math.abs(r.height-viewport.height)<=tolerance&&canvas.width>0&&canvas.height>0});
+  const canvasSync=canvases.every((canvas)=>{const r=canvas.getBoundingClientRect(),scaleX=canvas.width/Math.max(1,r.width),scaleY=canvas.height/Math.max(1,r.height);return Math.abs(r.width-viewport.width)<=tolerance&&Math.abs(r.height-viewport.height)<=tolerance&&canvas.width>0&&canvas.height>0&&Math.abs(scaleX-scaleY)<=.05});
+  const objective=document.getElementById('campaign-objective42');
+  const hud=document.getElementById('hud'),objectiveVisible=!objective||hud?.classList.contains('hidden')||hud?.classList.contains('boss-active')||visible(objective);
+  const layers=['#campaign-progress42.show','#boss-bar:not(.hidden)','.campaign-comms42.show','.tactical-receipt43.show'].map((selector)=>document.querySelector(selector)).filter(visible).map((element)=>element.getBoundingClientRect());
+  const combatLayersSeparated=layers.every((a,index)=>layers.slice(index+1).every((b)=>a.right<=b.left+tolerance||b.right<=a.left+tolerance||a.bottom<=b.top+tolerance||b.bottom<=a.top+tolerance));
   return{
     pageFit:root.scrollHeight<=viewport.height+tolerance&&root.scrollWidth<=viewport.width+tolerance,
-    criticalInside,canvasSync,viewport,
+    criticalInside,panelContained,panelHasReachableControl,canvasSync,objectiveVisible,combatLayersSeparated,viewport,
     document:{width:root.scrollWidth,height:root.scrollHeight},
   };
 }

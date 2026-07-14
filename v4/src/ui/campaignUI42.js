@@ -79,7 +79,7 @@ export function applyCampaignUI42(AppUI){
     base.call(this,profile,mechs,dialogue,selectedMech,...rest);
     const brand=this.panel.querySelector('.brand-block');
     const eyebrow=brand?.querySelector('.eyebrow');
-    if(eyebrow)eyebrow.textContent='MECHA MARCO · V4.3.1 CONSEQUENCE FRONTLINE';
+    if(eyebrow)eyebrow.textContent='MECHA MARCO · V4.3.2 STABILITY PASS';
     const subtitle=brand?.querySelector('p');
     if(subtitle)subtitle.textContent='轨道墓场十二段战术行动 / 路线后果将进入核心决战';
     const meta=this.panel.querySelector('.base-meta');

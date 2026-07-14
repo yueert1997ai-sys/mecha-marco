@@ -17,6 +17,16 @@ test('v6 saves migrate to horizontal progression without losing fleet data',()=>
   assert.deepEqual(profile.archiveFragments,['legacy']);assert.deepEqual(profile.selectedDirectives,[]);
 });
 
+test('schema 5, 6 and 7 saves preserve cosmetics, settings, licenses and mastery',()=>{
+  const sideKit=FRAME_KITS_43.vanguard[1].id,directiveIds=DIRECTIVES_43.slice(0,2).map((item)=>item.id);
+  for(const version of[5,6,7]){
+    const profile=sanitizeProfile({version,permanent:37,runs:9,mechPaints:{vanguard:'nightfall'},settings:{aimSensitivity:1.45,aimDeadZone:.11,controlOpacity:.55,autoFire:false},unlockedKits:['vanguard-standard',sideKit],selectedKits:{vanguard:sideKit},unlockedDirectives:directiveIds,selectedDirectives:[directiveIds[1]],mechMastery:{vanguard:24,bulwark:8,starwing:3}});
+    assert.equal(profile.version,7);assert.equal(profile.permanent,37);assert.equal(profile.runs,9);
+    assert.equal(profile.mechPaints.vanguard,'nightfall');assert.equal(profile.settings.aimSensitivity,1.45);assert.equal(profile.settings.aimDeadZone,.11);assert.equal(profile.settings.controlOpacity,.55);assert.equal(profile.settings.autoFire,false);
+    assert.ok(profile.unlockedKits.includes(sideKit));assert.equal(profile.selectedKits.vanguard,sideKit);assert.deepEqual(profile.unlockedDirectives,directiveIds);assert.deepEqual(profile.selectedDirectives,[directiveIds[1]]);assert.deepEqual(profile.mechMastery,{vanguard:24,bulwark:8,starwing:3});
+  }
+});
+
 test('fleet data and frame mastery certify side-grade kits while directives cap at three',()=>{
   let profile=sanitizeProfile({permanent:20,mechMastery:{vanguard:8},unlockedDirectives:DIRECTIVES_43.slice(0,4).map((item)=>item.id)});
   const kit=FRAME_KITS_43.vanguard[1],bought=buyKit43(profile,kit.id);assert.equal(bought.ok,true);assert.equal(bought.profile.permanent,12);
@@ -73,6 +83,14 @@ test('module capacity forces replacement instead of unlimited stacking',()=>{
   const run={modules:[...standards]};const candidate=MODULES.find((module)=>module.slot!=='Core'&&!run.modules.includes(module));
   const blocked=installModule43(run,candidate);assert.equal(blocked.needsReplacement,true);assert.equal(run.modules.length,MODULE_CAPACITY_43.standard);
   const replaced=installModule43(run,candidate,standards[0].id);assert.equal(replaced.installed,true);assert.equal(replaced.removed.id,standards[0].id);assert.equal(run.modules.length,MODULE_CAPACITY_43.standard);
+});
+
+test('two core slots replace atomically without duplication or loss',()=>{
+  installTransformModules416();
+  const cores=MODULES.filter((module)=>module.slot==='Core').slice(0,3),run={modules:cores.slice(0,2)};
+  assert.equal(cores.length,3);assert.equal(installModule43(run,cores[2]).needsReplacement,true);assert.deepEqual(run.modules.map((module)=>module.id),cores.slice(0,2).map((module)=>module.id));
+  const before=new Set(run.modules.map((module)=>module.id)),result=installModule43(run,cores[2],cores[0].id);
+  assert.equal(result.installed,true);assert.equal(result.removed.id,cores[0].id);assert.equal(run.modules.length,MODULE_CAPACITY_43.core);assert.equal(new Set(run.modules.map((module)=>module.id)).size,2);assert.equal(before.has(cores[1].id),true);assert.equal(run.modules.some((module)=>module.id===cores[2].id),true);
 });
 
 test('doctrine commitment has two and four module breakpoints',()=>{

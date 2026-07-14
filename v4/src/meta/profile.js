@@ -36,7 +36,7 @@ export const DEFAULT_PROFILE = {
     aimSensitivity: 1,
     moveSensitivity: 1,
     aimDeadZone: .065,
-    controlOpacity: .78,
+    controlOpacity: .8,
     autoFire: true,
   },
 };

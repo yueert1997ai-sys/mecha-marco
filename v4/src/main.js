@@ -74,6 +74,12 @@ const audio = new SynthAudio();
 const game = new Game({ renderer, input, ui, audio });
 let mech3d = null;
 let mech3dStatus = 'loading';
+const syncRenderSurfaces=()=>{
+  renderer.resize();
+  mech3d?.resize?.();
+};
+addEventListener('mecha-viewport-change',syncRenderSurfaces);
+mobileViewport42.apply();
 document.documentElement.dataset.combatView = 'topdown';
 document.documentElement.dataset.mechSilhouette = 'upper-body';
 document.documentElement.dataset.uiStyle = 'low-saturation-glass';
@@ -106,16 +112,55 @@ const renderFrame = () => {
   mech3d?.render(game);
 };
 const loop = new GameLoop({ update:(dt)=>game.update(dt), render:renderFrame });
-const smokeMode = new URLSearchParams(location.search).has('smoke');
+const smokeParams=new URLSearchParams(location.search),smokeMode=smokeParams.has('smoke');
 if (smokeMode) {
+  const screen=smokeParams.get('screen')||'base';
+  if(screen==='campaign'){
+    game.ui.showFieldReward42=(modules,reward,onChoose)=>onChoose(0);
+    game.ui.showCampaignBranch42=(stage,branches,onChoose)=>onChoose(0);
+    game.ui.showShop=(run,inventory,onBuy,onRepair,onLeave)=>onLeave();
+    game.ui.showCampaignEvent42=(event,onChoose)=>onChoose(0);
+    game.ui.showModuleReplacement43=(run,module,onReplace,onCancel)=>onCancel();
+    game.ui.showResult=(report)=>{game.__smokeCampaignReport=report};
+    game.startRun();
+    for(let index=0;index<12&&game.run?.stageIndex===index;index+=1){
+      if(game.run.mission43)game.run.mission43.complete=true;
+      for(const target of game.facilities42||[])target.dead=true;
+      for(const enemy of game.enemies)enemy.dead=true;
+      game.room.waveIndex=game.room.waves.length-1;game.waveDelay=0;
+      game.completeCombatRoom();
+      if(index<11&&game.run.exitOpen){game.player.y=game.room.stage42.centerY-8;game.updateCombat(0)}
+    }
+    setTimeout(()=>{const complete=game.run?.visitedStages?.length===12&&game.state==='result'&&game.__smokeCampaignReport?.victory===true;document.documentElement.dataset.campaignFlow=complete?'pass':'fail'},1700);
+  }
+  if(screen==='combat'||screen==='boss')game.startRun();
+  if(screen==='boss'){
+    game.startCampaignStage42(11,false);game.waveDelay=0;game.spawnNextWave();
+    game.ui.showComms42?.('守墓者·阿尔法','阶段转换通讯测试',30,'enemy');
+    game.ui.showTacticalReceipt43?.('指挥链仍在线','PHASE 2 敌方精英增援抵达','danger');
+  }
+  if(screen==='settings')game.openSettings416('base');
+  if(screen==='armory')game.openArmory43();
+  if(screen==='reward'){game.startRun();game.resolveCampaignReward42(game.room.stage42)}
+  if(screen==='shop'){game.startRun();game.run.credits=100;game.showShop()}
+  if(screen==='event'){game.startRun();game.showEvent()}
+  if(screen==='pause'){game.startRun();game.pause()}
+  if(screen==='result'){game.startRun();game.finishRun(false)}
+  if(screen==='branch'){game.startRun();game.startCampaignStage42(2,false);game.ui.showCampaignBranch42(game.room.stage42,game.room.stage42.branches,()=>{})}
   mobileViewport42.apply();
+  if(game.state==='combat')game.ui.updateHud(game);
   renderFrame();
   document.documentElement.dataset.smokeReady = 'true';
+  document.documentElement.dataset.smokeScreen=screen;
   const recordAudit=()=>{
     const audit=auditMobileViewport42();
     document.documentElement.dataset.pageFit=audit.pageFit?'pass':'fail';
     document.documentElement.dataset.criticalInside=audit.criticalInside?'pass':'fail';
+    document.documentElement.dataset.panelContained=audit.panelContained?'pass':'fail';
+    document.documentElement.dataset.panelControl=audit.panelHasReachableControl?'pass':'fail';
     document.documentElement.dataset.canvasSync=audit.canvasSync?'pass':'fail';
+    document.documentElement.dataset.objectiveVisible=audit.objectiveVisible?'pass':'fail';
+    document.documentElement.dataset.combatLayers=audit.combatLayersSeparated?'pass':'fail';
   };
   recordAudit();
   setTimeout(recordAudit,700);
@@ -129,10 +174,6 @@ addEventListener('mecha-loadout-changed',(event)=>{
 });
 addEventListener('pointerdown', () => audio.unlock(), { once:true });
 addEventListener('keydown', () => audio.unlock(), { once:true });
-addEventListener('mecha-viewport-change', () => {
-  renderer.resize();
-  mech3d?.resize?.();
-});
 
 if (!smokeMode && 'serviceWorker' in navigator && location.protocol.startsWith('http')) {
   navigator.serviceWorker.register('./sw.js').catch(() => {});
@@ -140,7 +181,7 @@ if (!smokeMode && 'serviceWorker' in navigator && location.protocol.startsWith('
 
 globalThis.__MECHA_MARCO__ = {
   game,
-  visualVersion:'4.3.1-consequence-progression',
+  visualVersion:'4.3.2-stability-pass',
   mech3dStatus:()=>mech3dStatus,
   mech3dRenderer:()=>mech3d,
   refreshViewport:()=>mobileViewport42.apply(),

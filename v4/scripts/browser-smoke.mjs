@@ -24,12 +24,13 @@ const server=http.createServer((request,response)=>{
   createReadStream(file).pipe(response);
 });
 
-const runChrome=(name,width,height)=>new Promise((resolve,reject)=>{
-  const args=['--headless=new','--no-sandbox','--enable-unsafe-swiftshader','--disable-dev-shm-usage','--disable-background-networking','--disable-component-update','--no-first-run','--touch-events=enabled','--force-device-scale-factor=1',`--window-size=${width+16},${height+95}`,'--virtual-time-budget=2500','--dump-dom',url];
+const runChrome=(name,width,height,screen='base')=>new Promise((resolve,reject)=>{
+  const target=`${url}&screen=${encodeURIComponent(screen)}`;
+  const args=['--headless=new','--no-sandbox','--enable-unsafe-swiftshader','--disable-dev-shm-usage','--disable-background-networking','--disable-component-update','--no-first-run','--touch-events=enabled','--force-device-scale-factor=1',`--window-size=${width+16},${height+95}`,'--virtual-time-budget=2500','--dump-dom',target];
   const child=spawn(chrome,args,{stdio:['ignore','pipe','pipe']});let stdout='',stderr='';
   child.stdout.on('data',(chunk)=>stdout+=chunk);child.stderr.on('data',(chunk)=>stderr+=chunk);
   const timer=setTimeout(()=>{child.kill();reject(new Error(`${name} timed out`))},18000);
-  child.on('error',reject);child.on('close',(code)=>{clearTimeout(timer);const checks={ready:stdout.includes('data-smoke-ready="true"'),fit:stdout.includes('data-page-fit="pass"'),critical:stdout.includes('data-critical-inside="pass"'),canvas:stdout.includes('data-canvas-sync="pass"'),base:stdout.includes('开始出击'),campaign:stdout.includes('data-campaign-mode="continuous-12-stage"'),loadError:stdout.includes('游戏脚本加载失败')};const ok=code===0&&checks.ready&&checks.fit&&checks.critical&&checks.canvas&&checks.base&&checks.campaign&&!checks.loadError;if(!ok)return reject(new Error(`${name} failed (code=${code}, stdout=${stdout.length}, checks=${JSON.stringify(checks)})\n${stdout.match(/<html[^>]*>/)?.[0]||''}\n${stderr.slice(-1200)}`));console.log(`${name}: ${width}x${height} viewport, controls and canvas passed`);resolve()});
+  child.on('error',reject);child.on('close',(code)=>{clearTimeout(timer);const checks={ready:stdout.includes('data-smoke-ready="true"'),fit:stdout.includes('data-page-fit="pass"'),critical:stdout.includes('data-critical-inside="pass"'),panel:stdout.includes('data-panel-contained="pass"'),control:stdout.includes('data-panel-control="pass"'),canvas:stdout.includes('data-canvas-sync="pass"'),objective:stdout.includes('data-objective-visible="pass"'),layers:stdout.includes('data-combat-layers="pass"'),screen:stdout.includes(`data-smoke-screen="${screen}"`),base:screen!=='base'||stdout.includes('开始出击'),campaign:stdout.includes('data-campaign-mode="continuous-12-stage"'),flow:screen!=='campaign'||stdout.includes('data-campaign-flow="pass"'),loadError:stdout.includes('游戏脚本加载失败')};const ok=code===0&&Object.entries(checks).every(([key,value])=>key==='loadError'?!value:value);if(!ok)return reject(new Error(`${name} failed (code=${code}, stdout=${stdout.length}, checks=${JSON.stringify(checks)})\n${stdout.match(/<html[^>]*>/)?.[0]||''}\n${stderr.slice(-1200)}`));console.log(`${name}: ${width}x${height} ${screen} viewport, controls and canvas passed`);resolve()});
 });
 
 if(!chrome){
@@ -39,6 +40,11 @@ if(!chrome){
 }else{
   await new Promise((resolve)=>server.listen(port,'127.0.0.1',resolve));
   try{
-    for(const [width,height] of [[956,440],[844,390],[932,430],[896,414],[852,393]])await runChrome('Mobile landscape smoke',width,height);
+    for(const [width,height] of [[956,440],[844,390],[932,430],[896,414],[852,393]]){
+      await runChrome('Mobile landscape smoke',width,height,'base');
+      await runChrome('Mobile combat objective smoke',width,height,'combat');
+    }
+    for(const screen of['settings','armory','reward','shop','event','pause','result','branch','boss'])await runChrome('Mobile overlay smoke',844,390,screen);
+    await runChrome('Accelerated twelve-stage browser flow',844,390,'campaign');
   }finally{await new Promise((resolve)=>server.close(resolve))}
 }

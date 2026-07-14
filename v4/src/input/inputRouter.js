@@ -11,6 +11,7 @@ export class InputRouter {
     this.pressed = Object.fromEntries(ACTIONS.map((a) => [a,false]));
     this.actionSources = Object.fromEntries(ACTIONS.map((a) => [a,new Set()]));
     this.actionPointers = new Map();
+    this.actionButtonStates = new Set();
     this.move = { x:0, y:0 };
     this.aim = { x:0, y:-1 };
     this.mouse = { x:0, y:0, active:false };
@@ -57,7 +58,7 @@ export class InputRouter {
 
   bindStick(element, kind) {
     const knob = element.querySelector('.stick-knob');
-    const state = { pointerId:null, center:{x:0,y:0}, value:{x:0,y:0} };
+    const state = { element, knob, kind, pointerId:null, center:{x:0,y:0}, value:{x:0,y:0} };
     const update = (event) => {
       const rect = element.getBoundingClientRect();
       state.center = { x:rect.left+rect.width/2, y:rect.top+rect.height/2 };
@@ -92,30 +93,42 @@ export class InputRouter {
     }, { passive:false });
     const end = (event) => {
       if (event.pointerId !== state.pointerId) return;
+      const pointerId = state.pointerId;
       state.pointerId = null;
       state.value = {x:0,y:0};
       knob.style.transform = 'translate(0,0)';
       if (kind === 'move') this.move = {x:0,y:0};
       else this.setHeld('primary', false);
+      try {
+        if (element.hasPointerCapture?.(pointerId)) element.releasePointerCapture(pointerId);
+      } catch {}
+      event.preventDefault();
     };
-    element.addEventListener('pointerup', end);
-    element.addEventListener('pointercancel', end);
+    element.addEventListener('pointerup', end, { passive:false });
+    element.addEventListener('pointercancel', end, { passive:false });
+    element.addEventListener('lostpointercapture', (event) => {
+      if (state.pointerId === event.pointerId) end(event);
+    }, { passive:false });
     this.touch[kind] = state;
   }
 
   bindActionButton(button, action) {
-    let activePointer = null;
+    const state = { button, action, pointerId:null };
+    this.actionButtonStates.add(state);
     const end = (event) => {
-      if (activePointer !== event.pointerId) return;
+      if (state.pointerId !== event.pointerId) return;
+      state.pointerId = null;
       this.setSourceHeld(action, `button:${action}:${event.pointerId}`, false);
       this.actionPointers.delete(event.pointerId);
-      activePointer = null;
       button.classList.remove('active');
+      try {
+        if (button.hasPointerCapture?.(event.pointerId)) button.releasePointerCapture(event.pointerId);
+      } catch {}
       event.preventDefault();
     };
     button.addEventListener('pointerdown', (event) => {
-      if (!this.enabled || activePointer !== null) return;
-      activePointer = event.pointerId;
+      if (!this.enabled || state.pointerId !== null) return;
+      state.pointerId = event.pointerId;
       this.actionPointers.set(event.pointerId, action);
       try { button.setPointerCapture(event.pointerId); } catch {}
       this.setSourceHeld(action, `button:${action}:${event.pointerId}`, true, true);
@@ -125,7 +138,7 @@ export class InputRouter {
     button.addEventListener('pointerup', end, { passive:false });
     button.addEventListener('pointercancel', end, { passive:false });
     button.addEventListener('lostpointercapture', (event) => {
-      if (activePointer === event.pointerId) end(event);
+      if (state.pointerId === event.pointerId) end(event);
     }, { passive:false });
   }
 
@@ -140,9 +153,7 @@ export class InputRouter {
   }
 
   setHeld(action, value, alsoPress = false) {
-    if (!(action in this.held)) return;
-    if (value && !this.held[action] && alsoPress) this.pressed[action] = true;
-    this.held[action] = value;
+    this.setSourceHeld(action, `direct:${action}`, value, alsoPress);
   }
 
   press(action) {
@@ -181,6 +192,17 @@ export class InputRouter {
   clear() {
     this.keys.clear();
     this.move = {x:0,y:0};
+    for (const state of this.actionButtonStates) {
+      const pointerId = state.pointerId;
+      state.pointerId = null;
+      if (pointerId !== null) {
+        this.actionPointers.delete(pointerId);
+        try {
+          if (state.button.hasPointerCapture?.(pointerId)) state.button.releasePointerCapture(pointerId);
+        } catch {}
+      }
+      state.button.classList.remove('active');
+    }
     for (const action of ACTIONS) {
       this.actionSources[action].clear();
       this.held[action] = false;
@@ -189,11 +211,17 @@ export class InputRouter {
     this.actionPointers.clear();
     for (const state of Object.values(this.touch)) {
       if (!state) continue;
+      const pointerId = state.pointerId;
       state.pointerId = null;
       state.value = {x:0,y:0};
+      if (pointerId !== null) {
+        try {
+          if (state.element?.hasPointerCapture?.(pointerId)) state.element.releasePointerCapture(pointerId);
+        } catch {}
+      }
+      if (state.knob) state.knob.style.transform = 'translate(0,0)';
     }
     for (const knob of this.touchRoot?.querySelectorAll('.stick-knob') || []) knob.style.transform = 'translate(0,0)';
-    for (const button of this.touchRoot?.querySelectorAll('.active') || []) button.classList.remove('active');
   }
 
   setEnabled(value) {

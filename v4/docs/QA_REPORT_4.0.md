@@ -1,8 +1,8 @@
-# 天穹断刃 4.3.1 当前 QA 状态
+# 天穹断刃 4.3.2 当前 QA 状态
 
-版本：`4.3.1-consequence-progression`
+版本：`4.3.2-stability-pass`
 
-日期：2026-07-12
+日期：2026-07-13
 
 > 文件名保留为 `QA_REPORT_4.0.md`，用于兼容既有链接。本文内容已经更新为 4.3 当前状态，不应再把 4.0 / 4.1 的验证范围视为完整现状。
 
@@ -136,7 +136,7 @@
 
 ## 8. 版本与资源一致性
 
-当前一致版本：`4.3.1-consequence-progression`
+当前一致版本：`4.3.2-stability-pass`
 
 已检查：
 
@@ -259,3 +259,34 @@ Browser Harness 在 844×390、DPR 3 的隔离 Chromium 配置中主动注销 Se
 - `qa-artifacts/4.3.1-result-causality-844x390-dpr3.png`
 
 这些结果是自动化 Chromium 的逻辑、布局和渲染证据，不代表实体 iPhone 17 Pro Max 的发热、功耗、内存或持续帧率。
+
+## 15. 4.3.2 稳定性与体验审查（2026-07-13）
+
+本轮以 4.3.1 正式 main 为基线，先确认原始 `verify` 的 57/57 Node 测试、79 个语法文件和五组基地 Smoke 均通过，再补足原回归未覆盖的真实运行路径。
+
+已验证修复：
+
+- 动作按钮 `pointerdown → clear → 新 pointerdown` 可以重新按下；`pointercancel`、`lostpointercapture`、四指并发和混合来源释放均有行为测试
+- 移动与瞄准摇杆在 `lostpointercapture` 后会释放旧指针并接受新指针；旋屏触发 clear 时会主动释放两支摇杆 capture，瞄准释放后主炮 held 归零
+- OG-08 监察官在可达边界或 24 秒倒计时归零时正确逃脱，清完剩余波次后战线继续
+- 主炮、军刀、导弹直击与爆炸、范围爆炸、哨戒和僚机均可伤害设施；清敌但设施未完成时不开放闸门
+- OG-11 18 秒内外两条斩首路径真实控制 Boss 增援；结束动画期间重复结算不会重复发奖
+- 956×440、844×390、932×430、896×414、852×393 均进入战斗检查任务目标、页面、关键操作和 Canvas 同步
+- 844×390 额外覆盖基地、设置、军备、奖励、商店、事件、暂停、结算、分支和 Boss 通讯 / 回执 / 血条叠层
+- 浏览器内加速战役按真实运行时依次建立 OG-01～OG-12，自动处理奖励、两次分支、商店、投降事件、11 次闸门转换和胜利报告；最终 `visitedStages=12` 且 victory 为 true
+- Service Worker 依赖闭包与缓存命名空间进入 Node 回归
+
+最终 `npm run verify`：84 个 ES 模块 / 脚本通过语法检查，83/83 Node 测试通过，20 个 Chromium / SwiftShader 浏览器场景通过。存档专项覆盖 schema 5 / 6 / 7 的资源、涂装、设置、许可、当前套件、指令与三机体熟练度；核心容量专项覆盖 2 槽原子替换无复制、无丢失。
+
+4.3.2 截图证据：
+
+以下六张资产均重新导出为真实 PNG，自动测试校验 PNG 签名、IHDR 及 844×390 尺寸：
+
+- `qa-artifacts/4.3.2-base-844x390.png`
+- `qa-artifacts/4.3.2-settings-844x390.png`
+- `qa-artifacts/4.3.2-combat-844x390.png`
+- `qa-artifacts/4.3.2-shop-844x390.png`
+- `qa-artifacts/4.3.2-result-844x390.png`
+- `qa-artifacts/4.3.2-boss-844x390.png`
+
+自动浏览器结果仍属于 Chromium / SwiftShader 逻辑、布局与渲染模拟，不代表实体 iPhone Safari 性能。
