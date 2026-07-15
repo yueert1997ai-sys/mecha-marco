@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased - 4.4B OG-04 painterly scene prototype
+
+- 新增资产驱动的六层 2.5D 场景管线与 `scene.json`，仅在 OG-04 生效；`main.js` 只增加 import / apply 接线，未新增 `Game.prototype.updateCombat` 包装。
+- 新增五张原创临时 WebP 图层：深空背景、断裂巨构远景、不对称阵列中景、透明前景碎片和空气雾层；第三方参考图与 Logo 未进入仓库。
+- 真实碰撞物、三个识别节点、设施 intact / active / heavy-damage / destroyed、闸门关闭 / 开放提示继续从玩法状态绘制。
+- 增加独立锚点、缩放、透明度、视差、cover / contain、横屏安全裁切、质量等级、单图缺失降级和清单加载失败降级。
+- 增加 844×390、956×440、同机位改造前后、闸门、设施四状态、缺图与低性能 Canvas 的 Chromium / SwiftShader 浏览器模拟审查和真实 PNG 证据。
+- 正式版本号、页面标题、runtime marker 和 Service Worker 缓存版本保持 `4.4.0-vanguard-identity`；仅把新增模块和资产加入现有离线核心清单。
+
 ## 4.4.0-vanguard-identity
 
 - 仅在先锋机进入 OG-04 时启用“刃势 → 短蓄偏转 → 反击射击”身份循环；轻触军刀仍为普通斩击，偏转不增加新按钮。
