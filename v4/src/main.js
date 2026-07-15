@@ -12,6 +12,7 @@ import { applyArenaDetail415 } from './render/arenaDetail415.js';
 import { applyContinuousCampaignRenderer42 } from './render/continuousCampaign42.js';
 import { applyFrontlineRenderer43 } from './render/frontlineDepth43.js';
 import { applyOg04IdentityVisual44 } from './render/og04IdentityVisual44.js';
+import { applyPainterlyScene44b } from './render/painterlyScene44b.js';
 import { applyMobileFeel42 } from './combat/mobileFeel42.js';
 import { applyLoadoutRuntime415 } from './combat/loadoutRuntime415.js';
 import { applyRogueTransform416 } from './combat/rogueTransform416.js';
@@ -49,6 +50,7 @@ applyArenaDetail415(Renderer);
 applyContinuousCampaignRenderer42(Renderer);
 applyFrontlineRenderer43(Renderer);
 applyOg04IdentityVisual44(Renderer);
+applyPainterlyScene44b(Renderer);
 const drawCanvasMechFallback = Renderer.prototype.drawMech;
 Renderer.prototype.drawMech = function drawMechWithWebGLFallback(...args) {
   if (globalThis.__MECH_3D_READY__) return;
