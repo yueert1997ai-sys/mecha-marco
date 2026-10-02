@@ -1,0 +1,90 @@
+{
+  "id": "og04-painterly-44b",
+  "schema": 1,
+  "safeCrop": {
+    "minAspect": 1.9,
+    "maxAspect": 2.5,
+    "focus": [0.5, 0.5],
+    "protectedArea": [0.16, 0.12, 0.84, 0.88]
+  },
+  "layers": [
+    {
+      "id": "background",
+      "role": "background",
+      "src": "background.webp",
+      "anchor": [0.5, 0.5],
+      "scale": 1.04,
+      "opacity": 1,
+      "parallax": [0.006, 0.004],
+      "fit": "cover",
+      "blend": "source-over",
+      "minTier": "low",
+      "fallback": { "type": "gradient", "colors": ["#02040e", "#08172f", "#0a2229"] }
+    },
+    {
+      "id": "far",
+      "role": "far",
+      "src": "far.webp",
+      "anchor": [0.49, 0.47],
+      "scale": 1.03,
+      "opacity": 0.78,
+      "parallax": [0.012, 0.009],
+      "fit": "cover",
+      "blend": "source-over",
+      "minTier": "low",
+      "fallback": { "type": "wreck-silhouette", "color": "#163a58", "accent": "#53d8d0" }
+    },
+    {
+      "id": "mid",
+      "role": "mid",
+      "src": "mid.webp",
+      "anchor": [0.5, 0.51],
+      "scale": 1.02,
+      "opacity": 0.74,
+      "parallax": [0.022, 0.017],
+      "fit": "cover",
+      "blend": "source-over",
+      "minTier": "medium",
+      "fallback": { "type": "array-silhouette", "color": "#154a5b", "accent": "#70efe0" }
+    },
+    {
+      "id": "playfield",
+      "role": "playfield",
+      "src": null,
+      "anchor": [0.5, 0.5],
+      "scale": 1,
+      "opacity": 1,
+      "parallax": [0, 0],
+      "fit": "contain",
+      "blend": "source-over",
+      "minTier": "low",
+      "fallback": { "type": "og04-playfield" }
+    },
+    {
+      "id": "foreground",
+      "role": "foreground",
+      "src": "foreground.webp",
+      "anchor": [0.5, 0.5],
+      "scale": 1.04,
+      "opacity": 0.7,
+      "parallax": [0.045, 0.032],
+      "fit": "cover",
+      "blend": "source-over",
+      "minTier": "high",
+      "fallback": { "type": "edge-debris", "color": "#01030a" }
+    },
+    {
+      "id": "atmosphere",
+      "role": "atmosphere",
+      "src": "atmosphere.webp",
+      "anchor": [0.5, 0.5],
+      "scale": 1.03,
+      "opacity": 0.42,
+      "parallax": [0.032, 0.025],
+      "fit": "cover",
+      "blend": "source-over",
+      "minTier": "medium",
+      "fallback": { "type": "edge-mist", "color": "#45d7d1" }
+    }
+  ]
+}
