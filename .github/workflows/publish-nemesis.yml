@@ -1,0 +1,117 @@
+name: Publish Nemesis hotfix
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/publish-nemesis.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: nemesis-import
+  cancel-in-progress: false
+jobs:
+  import-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import exact tested standalone game
+        env:
+          ARTIFACT_URL: https://at.adobe.com/ljf0vsEi5S6pJNd9
+          EXPECTED_SHA256: 605b4838d87b60cfd4acf483f65a99b5f69c81dfac18415b398506c709e8e7e2
+        run: |
+          python3 - <<'PY'
+          import hashlib, os, pathlib, urllib.request
+          target = pathlib.Path('nemesis/index.html')
+          if target.exists():
+              data = target.read_bytes()
+              if hashlib.sha256(data).hexdigest() != os.environ['EXPECTED_SHA256']:
+                  raise SystemExit('Existing independent game differs: refusing to overwrite.')
+          else:
+              req = urllib.request.Request(os.environ['ARTIFACT_URL'], headers={'User-Agent':'Nemesis-release/1.0.1'})
+              with urllib.request.urlopen(req, timeout=60) as response:
+                  data = response.read(1000000)
+              digest = hashlib.sha256(data).hexdigest()
+              if digest != os.environ['EXPECTED_SHA256']:
+                  raise SystemExit('Artifact integrity mismatch: ' + digest)
+              target.parent.mkdir(exist_ok=True)
+              target.write_bytes(data)
+          print('Verified standalone artifact:', len(data), 'bytes')
+          pathlib.Path('nemesis/README.md').write_text('# 冥隼 · 破晓战线 1.0.1\n\n独立回合制战棋游戏，入口为本目录 index.html。\n本次交付保留仓库原有 v4 顶视角动作游戏，不修改其代码、版本或入口。\n\n修复内容：脚本禁用及启动异常可见提示；自然竖屏布局；武装演示页底部按钮遮挡。\n在线入口：https://yueert1997ai-sys.github.io/mecha-marco/nemesis/\n\n浏览器自动化结果见 Publish Nemesis hotfix / Nemesis live smoke 工作流。\nChromium 和 WebKit 的自动化结果不等于真实 iPhone 硬件测试。\n', encoding='utf-8')
+          PY
+      - name: Install browser test engines
+        run: |
+          python3 -m pip install playwright
+          python3 -m playwright install --with-deps chromium webkit
+      - name: Verify actual HTTP startup, touch controls, and fallback
+        run: |
+          python3 - <<'PY'
+          import functools, http.server, json, pathlib, threading
+          from playwright.sync_api import sync_playwright
+          server = http.server.ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(http.server.SimpleHTTPRequestHandler, directory='nemesis'))
+          threading.Thread(target=server.serve_forever, daemon=True).start()
+          url = 'http://127.0.0.1:%d/' % server.server_port
+          out = pathlib.Path('nemesis-test-results'); out.mkdir(exist_ok=True)
+          results = []
+          with sync_playwright() as p:
+              for engine in ['chromium', 'webkit']:
+                  browser = getattr(p, engine).launch()
+                  for name, width, height in [('portrait',416,793),('landscape',852,393)]:
+                      ctx = browser.new_context(viewport={'width':width,'height':height}, is_mobile=True, has_touch=True)
+                      page = ctx.new_page(); page.set_default_timeout(15000)
+                      errors = []; page.on('pageerror',lambda e: errors.append(str(e)))
+                      assert page.goto(url).status == 200
+                      page.locator('[data-act="newgame"]').wait_for()
+                      assert not page.locator('#boot-guard').is_visible()
+                      page.screenshot(path=str(out / (engine+'-'+name+'-title.png')))
+                      page.locator('[data-act="newgame"]').tap()
+                      page.locator('#tkSkip').wait_for(state='visible')
+                      page.locator('#tkSkip').tap()
+                      page.wait_for_function('typeof G !== "undefined" && G && G.ci === 0 && G.units.length >= 3 && !G.busy')
+                      page.screenshot(path=str(out / (engine+'-'+name+'-battle.png')))
+                      assert not errors, errors
+                      results.append({'engine':engine,'viewport':name,'first_chapter':True,'errors':errors.copy()})
+                      ctx.close()
+                  ctx = browser.new_context(viewport={'width':416,'height':793}, is_mobile=True, has_touch=True)
+                  page = ctx.new_page(); page.set_default_timeout(15000)
+                  errors = []; page.on('pageerror',lambda e: errors.append(str(e)))
+                  page.goto(url)
+                  page.locator('[data-act="gallery"]').tap()
+                  page.locator('[data-act="gweapon"][data-i="4"]').tap()
+                  page.locator('[data-act="gplay"]').tap()
+                  page.locator('#battle').wait_for(state='visible')
+                  page.wait_for_timeout(1500)
+                  page.locator('#bskip').tap()
+                  page.locator('#battle').wait_for(state='hidden')
+                  assert not errors, errors
+                  results.append({'engine':engine,'gallery_six_funnels':True,'errors':errors.copy()})
+                  ctx.close()
+                  ctx = browser.new_context(viewport={'width':416,'height':793}, java_script_enabled=False)
+                  page = ctx.new_page(); page.goto(url)
+                  assert page.locator('#boot-guard').is_visible()
+                  assert '当前预览没有运行' in page.locator('body').inner_text()
+                  results.append({'engine':engine,'no_javascript_fallback':True})
+                  ctx.close(); browser.close()
+          server.shutdown()
+          (out / 'report.json').write_text(json.dumps(results,ensure_ascii=False,indent=2),encoding='utf-8')
+          print(json.dumps(results,ensure_ascii=False,indent=2))
+          PY
+      - name: Save browser verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nemesis-1.0.1-browser-tests
+          path: nemesis-test-results/
+          retention-days: 14
+      - name: Commit only the independent game
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- nemesis/index.html nemesis/README.md
+          if git diff --cached --quiet; then
+            echo 'Standalone game already matches verified artifact.'
+          else
+            git commit -m 'Publish Nemesis 1.0.1 with startup fallback and portrait fixes'
+            git push origin HEAD:main
+          fi
+          echo 'Native branch-based Pages requires a subsequent non-GITHUB_TOKEN commit.'
