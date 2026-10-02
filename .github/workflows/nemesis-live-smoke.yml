@@ -1,0 +1,95 @@
+name: Nemesis live smoke
+on:
+  push:
+    branches: [main]
+    paths: ['nemesis/**', '.github/workflows/nemesis-live-smoke.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: nemesis-live-smoke
+  cancel-in-progress: true
+jobs:
+  check-live-entry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install mobile browser test engines
+        run: |
+          python3 -m pip install playwright
+          python3 -m playwright install --with-deps chromium webkit
+      - name: Verify deployed bytes and live gameplay entry
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, pathlib, time, urllib.request
+          from playwright.sync_api import sync_playwright
+          url = 'https://yueert1997ai-sys.github.io/mecha-marco/nemesis/'
+          expected = hashlib.sha256(pathlib.Path('nemesis/index.html').read_bytes()).hexdigest()
+          out = pathlib.Path('nemesis-live-results'); out.mkdir(exist_ok=True)
+          for attempt in range(30):
+              try:
+                  req = urllib.request.Request(url+'?build=1.0.1',headers={'Cache-Control':'no-cache','User-Agent':'Nemesis-live-smoke/1.0.1'})
+                  with urllib.request.urlopen(req,timeout=20) as response:
+                      data = response.read()
+                      status = response.status
+                      content_type = response.headers.get('Content-Type','')
+                  digest = hashlib.sha256(data).hexdigest()
+                  if status == 200 and 'text/html' in content_type and digest == expected:
+                      break
+                  print('Waiting for the verified artifact to be deployed:',attempt,status,digest,flush=True)
+              except Exception as e:
+                  print('Waiting for Pages:',attempt,type(e).__name__,flush=True)
+              time.sleep(10)
+          else:
+              raise SystemExit('Live entry did not serve the expected HTML within five minutes.')
+          results = {'url':url,'status':status,'content_type':content_type,'sha256':digest,'tests':[],'hardware_note':'Automated Chromium and WebKit engines; not physical iPhone testing.'}
+          (out / 'http.json').write_text(json.dumps(results,indent=2),encoding='utf-8')
+          with sync_playwright() as p:
+              for engine in ['chromium','webkit']:
+                  browser = getattr(p,engine).launch()
+                  for name,width,height in [('portrait',416,793),('landscape',852,393)]:
+                      ctx = browser.new_context(viewport={'width':width,'height':height},is_mobile=True,has_touch=True)
+                      page = ctx.new_page(); page.set_default_timeout(20000)
+                      errors = []; page.on('pageerror',lambda e: errors.append(str(e)))
+                      res = page.goto(url+'?v=1.0.1',wait_until='load',timeout=45000)
+                      assert res.status == 200
+                      page.locator('[data-act="newgame"]').wait_for()
+                      assert not page.locator('#boot-guard').is_visible()
+                      page.screenshot(path=str(out / (engine+'-'+name+'-title.png')))
+                      page.locator('[data-act="newgame"]').tap()
+                      page.locator('#tkSkip').wait_for(state='visible')
+                      page.locator('#tkSkip').tap()
+                      page.wait_for_function('typeof G !== "undefined" && G && G.ci === 0 && G.units.length >= 3 && !G.busy')
+                      page.wait_for_timeout(1000)
+                      state = page.evaluate('({chapter:G.ci,units:G.units.length,phase:G.phase,screen:EDITION.screen})')
+                      assert state['screen'] == 'battle'
+                      assert not errors,errors
+                      page.screenshot(path=str(out / (engine+'-'+name+'-battle.png')))
+                      results['tests'].append({'engine':engine,'viewport':name,'state':state,'errors':errors.copy()})
+                      ctx.close()
+                  ctx = browser.new_context(viewport={'width':416,'height':793},is_mobile=True,has_touch=True)
+                  page = ctx.new_page(); page.set_default_timeout(20000)
+                  errors = []; page.on('pageerror',lambda e: errors.append(str(e)))
+                  page.goto(url+'?v=1.0.1')
+                  page.locator('[data-act="gallery"]').tap()
+                  page.locator('[data-act="gweapon"][data-i="4"]').tap()
+                  page.locator('[data-act="gplay"]').tap()
+                  page.locator('#battle').wait_for(state='visible')
+                  page.wait_for_timeout(1800)
+                  page.screenshot(path=str(out / (engine+'-six-funnels.png')))
+                  page.locator('#bskip').tap()
+                  page.locator('#battle').wait_for(state='hidden')
+                  assert not errors,errors
+                  results['tests'].append({'engine':engine,'gallery_six_funnels':True,'errors':errors.copy()})
+                  ctx.close(); browser.close()
+          (out / 'report.json').write_text(json.dumps(results,ensure_ascii=False,indent=2),encoding='utf-8')
+          print(json.dumps(results,ensure_ascii=False,indent=2))
+          PY
+      - name: Save live verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nemesis-live-1.0.1
+          path: nemesis-live-results/
+          retention-days: 14
